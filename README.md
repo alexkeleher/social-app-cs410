@@ -1,4 +1,4 @@
-# Scheduling Social Gatherings
+# [Scheduling Social Gatherings](https://fotihk.github.io/social-app-cs410/)
 Summer 2024 CS410
 - Kirby Douglas
 - Matt Janak
