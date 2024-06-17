@@ -1,0 +1,33 @@
+- name: Alex Keleher
+  bio: > 
+    A US Navy veteran, Alex received his Associate in Computer Science from Tidewater Community College and is now pursuing his Bachelor's at Old Dominion University. 
+    He is currently a senior. Alex loves cats, reading, and anything tech-related.
+  photo: /assets/images/alex.jpg
+- name: Juan Mireles
+  bio: >
+    Juan Mireles is a Senior at ODU and is currently majoring in Computer Science and minoring in Computer Engineering. 
+    He likes to spend his free time playing video games, working out, reading, cooking, and programming.
+  photo: /assets/images/juan.jpg
+- name: Matt Janak
+  bio: >
+    Matt Janak is a Senior at ODU currently studying Computer Science. 
+    He is currently working as an Engineering Technician supporting combat systems on VA Class submarines. In his free time he enjoys cooking, reading science fiction, and working out.
+  photo: /assets/images/matt.jpg
+- name: Kirby Douglas
+  bio: >
+    Kirby Douglas is a current senior and is majoring in computer science. He is currently after a Bachelor's in Computer Science. 
+    Kirby likes reading comics, making random projects, watching game of thrones and currently invested in house of the dragon.
+  photo: /assets/images/kirby.jpg
+- name: Fotih Karimov
+  bio: >
+    placeholder
+  photo: /assets/images/fotih.jpg
+- name: Jajuan Myers
+  bio: >
+    placeholder
+  photo: /assets/images/jajuan.jpg
+- name: Armando Toledo
+  bio: >
+    Armando Toledo is a Senior at ODU currently majoring Computer Science. 
+    Armando is currently working as an Upgrades Team Lead at a Telecommunications Software company named VertiGIS LLC. He enjoys playing with his toddler and playing Pokemon Trading Card Game.
+  photo: /assets/images/armando.png

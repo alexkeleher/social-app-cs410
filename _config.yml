@@ -1,4 +1,86 @@
-remote_theme: pages-themes/cayman@v0.2.0
+# Welcome to Jekyll!
+#
+# This config file is meant for settings that affect your whole blog, values
+# which you are expected to set up once and rarely edit after that. If you find
+# yourself editing this file very often, consider using Jekyll's data files
+# feature for the data you need to update frequently.
+#
+# For technical reasons, this file is *NOT* reloaded automatically when you use
+# 'bundle exec jekyll serve'. If you change this file, please restart the server process.
+
+# Site settings
+# These are used to personalize your new site. If you look in the HTML files,
+# you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
+# You can create any custom variable you would like, and they will be accessible
+# in the templates via {{ site.myvariable }}.
+remote_theme: mmistakes/minimal-mistakes
+minimal_mistakes_skin: dark
+
+
+locale: "en-US"
+title: Social App
+description: >- # this means to ignore newlines until "baseurl:"
+  Write an awesome description for your new site here. You can edit this
+  line in _config.yml. It will appear in your document head meta (for
+  Google search results) and in your feed.xml site description.
+url: "https://fotihk.github.io"
+baseurl: "/social-app-cs410"
+repository: "fotihk/social-app-cs410"
+enable_copy_code_button: true
+atom_feed:
+  hide: true
+# Build settings
+markdown: kramdown
+# Outputting
+permalink: /:categories/:title/
+timezone: America/New_York
+
+include:
+  - _pages
+
+# Exclude from processing.
+# The following items will not be processed, by default. Create a custom list
+# to override the default setting.
+# exclude:
+#   - Gemfile
+#   - Gemfile.lock
+#   - node_modules
+#   - vendor/bundle/
+#   - vendor/cache/
+#   - vendor/gems/
+#   - vendor/ruby/
+
+# Plugins (previously gems:)
 plugins:
-- jekyll-remote-theme
-title: Social Gatherings CS410
+  - jekyll-sitemap
+  - jekyll-gist
+  - jemoji
+  - jekyll-include-cache
+
+footer:
+  links:
+    - label: "GitHub"
+      icon: "fab fa-fw fa-github"
+      url: "https://github.com/FotihK/social-app-cs410"
+
+defaults:
+  # _pages
+  - scope:
+      path: "_pages"
+      type: pages
+    values:
+      layout: single
+      author_profile: false
+  # _presentations
+  - scope:
+      path: ""
+      type: presentations
+    values:
+      layout: single
+      author_profile: false
+      share: false
+
+collections:
+  presentations:
+    output: true
+    permalink: /:collection/:path/
