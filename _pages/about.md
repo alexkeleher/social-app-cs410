@@ -9,8 +9,8 @@ classes: wide
 {% for member in site.data.members %}
     <div class="bio">
         <img src="{{ site.baseurl }}/{{ member.photo }}">
-        <div> {{ member.name }} </div>
-        <p> {{ member.bio }} </p>
+        <div class="name"> {{ member.name }} </div>
+        <p class="desc"> {{ member.bio }} </p>
     </div>
 {% endfor %}
 </div>
