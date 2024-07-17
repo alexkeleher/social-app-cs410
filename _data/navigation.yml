@@ -3,3 +3,7 @@ main:
     url: /about/
   - title: "Presentations"
     url: /presentations/
+  - title: "References"
+    url: /refs/
+  - title: "Glossary"
+    url: /terms/

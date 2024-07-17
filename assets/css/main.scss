@@ -4,11 +4,16 @@ search: false
 ---
 
 @charset "utf-8";
+$max-width: calc(75vw);
 
 article.page,
 div.archive {
     float: left;
     width: 100%;
+}
+
+#footer footer {
+    max-width: $max-width;
 }
 
 .flex-container {
@@ -58,10 +63,24 @@ div.archive {
 .presentation {
     margin: auto;
     display: block;
-    padding-top: 2em;
 }
 
-$max-width: calc(75vw);
+.pdf-link {
+    display: block;
+    margin: 2em 10em;
+}
+
+.team {
+    color: #ff8585;
+}
+
+.odu-icon {
+    width: 20px;
+    height: 20px;
+}
+// .splash {
+//     max-width: 50vw;
+// }
 
 @import "minimal-mistakes/skins/{{ site.minimal_mistakes_skin | default: 'default' }}"; // skin
 @import "minimal-mistakes"; // main partials
