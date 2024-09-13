@@ -24,9 +24,9 @@ description: >- # this means to ignore newlines until "baseurl:"
   Write an awesome description for your new site here. You can edit this
   line in _config.yml. It will appear in your document head meta (for
   Google search results) and in your feed.xml site description.
-url: "https://fotihk.github.io"
+url: "https://alexkeleher.github.io"
 baseurl: "/social-app-cs410"
-repository: "fotihk/social-app-cs410"
+repository: "alexkeleher/social-app-cs410"
 enable_copy_code_button: true
 atom_feed:
   hide: true
@@ -62,7 +62,7 @@ footer:
   links:
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
-      url: "https://github.com/FotihK/social-app-cs410"
+      url: "https://github.com/alexkeleher/social-app-cs410"
 
 defaults:
   # _pages
@@ -74,7 +74,7 @@ defaults:
       author_profile: false
   # _presentations
   - scope:
-      path: ""
+      path: "_presentations"
       type: presentations
     values:
       layout: single
@@ -84,4 +84,4 @@ defaults:
 collections:
   presentations:
     output: true
-    permalink: /:collection/:path/
+    permalink: /:collection/:name/
