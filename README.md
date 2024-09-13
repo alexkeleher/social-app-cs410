@@ -1,8 +1,7 @@
-# [Scheduling Social Gatherings](https://fotihk.github.io/social-app-cs410/)
-Summer 2024 CS410
+# [Scheduling Social Gatherings](https://alexkeleher.github.io/social-app-cs410/)
+Fall 2024 CS411W
 - Kirby Douglas
 - Matt Janak
-- Fotih Karimov
 - Alex Keleher
 - Juan Mireles
 - Jajuan Myers
