@@ -80,8 +80,19 @@ defaults:
       layout: single
       author_profile: false
       share: false
+  # _labs
+  - scope:
+      path: "_labs"
+      type: labs
+    values:
+      layout: single
+      author_profile: false
+      share: false
 
 collections:
   presentations:
+    output: true
+    permalink: /:collection/:name/
+  labs:
     output: true
     permalink: /:collection/:name/
