@@ -35,7 +35,7 @@ app.post('/data', async (req, res) => {
 });
 
 // Read
-app.get('/data', async (req, res) => {
+app.get('/data', async (res) => {
 	try {
 		const allData = await pool.query('SELECT * FROM data_table');
 		res.json(allData.rows);
