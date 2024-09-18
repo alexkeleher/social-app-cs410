@@ -6,3 +6,9 @@ Fall 2024 CS411W
 - Juan Mireles
 - Jajuan Myers
 - Armando Toledo
+
+## Running the app
+From the root directory, run
+``` bash
+npm start
+```
