@@ -1,25 +1,36 @@
 {
-  "name": "social-app-cs410",
-  "version": "1.0.0",
-  "description": "Fall 2024 CS411W - Kirby Douglas - Matt Janak - Alex Keleher - Juan Mireles - Jajuan Myers - Armando Toledo",
-  "main": "index.js",
-  "scripts": {
-    "start": "concurrently \"npm run server\" \"npm run client\"",
-    "server": "nodemon server/index.js",
-    "client": "npm start --prefix client",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.21.0",
-    "pg": "^8.13.0"
-  },
-  "devDependencies": {
-    "concurrently": "^9.0.1",
-    "nodemon": "^3.1.5"
-  }
+    "name": "social-app-cs410",
+    "version": "1.0.0",
+    "description": "Fall 2024 CS411W - Kirby Douglas - Matt Janak - Alex Keleher - Juan Mireles - Jajuan Myers - Armando Toledo",
+    "main": "index.js",
+    "scripts": {
+        "start": "concurrently \"npm run server\" \"npm run client\"",
+        "server": "nodemon server/index.js",
+        "client": "npm start --prefix client",
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,json,css,sccs,md}\"",
+        "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --quiet"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.5",
+        "express": "^4.21.0",
+        "pg": "^8.13.0"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.11.1",
+        "@types/eslint__js": "^8.42.3",
+        "concurrently": "^9.0.1",
+        "eslint": "^9.11.1",
+        "eslint-config-prettier": "^9.1.0",
+        "eslint-plugin-prettier": "^5.2.1",
+        "eslint-plugin-react": "^7.36.1",
+        "globals": "^15.9.0",
+        "nodemon": "^3.1.5",
+        "prettier": "3.3.3",
+        "typescript-eslint": "^8.7.0"
+    }
 }
