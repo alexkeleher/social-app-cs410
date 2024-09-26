@@ -21,16 +21,21 @@ app.listen(PORT, () => {
 const pool = require('./db');
 
 // Create
-app.post('/data', async (req, res) => {
+app.post('/user', async (req, res) => {
     try {
-        const { info } = req.body;
+        const { FirstName, LastName, UserName, Password, Phone, Address } = req.body;
         const newData = await pool.query(
-            `INSERT INTO data_table (info) VALUES($1) RETURNING *`,
-            [info]
+            `INSERT INTO Users (firstname, lastname, username, password, phone, address) 
+             VALUES($1, $2, $3, $4, $5, $6) RETURNING *`,
+            [FirstName, LastName, UserName, Password, Phone, Address]
         );
-        res.json(newData.rows[0]);
+        res.json({
+            Result : 'Success',
+            InsertedEntry : newData.rows
+        });
     } catch (err) {
         console.error(err.message);
+        res.json(err.message);
     }
 });
 
