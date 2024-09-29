@@ -35,7 +35,13 @@ npm install
 From the _root directory_, run
 
 ```bash
-npm start
+npm run start
+```
+
+To only start the server you can run
+
+```bash
+npm run server
 ```
 
 ## Running the Formatter
