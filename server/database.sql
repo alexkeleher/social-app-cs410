@@ -5,6 +5,7 @@ CREATE TABLE Users (
 	FirstName VARCHAR(50),
 	LastName VARCHAR(50),
 	UserName VARCHAR(50),
+	Email VARCHAR(50) NOT NULL,
 	Password VARCHAR(500),
 	Phone CHAR(10),
 	Address VARCHAR(500)
