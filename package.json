@@ -2,10 +2,11 @@
     "name": "social-app-cs410",
     "version": "1.0.0",
     "description": "Fall 2024 CS411W - Kirby Douglas - Matt Janak - Alex Keleher - Juan Mireles - Jajuan Myers - Armando Toledo",
-    "main": "index.js",
+    "main": "index.ts",
+    "type": "module",
     "scripts": {
         "start": "concurrently \"npm run server\" \"npm run client\"",
-        "server": "nodemon server/index.js",
+        "server": "nodemon --exec tsx server/index.js",
         "client": "npm start --prefix client",
         "test": "echo \"Error: no test specified\" && exit 1",
         "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,json,css,sccs,md}\"",
@@ -22,7 +23,11 @@
     },
     "devDependencies": {
         "@eslint/js": "^9.11.1",
+        "@types/cors": "^2.8.17",
         "@types/eslint__js": "^8.42.3",
+        "@types/express": "^5.0.0",
+        "@types/node": "^22.7.4",
+        "@types/pg": "^8.11.10",
         "concurrently": "^9.0.1",
         "eslint": "^9.11.1",
         "eslint-config-prettier": "^9.1.0",
@@ -31,6 +36,9 @@
         "globals": "^15.9.0",
         "nodemon": "^3.1.5",
         "prettier": "3.3.3",
+        "ts-node": "^10.9.2",
+        "tsx": "^4.19.1",
+        "typescript": "^5.6.2",
         "typescript-eslint": "^8.7.0"
     }
 }

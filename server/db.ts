@@ -4,15 +4,17 @@
 // served while using fewer server resources. This is because each connection in
 // the pool is shared, instead of each connection taking up a separate process on the server.
 
-const { Pool } = require('pg');
-require('dotenv').config();
+import pg from 'pg';
+const { Pool } = pg;
+import dotenv from 'dotenv';
+dotenv.config();
 
 const pool = new Pool({
     user: process.env.DB_USER,
     host: process.env.DB_HOST,
     database: process.env.DB_NAME,
     password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT,
+    port: parseInt(process.env.DB_PORT || "5432", 10),
 });
 
-module.exports = pool;
+export default pool;
