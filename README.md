@@ -45,7 +45,9 @@ npm run server
 ```
 
 ## Running the Formatter
+
 In the root directory, you can run:
+
 ```bash
 npm run format
 ```

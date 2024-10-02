@@ -1,7 +1,7 @@
 {
-  "compilerOptions": {
-    "esModuleInterop": true,
-    "moduleResolution": "node",
-    "target": "es6"
-  }
+    "compilerOptions": {
+        "esModuleInterop": true,
+        "moduleResolution": "node",
+        "target": "es6"
+    }
 }
