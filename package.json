@@ -8,7 +8,7 @@
         "start": "concurrently \"npm run server\" \"npm run client\"",
         "server": "nodemon --exec tsx server/index.js",
         "client": "npm start --prefix client",
-        "test": "echo \"Error: no test specified\" && exit 1",
+        "test": "jest",
         "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,json,css,sccs,md}\"",
         "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --quiet"
     },
@@ -34,6 +34,7 @@
         "eslint-plugin-prettier": "^5.2.1",
         "eslint-plugin-react": "^7.36.1",
         "globals": "^15.9.0",
+        "jest": "^29.7.0",
         "nodemon": "^3.1.5",
         "prettier": "3.3.3",
         "ts-node": "^10.9.2",

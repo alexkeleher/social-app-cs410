@@ -76,20 +76,23 @@ app.get('/data', async (res: Response) => {
 });
 
 // Update
-app.put('/data/:id', async (req: Request<Parameters, unknown, UpdateBody>, res: Response) => {
-    try {
-        const { id } = req.params;
-        const { info } = req.body;
-        await pool.query('UPDATE data_table SET info = $1 WHERE id = $2', [
-            info,
-            id,
-        ]);
-        res.json('Data was updated, nice.');
-    } catch (e) {
-        console.error((e as Error).message);
-        res.status(500).json({ error: (e as Error).message });
+app.put(
+    '/data/:id',
+    async (req: Request<Parameters, unknown, UpdateBody>, res: Response) => {
+        try {
+            const { id } = req.params;
+            const { info } = req.body;
+            await pool.query('UPDATE data_table SET info = $1 WHERE id = $2', [
+                info,
+                id,
+            ]);
+            res.json('Data was updated, nice.');
+        } catch (e) {
+            console.error((e as Error).message);
+            res.status(500).json({ error: (e as Error).message });
+        }
     }
-});
+);
 
 // Delete
 app.delete('/data/:id', async (req: Request<Parameters>, res: Response) => {
