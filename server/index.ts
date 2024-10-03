@@ -14,6 +14,7 @@ interface UserBody {
     Password: string;
     Phone: string;
     Address: string;
+    Email: string;
 }
 
 interface Parameters {
@@ -51,6 +52,44 @@ app.post(
              VALUES($1, $2, $3, $4, $5, $6) RETURNING *`,
                 [FirstName, LastName, UserName, Password, Phone, Address]
             );
+            res.json({
+                Result: 'Success',
+                InsertedEntry: newData.rows,
+            });
+        } catch (e) {
+            console.error((e as Error).message);
+            res.status(500).json({ error: (e as Error).message });
+        }
+    }
+);
+
+// app.post(
+//     // first argument is the path '/path',
+//     // 2nd argument is a function that takes a request, and a response
+// );
+app.post(
+    // first argument is the path
+    '/createAccount',
+
+    // second argument is an anonymous function
+    async (req: Request<unknown, unknown, UserBody>, res: Response) => {
+        // our logic goes here
+
+        // What do we need to do to create an account
+        try {
+            // Take the email from the request
+            // Take the password from the request
+            const { Email, Password } = req.body;
+
+            // Store the email & password
+            // How do we store a new user in the user table?
+            const newData: QueryResult = await pool.query(
+                `INSERT INTO Users (email, password) 
+             VALUES($1, $2) RETURNING *`,
+                [Email, Password]
+            );
+
+            // Send response back to the client
             res.json({
                 Result: 'Success',
                 InsertedEntry: newData.rows,
