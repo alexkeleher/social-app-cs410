@@ -5,6 +5,10 @@ import App from './App';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 import reportWebVitals from './reportWebVitals';
 
+import './styles/main.css'; // Importing global styles
+
+//ReactDOM.render(<App />, document.getElementById('root'));
+
 const root = ReactDOM.createRoot(
     document.getElementById('root') as HTMLElement
 );

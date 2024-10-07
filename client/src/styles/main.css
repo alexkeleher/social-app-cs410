@@ -1,0 +1,90 @@
+.cta-button {
+    background-color: #ff4d4d; /* Inviting red color */
+    color: white;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 12px; /* Rounded corners */
+    font-size: 1.2rem; /* Adjust font size for readability */
+    cursor: pointer;
+    margin: 1rem auto; /* Centers the button with flexbox or block elements */
+    display: block; /* Ensures it behaves like a block element for centering */
+    text-align: center;
+    transition: background-color 0.3s ease; /* Smooth transition for hover effects */
+}
+
+.cta-button:hover {
+    background-color: #ff3333; /* Darker red on hover */
+}
+
+.landing-main,
+.create-group-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh; /* Full height of the viewport */
+    text-align: center;
+}
+
+/* General form container */
+.form-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    max-width: 500px;
+    margin: 2rem auto;
+    background-color: #f9f9f9; /* Light background color */
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); /* Soft shadow */
+    border-radius: 8px; /* Rounded corners */
+}
+
+/* Input fields */
+input[type='text'],
+input[type='email'],
+input[type='password'],
+select {
+    width: 100%;
+    padding: 0.8rem;
+    margin: 1rem 0;
+    border: 1px solid #ccc;
+    border-radius: 6px; /* Rounded corners */
+    font-size: 1rem;
+    box-shadow: inset 0px 1px 3px rgba(0, 0, 0, 0.1); /* Slight inner shadow */
+    transition: border-color 0.3s ease;
+}
+
+/* Input fields on focus */
+input:focus,
+select:focus {
+    outline: none;
+    border-color: #ff4d4d; /* Change border color when active */
+}
+
+/* Labels */
+label {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+/* Button styles */
+.cta-button {
+    background-color: #ff4d4d; /* Red color */
+    color: white;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 12px; /* Rounded corners */
+    font-size: 1.2rem;
+    cursor: pointer;
+    margin-top: 1rem;
+    width: 100%;
+    text-align: center;
+    transition: background-color 0.3s ease;
+}
+
+.cta-button:hover {
+    background-color: #ff3333; /* Darker red on hover */
+}
