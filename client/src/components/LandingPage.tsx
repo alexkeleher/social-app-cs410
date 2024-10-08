@@ -10,6 +10,22 @@ const LandingPage: React.FC<LandingPageProps> = ({ goToCreateGroup }) => {
         <div className="landing-container">
             <header className="landing-header">
                 <h1>GroupEats</h1>
+                <style>{`
+                .landing-container {
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100vh;
+                    text-align: center;
+                }
+                .landing-header, .landing-main, .landing-footer {
+                    width: 100%;
+                }
+                .cta-button {
+                    margin-top: 20px;
+                }
+            `}</style>
             </header>
 
             <main className="landing-main">

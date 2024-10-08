@@ -1,90 +1,168 @@
-.cta-button {
-    background-color: #ff4d4d; /* Inviting red color */
-    color: white;
-    padding: 1rem 2rem;
-    border: none;
-    border-radius: 12px; /* Rounded corners */
-    font-size: 1.2rem; /* Adjust font size for readability */
-    cursor: pointer;
-    margin: 1rem auto; /* Centers the button with flexbox or block elements */
-    display: block; /* Ensures it behaves like a block element for centering */
-    text-align: center;
-    transition: background-color 0.3s ease; /* Smooth transition for hover effects */
+/* Center the entire container */
+.my-groups-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centers items horizontally */
+    justify-content: center; /* Centers items vertically */
+    min-height: 100vh; /* Full viewport height for vertical centering */
+    text-align: center; /* Center text */
+    padding: 20px;
 }
 
-.cta-button:hover {
-    background-color: #ff3333; /* Darker red on hover */
-}
-
-.landing-main,
-.create-group-container {
+/* Style for the group list */
+.group-list {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    height: 100vh; /* Full height of the viewport */
+    margin-bottom: 20px;
+}
+
+/* Style each group card */
+.group-card {
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 15px;
+    width: 300px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Style the preferences card */
+.my-preferences-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    list-style-type: none;
+}
+
+.preference-list {
+    margin-bottom: 20px;
+}
+
+.preference-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Space between buttons */
+}
+
+.preference-link {
+    background-color: red;
+    .preference-link {
+        background-color: red;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 200px;
+        text-align: center;
+    }
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 200px;
     text-align: center;
 }
 
-/* General form container */
+.preference-link:hover {
+    background-color: darkred;
+}
+
+.back-button {
+    background-color: gray;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.back-button:hover {
+    background-color: darkgray;
+}
+
+/* Style the preferences list */
+
+/* Style the buttons */
+.button-container {
+    display: flex;
+    justify-content: center; /* Center the buttons */
+    gap: 10px; /* Space between buttons */
+    margin-bottom: 20px;
+}
+
+.cta-button,
+.back-button {
+    background-color: red;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    width: auto;
+    min-width: 150px;
+}
+
+.cta-button:hover,
+.back-button:hover {
+    background-color: darkred;
+}
+
 .form-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 2rem;
-    max-width: 500px;
-    margin: 2rem auto;
-    background-color: #f9f9f9; /* Light background color */
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); /* Soft shadow */
-    border-radius: 8px; /* Rounded corners */
+    justify-content: center;
+    margin-top: 20px;
 }
 
-/* Input fields */
-input[type='text'],
-input[type='email'],
-input[type='password'],
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+input,
 select {
-    width: 100%;
-    padding: 0.8rem;
-    margin: 1rem 0;
+    padding: 10px;
+    border-radius: 5px;
     border: 1px solid #ccc;
-    border-radius: 6px; /* Rounded corners */
-    font-size: 1rem;
-    box-shadow: inset 0px 1px 3px rgba(0, 0, 0, 0.1); /* Slight inner shadow */
-    transition: border-color 0.3s ease;
-}
-
-/* Input fields on focus */
-input:focus,
-select:focus {
-    outline: none;
-    border-color: #ff4d4d; /* Change border color when active */
-}
-
-/* Labels */
-label {
-    font-size: 1rem;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 0.5rem;
-    display: block;
-}
-
-/* Button styles */
-.cta-button {
-    background-color: #ff4d4d; /* Red color */
-    color: white;
-    padding: 1rem 2rem;
-    border: none;
-    border-radius: 12px; /* Rounded corners */
-    font-size: 1.2rem;
-    cursor: pointer;
-    margin-top: 1rem;
     width: 100%;
+    max-width: 300px;
+}
+.create-button {
+    background-color: red;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
     text-align: center;
+    margin: 10px 0;
+    min-width: 200px; /* Optional: ensure the button has a minimum width */
     transition: background-color 0.3s ease;
 }
 
-.cta-button:hover {
-    background-color: #ff3333; /* Darker red on hover */
+.create-button:hover {
+    background-color: rgb(97, 0, 0); /* Darken button on hover */
+}
+
+/* Ensure all buttons are aligned and centered */
+.create-button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 10px; /* Space between buttons */
+}
+
+.back-button {
+    background-color: gray;
+}
+
+.back-button:hover {
+    background-color: darkgray;
 }

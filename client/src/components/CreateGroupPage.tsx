@@ -49,7 +49,7 @@ const CreateGroupPage: React.FC<CreateGroupPageProps> = ({
                     <option value="schoold">School</option>
                 </select>
 
-                <button className="cta-button" type="submit">
+                <button className="create-button" type="submit">
                     Create Group submit not working
                 </button>
 
@@ -63,7 +63,7 @@ const CreateGroupPage: React.FC<CreateGroupPageProps> = ({
 
                 <button
                     onClick={goToMyGroups} // Use goToMyGroups prop here
-                    className="cta-button"
+                    className="create-button"
                     type="button"
                 >
                     Go to My Groups

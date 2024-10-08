@@ -2,7 +2,12 @@ import React, { useState } from 'react';
 import LandingPage from './components/LandingPage';
 import CreateGroupPage from './components/CreateGroupPage';
 import MyGroups from './components/MyGroups';
+import MyPreferences from './components/MyPreferences';
 import './styles/main.css';
+import PricePreferences from './components/PricePreferences';
+import DistancePreferences from './components/DistancePreferences';
+import DietaryRestrictionsPreferences from './components/DietaryRestrictionsPreferences';
+import CuisinePreferences from './components/CuisinePreferences';
 
 const App = () => {
     const [currentPage, setCurrentPage] = useState('landing');
@@ -18,15 +23,59 @@ const App = () => {
             case 'create-group':
                 return (
                     <CreateGroupPage
-                        goToLandingPage={() => setCurrentPage('landing')} // Pass prop correctly
+                        goToLandingPage={() => setCurrentPage('landing')}
                         goToMyGroups={() => setCurrentPage('my-groups')}
                     />
                 );
             case 'my-groups':
                 return (
                     <MyGroups
-                        goToLanding={() => setCurrentPage('landing')}
                         goToCreateGroup={() => setCurrentPage('create-group')}
+                        goToLanding={() => setCurrentPage('landing')}
+                        goToMyPreferences={() =>
+                            setCurrentPage('my-preferences')
+                        }
+                    />
+                );
+            case 'my-preferences':
+                return (
+                    <MyPreferences
+                        goToLanding={() => setCurrentPage('landing')}
+                        goToCuisine={() =>
+                            setCurrentPage('cuisine-preferences')
+                        }
+                        goToDietaryRestrictions={() =>
+                            setCurrentPage('dietary-restrictions-preferences')
+                        }
+                        goToDistance={() =>
+                            setCurrentPage('distance-preferences')
+                        }
+                        goToPrice={() => setCurrentPage('price-preferences')}
+                    />
+                );
+
+            case 'cuisine-preferences':
+                return (
+                    <CuisinePreferences
+                        goToBack={() => setCurrentPage('my-preferences')}
+                    />
+                );
+            case 'dietary-restrictions-preferences':
+                return (
+                    <DietaryRestrictionsPreferences
+                        goToBack={() => setCurrentPage('my-preferences')}
+                    />
+                );
+            case 'distance-preferences':
+                return (
+                    <DistancePreferences
+                        goToBack={() => setCurrentPage('my-preferences')}
+                    />
+                );
+            case 'price-preferences':
+                return (
+                    <PricePreferences
+                        goToBack={() => setCurrentPage('my-preferences')}
                     />
                 );
             default:
