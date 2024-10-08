@@ -173,3 +173,26 @@ select {
     border-radius: 5px;
     margin-top: 10px;
 }
+
+.cuisine-preferences-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.cuisine-list {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Align items to the left */
+    margin: 20px 0;
+}
+
+.cuisine-item {
+    margin: 20px 0;
+}
+
+.preference-options {
+    display: flex;
+    gap: 20px; /* Space between options */
+}
