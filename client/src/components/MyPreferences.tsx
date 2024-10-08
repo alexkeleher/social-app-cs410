@@ -6,6 +6,7 @@ interface MyPreferencesProps {
     goToDietaryRestrictions: () => void;
     goToDistance: () => void;
     goToPrice: () => void;
+    goToSchedule: () => void;
 }
 
 const MyPreferences: React.FC<MyPreferencesProps> = ({
@@ -14,6 +15,7 @@ const MyPreferences: React.FC<MyPreferencesProps> = ({
     goToDietaryRestrictions,
     goToDistance,
     goToPrice,
+    goToSchedule,
 }) => {
     return (
         <div className="my-groups-container">
@@ -37,6 +39,9 @@ const MyPreferences: React.FC<MyPreferencesProps> = ({
                 </button>
                 <button onClick={goToPrice} className="cta-button">
                     Price
+                </button>
+                <button onClick={goToSchedule} className="cta-button">
+                    Schedule
                 </button>
             </div>
             <button onClick={goToLanding} className="back-button">

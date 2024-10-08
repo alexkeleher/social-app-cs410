@@ -8,6 +8,7 @@ import PricePreferences from './components/PricePreferences';
 import DistancePreferences from './components/DistancePreferences';
 import DietaryRestrictionsPreferences from './components/DietaryRestrictionsPreferences';
 import CuisinePreferences from './components/CuisinePreferences';
+import SchedulingPage from './components/SchedulingPage';
 
 const App = () => {
     const [currentPage, setCurrentPage] = useState('landing');
@@ -51,6 +52,7 @@ const App = () => {
                             setCurrentPage('distance-preferences')
                         }
                         goToPrice={() => setCurrentPage('price-preferences')}
+                        goToSchedule={() => setCurrentPage('scheduling-page')}
                     />
                 );
 
@@ -75,6 +77,12 @@ const App = () => {
             case 'price-preferences':
                 return (
                     <PricePreferences
+                        goToBack={() => setCurrentPage('my-preferences')}
+                    />
+                );
+            case 'scheduling-page':
+                return (
+                    <SchedulingPage
                         goToBack={() => setCurrentPage('my-preferences')}
                     />
                 );

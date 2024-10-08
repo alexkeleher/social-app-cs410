@@ -54,19 +54,19 @@ const CreateGroupPage: React.FC<CreateGroupPageProps> = ({
                 </button>
 
                 <button
-                    onClick={goToLandingPage} // Use goToLandingPage prop here
-                    className="back-button"
-                    type="button"
-                >
-                    Go to Landing Page
-                </button>
-
-                <button
                     onClick={goToMyGroups} // Use goToMyGroups prop here
                     className="create-button"
                     type="button"
                 >
                     Go to My Groups
+                </button>
+
+                <button
+                    onClick={goToLandingPage} // Use goToLandingPage prop here
+                    className="back-button"
+                    type="button"
+                >
+                    Go to Landing Page
                 </button>
             </form>
         </div>

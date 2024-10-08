@@ -166,3 +166,10 @@ select {
 .back-button:hover {
     background-color: darkgray;
 }
+
+.date-picker {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-top: 10px;
+}
