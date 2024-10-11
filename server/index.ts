@@ -144,3 +144,5 @@ app.delete('/data/:id', async (req: Request<Parameters>, res: Response) => {
         res.status(500).json({ error: (e as Error).message });
     }
 });
+
+export default app;
