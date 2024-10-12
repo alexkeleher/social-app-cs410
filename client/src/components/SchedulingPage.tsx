@@ -1,6 +1,6 @@
-import React, { useState } from 'react'; // Import useState from React
+import React, { useState } from 'react';
 import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css'; // Import CSS for DatePicker
+import 'react-datepicker/dist/react-datepicker.css';
 
 interface SchedulingPageProps {
     goToBack: () => void; // Define goToBack as a prop
