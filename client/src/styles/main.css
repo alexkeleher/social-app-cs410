@@ -181,18 +181,148 @@ select {
     text-align: center;
 }
 
-.cuisine-list {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start; /* Align items to the left */
+.cuisine-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 columns */
+    gap: 20px; /* Space between the items */
+    width: 70%; /* Adjust to fit the content */
+    max-width: 900px; /* Optional: Limit the max width */
     margin: 20px 0;
 }
 
 .cuisine-item {
+    position: relative; /* Needed for the overlay */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    transition:
+        background-color 0.3s,
+        color 0.3s,
+        opacity 0.3s;
+}
+
+.cuisine-item img {
+    width: 270px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 20px;
+}
+
+.cuisine-item p {
+    margin-top: 10px;
+    font-size: 16px;
+}
+
+.cuisine-item.yes {
+    background-color: #00861f; /* Light green for "Yes" */
+    color: white;
+}
+
+.cuisine-item.no {
+    background-color: #be0010d3; /* Light red for "No" */
+    color: white;
+}
+
+.cuisine-item.no::after {
+    content: 'X'; /* The 'X' symbol */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: start + 10px;
+    font-size: 10rem; /* Large 'X' */
+    color: white;
+    opacity: 0.5; /* Semi-transparent */
+    font-weight: bold;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay */
+    border-radius: 20px; /* Ensures it follows the image's border radius */
+    pointer-events: none; /* Prevents the overlay from interfering with clicks */
+}
+
+.cuisine-item.off {
+    background-color: #f9f9f9; /* Default background for "Off" */
+}
+
+.cuisine-item:hover {
+    opacity: 0.8; /* Make the item more translucent on hover */
+}
+
+.scheduling-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.scheduling-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr); /* 7 columns for each day */
+    gap: 10px; /* Space between the items */
     margin: 20px 0;
 }
 
-.preference-options {
-    display: flex;
-    gap: 20px; /* Space between options */
+.days-row {
+    display: contents; /* Makes the days act like grid items */
+}
+
+.day-item {
+    font-weight: bold;
+    text-align: center; /* Center align the day names */
+}
+
+.time-row {
+    display: contents; /* Makes the time rows act like grid items */
+}
+
+.slot {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    position: relative; /* For absolute positioning of the 'X' */
+}
+
+.slot.off {
+    background-color: #f9f9f9; /* Default background for "Off" */
+}
+
+.slot.yes {
+    background-color: #00861f; /* Light green for "Yes" */
+    color: white;
+}
+
+.slot.no {
+    background-color: #be0010; /* Light red for "No" */
+    color: white;
+}
+
+.preference-indicator {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 20px; /* Adjust as needed */
+    color: white; /* Color for the 'X' */
+}
+
+.back-button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: red;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.back-button:hover {
+    background-color: darkred;
 }
