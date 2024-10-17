@@ -3,7 +3,6 @@
     "version": "1.0.0",
     "description": "Fall 2024 CS411W - Kirby Douglas - Matt Janak - Alex Keleher - Juan Mireles - Jajuan Myers - Armando Toledo",
     "main": "index.ts",
-    "type": "module",
     "scripts": {
         "start": "concurrently \"npm run server\" \"npm run client\"",
         "server": "nodemon --exec tsx server/index.js",
