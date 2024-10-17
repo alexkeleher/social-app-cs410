@@ -3,13 +3,15 @@ import React from 'react';
 interface MyGroupsProps {
     goToCreateGroup: () => void;
     goToLanding: () => void;
-    goToMyPreferences: () => void;
+    // goToMyPreferences: () => void;
+    goToAllPreferences: () => void;
 }
 
 const MyGroups: React.FC<MyGroupsProps> = ({
     goToCreateGroup,
     goToLanding,
-    goToMyPreferences,
+    // goToMyPreferences,
+    goToAllPreferences,
 }) => {
     return (
         <div className="my-groups-container">
@@ -38,7 +40,7 @@ const MyGroups: React.FC<MyGroupsProps> = ({
                 </button>
 
                 <button
-                    onClick={goToMyPreferences}
+                    onClick={goToAllPreferences}
                     className="cta-button"
                     type="button"
                 >

@@ -1,9 +1,5 @@
 import React, { useState } from 'react';
 
-interface CuisinePreferencesProps {
-    goToBack: () => void;
-}
-
 // Define the possible states
 enum PreferenceState {
     OFF = 'Off',
@@ -69,9 +65,7 @@ const cuisineOptions = [
     // Add more cuisines as needed
 ];
 
-const CuisinePreferences: React.FC<CuisinePreferencesProps> = ({
-    goToBack,
-}) => {
+const CuisinePreferences: React.FC = () => {
     // State to hold preferences for each cuisine type
     const [preferences, setPreferences] = useState<{
         [key: string]: PreferenceState;
@@ -124,9 +118,6 @@ const CuisinePreferences: React.FC<CuisinePreferencesProps> = ({
                     </div>
                 ))}
             </div>
-            <button onClick={goToBack} className="back-button">
-                Back to Preferences
-            </button>
         </div>
     );
 };

@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import LandingPage from './components/LandingPage';
 import CreateGroupPage from './components/CreateGroupPage';
 import MyGroups from './components/MyGroups';
-import MyPreferences from './components/MyPreferences';
+
 import './styles/main.css';
-import PricePreferences from './components/PricePreferences';
 import DistancePreferences from './components/DistancePreferences';
 import DietaryRestrictionsPreferences from './components/DietaryRestrictionsPreferences';
 import CuisinePreferences from './components/CuisinePreferences';
 import SchedulingPage from './components/SchedulingPage';
+import AllPreferencesPage from './components/AllPreferencesPage';
 
 const App = () => {
     const [currentPage, setCurrentPage] = useState('landing');
@@ -19,6 +19,10 @@ const App = () => {
                 return (
                     <LandingPage
                         goToCreateGroup={() => setCurrentPage('create-group')}
+                        goToMyGroups={() => setCurrentPage('my-groups')}
+                        goToAllPreferences={() =>
+                            setCurrentPage('all-preferences')
+                        }
                     />
                 );
             case 'create-group':
@@ -33,63 +37,41 @@ const App = () => {
                     <MyGroups
                         goToCreateGroup={() => setCurrentPage('create-group')}
                         goToLanding={() => setCurrentPage('landing')}
-                        goToMyPreferences={() =>
-                            setCurrentPage('my-preferences')
+                        goToAllPreferences={() =>
+                            setCurrentPage('all-preferences')
                         }
-                    />
-                );
-            case 'my-preferences':
-                return (
-                    <MyPreferences
-                        goToLanding={() => setCurrentPage('landing')}
-                        goToCuisine={() =>
-                            setCurrentPage('cuisine-preferences')
-                        }
-                        goToDietaryRestrictions={() =>
-                            setCurrentPage('dietary-restrictions-preferences')
-                        }
-                        goToDistance={() =>
-                            setCurrentPage('distance-preferences')
-                        }
-                        goToPrice={() => setCurrentPage('price-preferences')}
-                        goToSchedule={() => setCurrentPage('scheduling-page')}
                     />
                 );
 
             case 'cuisine-preferences':
-                return (
-                    <CuisinePreferences
-                        goToBack={() => setCurrentPage('my-preferences')}
-                    />
-                );
+                return <CuisinePreferences />;
             case 'dietary-restrictions-preferences':
-                return (
-                    <DietaryRestrictionsPreferences
-                        goToBack={() => setCurrentPage('my-preferences')}
-                    />
-                );
+                return <DietaryRestrictionsPreferences />;
             case 'distance-preferences':
-                return (
-                    <DistancePreferences
-                        goToBack={() => setCurrentPage('my-preferences')}
-                    />
-                );
-            case 'price-preferences':
-                return (
-                    <PricePreferences
-                        goToBack={() => setCurrentPage('my-preferences')}
-                    />
-                );
+                return <DistancePreferences />;
+
             case 'scheduling-page':
                 return (
                     <SchedulingPage
-                        goToBack={() => setCurrentPage('my-preferences')}
+                    // goToBack={() => setCurrentPage('my-preferences')}
+                    />
+                );
+            case 'all-preferences':
+                return (
+                    <AllPreferencesPage
+                        goToLanding={() => setCurrentPage('landing')}
+                        goToMyGroups={() => setCurrentPage('my-groups')}
+                        goToCreateGroup={() => setCurrentPage('create-group')}
                     />
                 );
             default:
                 return (
                     <LandingPage
                         goToCreateGroup={() => setCurrentPage('create-group')}
+                        goToAllPreferences={() =>
+                            setCurrentPage('all-preferences')
+                        }
+                        goToMyGroups={() => setCurrentPage('my-groups')}
                     />
                 );
         }

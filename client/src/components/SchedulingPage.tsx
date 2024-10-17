@@ -29,7 +29,7 @@ enum PreferenceState {
     NO = 'No',
 }
 
-const SchedulingPage: React.FC<{ goToBack: () => void }> = ({ goToBack }) => {
+const SchedulingPage: React.FC = () => {
     // State to hold preferences for each day and time slot
     const [preferences, setPreferences] = useState<{
         [key: string]: PreferenceState;
@@ -88,9 +88,6 @@ const SchedulingPage: React.FC<{ goToBack: () => void }> = ({ goToBack }) => {
                     </div>
                 ))}
             </div>
-            <button onClick={goToBack} className="back-button">
-                Back to Preferences
-            </button>
         </div>
     );
 };

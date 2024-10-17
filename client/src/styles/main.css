@@ -313,16 +313,107 @@ select {
     color: white; /* Color for the 'X' */
 }
 
-.back-button {
+.button-group {
+    display: flex;
+    justify-content: center; /* Center the buttons horizontally */
+    align-items: center; /* Vertically align buttons if needed */
+    gap: 10px; /* Space between the buttons */
     margin-top: 20px;
+}
+
+.back-button {
     padding: 10px 20px;
     background-color: red;
     color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    transition: background-color 0.3s;
 }
 
 .back-button:hover {
     background-color: darkred;
+}
+
+.confirm-button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.confirm-button {
+    background-color: #008cba;
+    color: white;
+}
+
+.confirm-button:hover {
+    background-color: #005f7b;
+}
+
+.preferences-page-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.preference-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin-bottom: 20px;
+}
+
+/* Dropdown Toggle Styling */
+.dropdown-toggle {
+    background-color: #b32222; /* More vibrant red */
+    color: white;
+    border: none;
+    padding: 12px 20px; /* Increased padding for a more inviting look */
+    font-size: 16px; /* Slightly larger font */
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 10px; /* Smooth, rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    transition:
+        background-color 0.3s,
+        transform 0.3s,
+        box-shadow 0.3s; /* Smooth transition */
+    width: 300px; /* Make the button full-width */
+    max-width: 300px; /* Optional: limit the max width */
+    margin: 10px auto; /* Center the button with auto margins */
+}
+
+/* Hover and Focus Effects */
+.dropdown-toggle:hover {
+    background-color: #ff3333; /* Darker red on hover */
+    transform: translateY(-2px); /* Lift the button slightly */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Add depth on hover */
+}
+
+.dropdown-toggle:active {
+    background-color: #cc0000; /* Even darker red on active */
+    transform: scale(0.98); /* Slightly shrink the button on click */
+}
+
+/* Content Area for Preferences */
+.preference-content {
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 10px; /* Make the content area match the button */
+    background-color: #f0f8ff; /* Light background for contrast */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Match the shadow */
+    transition: max-height 0.3s ease-in-out; /* Smoothly expand/collapse content */
+}
+
+/* Center the heading */
+h1 {
+    text-align: center; /* Center the text */
+    margin-bottom: 20px; /* Add some space below the heading */
+    font-size: 2rem; /* Optional: Adjust the size if needed */
+    font-weight: bold; /* Make the heading bold */
+    color: #333; /* Optional: Adjust the color */
 }

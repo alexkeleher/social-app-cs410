@@ -3,9 +3,15 @@ import React from 'react';
 
 interface LandingPageProps {
     goToCreateGroup: () => void;
+    goToAllPreferences: () => void;
+    goToMyGroups: () => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ goToCreateGroup }) => {
+const LandingPage: React.FC<LandingPageProps> = ({
+    goToCreateGroup,
+    goToAllPreferences,
+    goToMyGroups,
+}) => {
     return (
         <div className="landing-container">
             <header className="landing-header">
@@ -18,12 +24,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ goToCreateGroup }) => {
                     align-items: center;
                     height: 100vh;
                     text-align: center;
+
                 }
                 .landing-header, .landing-main, .landing-footer {
                     width: 100%;
+
                 }
                 .cta-button {
                     margin-top: 20px;
+                    padding: 10px 20px;
+                    margin-right: 10px;
+                    margin-left: 5px;
                 }
             `}</style>
             </header>
@@ -35,7 +46,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ goToCreateGroup }) => {
                     eat, taking into account everyone’s preferences.
                 </p>
                 <button className="cta-button" onClick={goToCreateGroup}>
-                    Get Started
+                    Create Group
+                </button>
+                <button className="cta-button" onClick={goToAllPreferences}>
+                    My Preferences
+                </button>
+                <button className="cta-button" onClick={goToMyGroups}>
+                    My Groups
                 </button>
             </main>
 
