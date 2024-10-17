@@ -17,6 +17,10 @@ interface UserBody {
     Email: string;
 }
 
+interface GroupBody {
+    Name: string;
+}
+
 interface Parameters {
     id: string;
 }
@@ -87,6 +91,36 @@ app.post(
                 `INSERT INTO Users (email, password) 
              VALUES($1, $2) RETURNING *`,
                 [Email, Password]
+            );
+
+            // Send response back to the client
+            res.json({
+                Result: 'Success',
+                InsertedEntry: newData.rows,
+            });
+        } catch (e) {
+            console.error((e as Error).message);
+            res.status(500).json({ error: (e as Error).message });
+        }
+    }
+);
+
+// create a group
+app.post(
+    // first argument is the path
+    '/createGroup',
+
+    // second argument is an anonymous function
+    async (req: Request<unknown, unknown, GroupBody>, res: Response) => {
+        try {
+            // Take the group name from the request
+            const { Name } = req.body;
+
+            // Store the groupname
+            const newData: QueryResult = await pool.query(
+                `INSERT INTO Groups (Name, DateCreated) 
+             VALUES($1, $2) RETURNING *`,
+                [Name, new Date()]
             );
 
             // Send response back to the client
