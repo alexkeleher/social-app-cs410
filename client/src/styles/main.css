@@ -179,6 +179,7 @@ select {
     flex-direction: column;
     align-items: center;
     text-align: center;
+    width: 1200px;
 }
 
 .cuisine-grid {
@@ -186,7 +187,7 @@ select {
     grid-template-columns: repeat(3, 1fr); /* 3 columns */
     gap: 20px; /* Space between the items */
     width: 70%; /* Adjust to fit the content */
-    max-width: 900px; /* Optional: Limit the max width */
+    max-width: 1200px; /* Optional: Limit the max width */
     margin: 20px 0;
 }
 
