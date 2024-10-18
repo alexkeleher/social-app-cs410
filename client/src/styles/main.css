@@ -407,7 +407,13 @@ select {
     border-radius: 10px; /* Make the content area match the button */
     background-color: #f0f8ff; /* Light background for contrast */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Match the shadow */
-    transition: max-height 0.3s ease-in-out; /* Smoothly expand/collapse content */
+    transition: max-height 1s ease-in-out; /* Smoothly expand/collapse content */
+    overflow: hidden; /* Hide content when collapsed */
+}
+
+.preference-content.open {
+    max-height: 500px; /* Set a maximum height for the content */
+    opacity: 1; /* Make the content fully visible */
 }
 
 /* Center the heading */

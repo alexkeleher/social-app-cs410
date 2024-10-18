@@ -57,13 +57,45 @@ const SchedulingPage: React.FC = () => {
         });
     };
 
+    // Function to handle selecting or cycling an entire day through YES, NO, OFF
+    const handleDayClick = (day: string) => {
+        // Check the state of the first time slot for the day to determine the current state
+        const firstTimeKey = `${day}-${timeSlots[0]}`;
+        const currentState = preferences[firstTimeKey] || PreferenceState.OFF;
+
+        let nextState: PreferenceState;
+
+        // Cycle through YES -> NO -> OFF
+        if (currentState === PreferenceState.OFF) {
+            nextState = PreferenceState.YES;
+        } else if (currentState === PreferenceState.YES) {
+            nextState = PreferenceState.NO;
+        } else {
+            nextState = PreferenceState.OFF;
+        }
+
+        // Update all time slots for the selected day with the next state
+        setPreferences((prev) => {
+            const updatedPreferences = { ...prev };
+            timeSlots.forEach((time) => {
+                const key = `${day}-${time}`;
+                updatedPreferences[key] = nextState;
+            });
+            return updatedPreferences;
+        });
+    };
+
     return (
         <div className="scheduling-container">
             <h1>Schedule Your Appointment</h1>
             <div className="scheduling-grid">
                 <div className="days-row">
                     {daysOfWeek.map((day) => (
-                        <div key={day} className="day-item">
+                        <div
+                            key={day}
+                            className="day-item"
+                            onClick={() => handleDayClick(day)} // Clickable day to cycle through YES, NO, OFF
+                        >
                             {day}
                         </div>
                     ))}
