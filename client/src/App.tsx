@@ -10,8 +10,8 @@ import CuisinePreferences from './components/CuisinePreferences';
 import SchedulingPage from './components/SchedulingPage';
 import AllPreferencesPage from './components/AllPreferencesPage';
 
-import Login from './components/login'; 
-import Register from './components/registerpage'; 
+import Login from './components/login';
+import Register from './components/registerpage';
 
 const App = () => {
     const [currentPage, setCurrentPage] = useState('landing');
@@ -26,6 +26,7 @@ const App = () => {
                         goToAllPreferences={() =>
                             setCurrentPage('all-preferences')
                         }
+                        goToLogin={() => setCurrentPage('login')}
                     />
                 );
             case 'create-group':
@@ -67,9 +68,9 @@ const App = () => {
                         goToCreateGroup={() => setCurrentPage('create-group')}
                     />
                 );
-                   case 'login': 
+            case 'login':
                 return <Login />;
-            case 'register': 
+            case 'register':
                 return <Register />;
             default:
                 return (
@@ -79,6 +80,7 @@ const App = () => {
                             setCurrentPage('all-preferences')
                         }
                         goToMyGroups={() => setCurrentPage('my-groups')}
+                        goToLogin={() => setCurrentPage('login')}
                     />
                 );
         }

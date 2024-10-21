@@ -5,12 +5,14 @@ interface LandingPageProps {
     goToCreateGroup: () => void;
     goToAllPreferences: () => void;
     goToMyGroups: () => void;
+    goToLogin: () => void;
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({
     goToCreateGroup,
     goToAllPreferences,
     goToMyGroups,
+    goToLogin,
 }) => {
     return (
         <div className="landing-container">
@@ -53,6 +55,9 @@ const LandingPage: React.FC<LandingPageProps> = ({
                 </button>
                 <button className="cta-button" onClick={goToMyGroups}>
                     My Groups
+                </button>
+                <button className="cta-button" onClick={goToLogin}>
+                    Login
                 </button>
             </main>
 
