@@ -10,7 +10,7 @@ import {
   import { useState } from "react";
   import { Link, useNavigate } from "react-router-dom";
   import logo from './Screenshot from 2024-10-07 14-11-21.png'; 
-  
+  import React from 'react';
   const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
