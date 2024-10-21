@@ -8,11 +8,11 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { LockOutlined } from "@mui/icons-material";
+// import { LockOutlined } from "@mui/icons-material";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import logo from './Screenshot from 2024-10-07 14-11-21.png'; 
-
+import React from 'react';
 const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
