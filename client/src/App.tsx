@@ -10,6 +10,9 @@ import CuisinePreferences from './components/CuisinePreferences';
 import SchedulingPage from './components/SchedulingPage';
 import AllPreferencesPage from './components/AllPreferencesPage';
 
+import Login from './components/login'; 
+import Register from './components/registerpage'; 
+
 const App = () => {
     const [currentPage, setCurrentPage] = useState('landing');
 
@@ -64,6 +67,10 @@ const App = () => {
                         goToCreateGroup={() => setCurrentPage('create-group')}
                     />
                 );
+                   case 'login': 
+                return <Login />;
+            case 'register': 
+                return <Register />;
             default:
                 return (
                     <LandingPage
