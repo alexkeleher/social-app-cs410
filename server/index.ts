@@ -135,11 +135,11 @@ app.post(
     }
 );
 
-// Read
-app.get('/data', async (res: Response) => {
+// GET Users table
+app.get('/users', async (req: Request, res: Response) => {
     try {
         const allData: QueryResult = await pool.query(
-            'SELECT * FROM data_table'
+            'SELECT * FROM users'
         );
         res.json(allData.rows);
     } catch (e) {
