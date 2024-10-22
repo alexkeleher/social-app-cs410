@@ -1,0 +1,10 @@
+{
+  "entryPoints": ["./server", "./client/src"],
+  "entryPointStrategy": "expand",
+  "out": "docs",
+  "name": "GroupEats",
+  "includeVersion": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "hideGenerator": true,
+}
