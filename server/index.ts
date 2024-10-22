@@ -11,10 +11,10 @@ interface UserBody {
     FirstName: string;
     LastName: string;
     UserName: string;
+    Email: string;
     Password: string;
     Phone: string;
     Address: string;
-    Email: string;
 }
 
 interface GroupBody {
@@ -44,17 +44,35 @@ app.listen(PORT, () => {
 });
 
 /*-- CRUD Operations --*/
-// Create
+
+/* USERS */
+app.get('/users', async (req: Request, res: Response) => {
+    try {
+        const allData: QueryResult = await pool.query('SELECT * FROM users');
+        res.json(allData.rows);
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
 app.post(
-    '/user',
+    '/users',
     async (req: Request<unknown, unknown, UserBody>, res: Response) => {
         try {
-            const { FirstName, LastName, UserName, Password, Phone, Address } =
-                req.body;
+            const {
+                FirstName,
+                LastName,
+                UserName,
+                Email,
+                Password,
+                Phone,
+                Address,
+            } = req.body;
             const newData: QueryResult = await pool.query(
-                `INSERT INTO Users (firstname, lastname, username, password, phone, address) 
-             VALUES($1, $2, $3, $4, $5, $6) RETURNING *`,
-                [FirstName, LastName, UserName, Password, Phone, Address]
+                `INSERT INTO Users (firstname, lastname, username, email, password, phone, address) 
+             VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+                [FirstName, LastName, UserName, Email, Password, Phone, Address]
             );
             res.json({
                 Result: 'Success',
@@ -67,48 +85,20 @@ app.post(
     }
 );
 
-// app.post(
-//     // first argument is the path '/path',
-//     // 2nd argument is a function that takes a request, and a response
-// );
-app.post(
-    // first argument is the path
-    '/createAccount',
-
-    // second argument is an anonymous function
-    async (req: Request<unknown, unknown, UserBody>, res: Response) => {
-        // our logic goes here
-
-        // What do we need to do to create an account
-        try {
-            // Take the email from the request
-            // Take the password from the request
-            const { Email, Password } = req.body;
-
-            // Store the email & password
-            // How do we store a new user in the user table?
-            const newData: QueryResult = await pool.query(
-                `INSERT INTO Users (email, password) 
-             VALUES($1, $2) RETURNING *`,
-                [Email, Password]
-            );
-
-            // Send response back to the client
-            res.json({
-                Result: 'Success',
-                InsertedEntry: newData.rows,
-            });
-        } catch (e) {
-            console.error((e as Error).message);
-            res.status(500).json({ error: (e as Error).message });
-        }
+/* GROUPS */
+app.get('/groups', async (req: Request, res: Response) => {
+    try {
+        const allData: QueryResult = await pool.query('SELECT * FROM groups');
+        res.json(allData.rows);
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
     }
-);
+});
 
-// create a group
 app.post(
     // first argument is the path
-    '/createGroup',
+    '/groups',
 
     // second argument is an anonymous function
     async (req: Request<unknown, unknown, GroupBody>, res: Response) => {
@@ -135,11 +125,10 @@ app.post(
     }
 );
 
-// GET Users table
-app.get('/users', async (req: Request, res: Response) => {
+app.get('/restaurant', async (req: Request, res: Response) => {
     try {
         const allData: QueryResult = await pool.query(
-            'SELECT * FROM users'
+            'SELECT * FROM restaurant'
         );
         res.json(allData.rows);
     } catch (e) {
@@ -148,7 +137,78 @@ app.get('/users', async (req: Request, res: Response) => {
     }
 });
 
-// Update
+app.get('/restauranthours', async (req: Request, res: Response) => {
+    try {
+        const allData: QueryResult = await pool.query(
+            'SELECT * FROM restauranthours'
+        );
+        res.json(allData.rows);
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
+app.get('/restauranttype', async (req: Request, res: Response) => {
+    try {
+        const allData: QueryResult = await pool.query(
+            'SELECT * FROM restauranttype'
+        );
+        res.json(allData.rows);
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
+app.get('/selection', async (req: Request, res: Response) => {
+    try {
+        const allData: QueryResult = await pool.query(
+            'SELECT * FROM selection'
+        );
+        res.json(allData.rows);
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
+app.get('/usergroupxref', async (req: Request, res: Response) => {
+    try {
+        const allData: QueryResult = await pool.query(
+            'SELECT * FROM usergroupxref'
+        );
+        res.json(allData.rows);
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
+app.get('/userhours', async (req: Request, res: Response) => {
+    try {
+        const allData: QueryResult = await pool.query(
+            'SELECT * FROM userhours'
+        );
+        res.json(allData.rows);
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
+app.get('/userrestauranttypexref', async (req: Request, res: Response) => {
+    try {
+        const allData: QueryResult = await pool.query(
+            'SELECT * FROM userrestauranttypexref'
+        );
+        res.json(allData.rows);
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
 app.put(
     '/data/:id',
     async (req: Request<Parameters, unknown, UpdateBody>, res: Response) => {
