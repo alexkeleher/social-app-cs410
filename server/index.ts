@@ -38,11 +38,6 @@ app.get('/', (req: Request, res: Response) => {
     res.send('This is Express working');
 });
 
-// Start the server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
-
 /*-- CRUD Operations --*/
 
 /* USERS */
@@ -209,25 +204,7 @@ app.get('/userrestauranttypexref', async (req: Request, res: Response) => {
     }
 });
 
-app.put(
-    '/data/:id',
-    async (req: Request<Parameters, unknown, UpdateBody>, res: Response) => {
-        try {
-            const { id } = req.params;
-            const { info } = req.body;
-            await pool.query('UPDATE data_table SET info = $1 WHERE id = $2', [
-                info,
-                id,
-            ]);
-            res.json('Data was updated, nice.');
-        } catch (e) {
-            console.error((e as Error).message);
-            res.status(500).json({ error: (e as Error).message });
-        }
-    }
-);
 
-// Delete
 app.delete('/data/:id', async (req: Request<Parameters>, res: Response) => {
     try {
         const { id } = req.params;
@@ -239,4 +216,8 @@ app.delete('/data/:id', async (req: Request<Parameters>, res: Response) => {
     }
 });
 
-export default app;
+const server = app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
+
+export { app, server };
