@@ -284,26 +284,34 @@ select {
     display: contents; /* Makes the time rows act like grid items */
 }
 
+/* General slot style to make it button-like */
 .slot {
-    border: 1px solid #ccc;
-    padding: 10px;
-    text-align: center;
-    cursor: pointer;
-    position: relative; /* For absolute positioning of the 'X' */
+    cursor: pointer; /* Makes the cursor a pointer (like a button) */
+    user-select: none; /* Prevents text from being highlighted */
+    padding: 10px; /* Add some padding to the cells */
+    text-align: center; /* Center text within the cell */
+    border: 1px solid #ccc; /* Add a border to make it look button-like */
+    transition: background-color 0.3s ease; /* Smooth transition for color changes */
 }
 
+/* Style for different preference states */
 .slot.off {
-    background-color: #f9f9f9; /* Default background for "Off" */
+    background-color: #f8f8f8; /* Default (Off) state */
 }
 
 .slot.yes {
-    background-color: #00861f; /* Light green for "Yes" */
+    background-color: #4caf50; /* Green for YES state */
     color: white;
 }
 
 .slot.no {
-    background-color: #be0010; /* Light red for "No" */
+    background-color: #f44336; /* Red for NO state */
     color: white;
+}
+
+/* Optional hover effect for better button feel */
+.slot:hover {
+    opacity: 0.9;
 }
 
 .preference-indicator {

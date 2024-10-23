@@ -57,29 +57,19 @@ const SchedulingPage: React.FC = () => {
         });
     };
 
-    // Function to handle selecting or cycling an entire day through YES, NO, OFF
+    // Function to handle selecting or deselecting an entire day
     const handleDayClick = (day: string) => {
-        // Check the state of the first time slot for the day to determine the current state
-        const firstTimeKey = `${day}-${timeSlots[0]}`;
-        const currentState = preferences[firstTimeKey] || PreferenceState.OFF;
+        const isAnyYes = timeSlots.some(
+            (time) => preferences[`${day}-${time}`] === PreferenceState.YES
+        );
 
-        let nextState: PreferenceState;
+        const newState = isAnyYes ? PreferenceState.OFF : PreferenceState.YES;
 
-        // Cycle through YES -> NO -> OFF
-        if (currentState === PreferenceState.OFF) {
-            nextState = PreferenceState.YES;
-        } else if (currentState === PreferenceState.YES) {
-            nextState = PreferenceState.NO;
-        } else {
-            nextState = PreferenceState.OFF;
-        }
-
-        // Update all time slots for the selected day with the next state
         setPreferences((prev) => {
             const updatedPreferences = { ...prev };
             timeSlots.forEach((time) => {
                 const key = `${day}-${time}`;
-                updatedPreferences[key] = nextState;
+                updatedPreferences[key] = newState;
             });
             return updatedPreferences;
         });
@@ -94,7 +84,7 @@ const SchedulingPage: React.FC = () => {
                         <div
                             key={day}
                             className="day-item"
-                            onClick={() => handleDayClick(day)} // Clickable day to cycle through YES, NO, OFF
+                            onClick={() => handleDayClick(day)} // Clickable day to select/deselect all
                         >
                             {day}
                         </div>
