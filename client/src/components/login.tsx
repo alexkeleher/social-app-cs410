@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-//import logo from './Screenshot from 2024-10-07 14-11-21.png';
+import logo from './Screenshot from 2024-10-07 14-11-21.png';
 import React from 'react';
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -40,21 +40,17 @@ const Login = () => {
                     width: '100%',
                 }}
             >
-                {/* <img
-            src={logo}
-            alt="Group Eats Logo"
-            style={{ width: "30%", height: "30%", marginBottom: '20px' }}
-          /> */}
-
-                <img
-                    src={`${process.env.PUBLIC_URL}/Screenshot from 2024-10-07 14-11-21.png`}
-                    alt="Group Eats Logo"
-                    style={{
-                        width: '30%',
-                        height: '30%',
-                        marginBottom: '20px',
-                    }}
-                />
+                {
+                    <img
+                        src={logo}
+                        alt="Group Eats Logo"
+                        style={{
+                            width: '30%',
+                            height: '30%',
+                            marginBottom: '20px',
+                        }}
+                    />
+                }
 
                 <Typography
                     variant="h5"
