@@ -1,18 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-interface MyGroupsProps {
-    goToCreateGroup: () => void;
-    goToLanding: () => void;
-    // goToMyPreferences: () => void;
-    goToAllPreferences: () => void;
-}
+const MyGroups: React.FC = () => {
+    const navigate = useNavigate(); // useNavigate hook for navigation
 
-const MyGroups: React.FC<MyGroupsProps> = ({
-    goToCreateGroup,
-    goToLanding,
-    // goToMyPreferences,
-    goToAllPreferences,
-}) => {
     return (
         <div className="my-groups-container">
             <h1>My Groups</h1>
@@ -32,7 +23,7 @@ const MyGroups: React.FC<MyGroupsProps> = ({
             {/* Flex container for the buttons */}
             <div className="button-container">
                 <button
-                    onClick={goToCreateGroup}
+                    onClick={() => navigate('/create-group')} // Navigate to Create Group
                     className="cta-button"
                     type="button"
                 >
@@ -40,7 +31,7 @@ const MyGroups: React.FC<MyGroupsProps> = ({
                 </button>
 
                 <button
-                    onClick={goToAllPreferences}
+                    onClick={() => navigate('/preferences')} // Navigate to Preferences
                     className="cta-button"
                     type="button"
                 >
@@ -48,7 +39,7 @@ const MyGroups: React.FC<MyGroupsProps> = ({
                 </button>
             </div>
 
-            <button onClick={goToLanding} className="back-button">
+            <button onClick={() => navigate('/')} className="back-button">
                 Back to Landing Page
             </button>
         </div>

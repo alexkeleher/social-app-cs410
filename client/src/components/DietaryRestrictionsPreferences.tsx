@@ -10,7 +10,7 @@ enum PreferenceState {
 const images = {
     glutenFree:
         'https://t3.ftcdn.net/jpg/05/89/81/70/360_F_589817083_iq2jX8gYocWYhe0gtdL1mPNJzN3C3KkM.jpg',
-    vegan: 'https://www.barry-callebaut.com/sites/default/files/styles/paragraph_text_and_image_left_right/public/2020-01/CAL%20icon%20VEGAN%20rgb.jpg?itok=8LEg47RA',
+    vegan: 'https://seeklogo.com/images/V/vegan-logo-ACE43D0D9E-seeklogo.com.png',
     vegetarian:
         'https://t3.ftcdn.net/jpg/05/57/22/82/360_F_557228264_6zTpe9TNaRi3z1Qw3wt9mfYkBygX1F7u.jpg',
     nutFree:

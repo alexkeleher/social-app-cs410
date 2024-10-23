@@ -1,19 +1,7 @@
 import React from 'react';
-//import 'styles/main.css';
+import { Link } from 'react-router-dom';
 
-interface LandingPageProps {
-    goToCreateGroup: () => void;
-    goToAllPreferences: () => void;
-    goToMyGroups: () => void;
-    goToLogin: () => void;
-}
-
-const LandingPage: React.FC<LandingPageProps> = ({
-    goToCreateGroup,
-    goToAllPreferences,
-    goToMyGroups,
-    goToLogin,
-}) => {
+const LandingPage: React.FC = () => {
     return (
         <div className="landing-container">
             <header className="landing-header">
@@ -26,11 +14,9 @@ const LandingPage: React.FC<LandingPageProps> = ({
                     align-items: center;
                     height: 100vh;
                     text-align: center;
-
                 }
                 .landing-header, .landing-main, .landing-footer {
                     width: 100%;
-
                 }
                 .cta-button {
                     margin-top: 20px;
@@ -47,18 +33,18 @@ const LandingPage: React.FC<LandingPageProps> = ({
                     GroupEats helps your group easily find the best places to
                     eat, taking into account everyone’s preferences.
                 </p>
-                <button className="cta-button" onClick={goToCreateGroup}>
-                    Create Group
-                </button>
-                <button className="cta-button" onClick={goToAllPreferences}>
-                    My Preferences
-                </button>
-                <button className="cta-button" onClick={goToMyGroups}>
-                    My Groups
-                </button>
-                <button className="cta-button" onClick={goToLogin}>
-                    Login
-                </button>
+                <Link to="/create-group" className="cta-button">
+                    <button className="cta-button">Create Group</button>
+                </Link>
+                <Link to="/all-preferences" className="cta-button">
+                    <button className="cta-button">My Preferences</button>
+                </Link>
+                <Link to="/my-groups" className="cta-button">
+                    <button className="cta-button">My Groups</button>
+                </Link>
+                <Link to="/login" className="cta-button">
+                    <button className="cta-button">Login</button>
+                </Link>
             </main>
 
             <footer className="landing-footer">

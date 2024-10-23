@@ -1,22 +1,16 @@
 import React from 'react';
-//import 'styles/main.css'; // Ensure the CSS is imported
+import { useNavigate } from 'react-router-dom';
 
-// Define the props interface
-interface CreateGroupPageProps {
-    goToLandingPage: () => void; // Function prop for navigation
-    goToMyGroups: () => void; // Function prop for navigation
-}
-
-const CreateGroupPage: React.FC<CreateGroupPageProps> = ({
-    goToLandingPage,
-    goToMyGroups,
-}) => {
+const CreateGroupPage: React.FC = () => {
     const [groupName, setGroupName] = React.useState('');
     const [groupType, setGroupType] = React.useState('');
+
+    const navigate = useNavigate(); // useNavigate hook for navigation
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         console.log({ groupName, groupType });
+        // You can add form validation or submit logic here
     };
 
     return (
@@ -46,15 +40,15 @@ const CreateGroupPage: React.FC<CreateGroupPageProps> = ({
                     <option value="family">Family</option>
                     <option value="friends">Friends</option>
                     <option value="work">Work</option>
-                    <option value="schoold">School</option>
+                    <option value="school">School</option>
                 </select>
 
                 <button className="create-button" type="submit">
-                    Create Group submit not working
+                    Create Group
                 </button>
 
                 <button
-                    onClick={goToMyGroups} // Use goToMyGroups prop here
+                    onClick={() => navigate('/my-groups')} // Navigate to My Groups
                     className="create-button"
                     type="button"
                 >
@@ -62,7 +56,7 @@ const CreateGroupPage: React.FC<CreateGroupPageProps> = ({
                 </button>
 
                 <button
-                    onClick={goToLandingPage} // Use goToLandingPage prop here
+                    onClick={() => navigate('/')} // Navigate to Landing Page
                     className="back-button"
                     type="button"
                 >
