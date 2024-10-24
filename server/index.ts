@@ -91,7 +91,6 @@ app.put('/users/:id', async (req: Request<Parameters, unknown, UpdateBody>, res:
     try {
         const { id } = req.params;
         const { FirstName, LastName, UserName, Email, Password, Phone, Address } = req.body;
-
         // Dynamically build the SET clause based on provided fields (since we don't have to provide every field)
         // An array to store the individual SET clauses (e.g., firstname = $1, lastname = $2)
         const updates = [];
@@ -107,16 +106,11 @@ app.put('/users/:id', async (req: Request<Parameters, unknown, UpdateBody>, res:
         if (Password) { updates.push(`password = $${count}`); values.push(Password); count++; }
         if (Phone) { updates.push(`phone = $${count}`); values.push(Phone); count++; }
         if (Address) { updates.push(`address = $${count}`); values.push(Address); count++; }
-
-        // === (strict equality) no type coercion. If different types returns false.
-        if (updates.length === 0) {
-            return res.status(400).json({ error: "No update fields provided" });
-        }
-
+        
         // Construct SQL query to dynamically update user fields based on request body
         const query = `UPDATE users SET ${updates.join(', ')} WHERE id = $${count} RETURNING *`;
         values.push(id);
-
+        
         // Executes the SQL query and sends response back to client
         const updatedData: QueryResult = await pool.query(query, values);
         res.json({
