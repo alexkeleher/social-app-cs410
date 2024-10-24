@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import pool from './db';
 import { QueryResult } from 'pg';
-import { Request, Response, RequestHandler } from 'express';
+import { Request, Response } from 'express';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -123,6 +123,18 @@ app.put('/users/:id', async (req: Request<Parameters, unknown, UpdateBody>, res:
             Result: 'Success',
             UpdateEntry: updatedData.rows[0],
         });
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
+// DELETE a user
+app.delete('/users/:id', async (req: Request<Parameters>, res: Response) => {
+    try {
+        const { id } = req.params;
+        await pool.query('DELETE FROM users WHERE id = $1', [id]);
+        res.json('User was deleted');
     } catch (e) {
         console.error((e as Error).message);
         res.status(500).json({ error: (e as Error).message });
