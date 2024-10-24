@@ -1,12 +1,12 @@
 CREATE TABLE Users (
 	ID SERIAL PRIMARY KEY,
-	FirstName VARCHAR(50),
-	LastName VARCHAR(50),
-	UserName VARCHAR(50),
-	Email VARCHAR(50) NOT NULL,
-	Password VARCHAR(500),
-	Phone CHAR(10),
-	Address VARCHAR(500)
+	FirstName VARCHAR(50) NOT NULL,
+	LastName VARCHAR(50) NOT NULL,
+	-- UserName VARCHAR(50),
+	Email VARCHAR(50) NOT NULL UINIQUE,
+	Password VARCHAR(500) NOT NULL
+	-- Phone CHAR(10),
+	-- Address VARCHAR(500) 
 );
 
 CREATE TABLE Groups (
@@ -71,11 +71,18 @@ CREATE TABLE UserRestaurantTypeXRef (
 
 
 -- Insert Dummy Data into Users Table
-INSERT INTO Users(
+INSERT INTO Users (FirstName, LastName, Email, Password)
+VALUES 
+('Armando', 'Toledo', 'atoledo@email.com', 'hashed_password_1'),
+('Kirby', 'Douglas', 'kdouglas@email.com', 'hashed_password_2'),
+('Alex', 'Keleher', 'akeleher@email.com', 'hashed_password_3');
+
+
+/* INSERT INTO Users(
 	firstname, lastname, username, password, phone, address, email)
 	VALUES ('Armando', 'Toledo', 'mandy1339', 'password', '7864475287', '123 E main St Baltimore MD, 21237', 'atoledo@email.com'),
 	 ('Kirby', 'Douglas', 'kdouglas', 'password', '1111111111', '124 E main St Baltimore MD, 21237', 'kdouglas@email.com'),
 	 ('Alex', 'Keleher', 'akeleher', 'password', '2222222222', '125 E main St Baltimore MD, 21237', 'akeleher@email.com'),
 	 ('Juan', 'Mireles', 'jmireles', 'password', '3333333333', '126 E main St Baltimore MD, 21237', 'jmireles@email.com'),
 	 ('Jajuan', 'Myers', 'jmyers', 'password', '4444444444', '127 E main St Baltimore MD, 21237', 'jmyers@email.com'),
-	 ('Matt', 'Janak', 'mjanak', 'password', '5555555555', '128 E main St Baltimore MD, 21237', 'mjanak@email.com');
+	 ('Matt', 'Janak', 'mjanak', 'password', '5555555555', '128 E main St Baltimore MD, 21237', 'mjanak@email.com'); */

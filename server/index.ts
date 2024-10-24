@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import pool from './db';
+import pool from './routes/db';
 import { QueryResult } from 'pg';
 import { Request, Response } from 'express';
 
