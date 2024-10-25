@@ -3,23 +3,10 @@ import cors from 'cors';
 import pool from './db';
 import { QueryResult } from 'pg';
 import { Request, Response } from 'express';
+import { User, Group } from '../frontend/src/interfaces/index'
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-interface UserBody {
-    FirstName: string;
-    LastName: string;
-    UserName: string;
-    Email: string;
-    Password: string;
-    Phone: string;
-    Address: string;
-}
-
-interface GroupBody {
-    Name: string;
-}
 
 interface Parameters {
     id: string;
@@ -59,7 +46,7 @@ app.get('/users', async (req: Request, res: Response) => {
 
 app.post(
     '/users',
-    async (req: Request<unknown, unknown, UserBody>, res: Response) => {
+    async (req: Request<unknown, unknown, User>, res: Response) => {
         try {
             const {
                 FirstName,
@@ -151,7 +138,7 @@ app.post(
     '/groups',
 
     // second argument is an anonymous function
-    async (req: Request<unknown, unknown, GroupBody>, res: Response) => {
+    async (req: Request<unknown, unknown, Group>, res: Response) => {
         try {
             // Take the group name from the request
             const { Name } = req.body;
