@@ -4,9 +4,9 @@
     "description": "Fall 2024 CS411W - Kirby Douglas - Matt Janak - Alex Keleher - Juan Mireles - Jajuan Myers - Armando Toledo",
     "main": "index.ts",
     "scripts": {
-        "start": "concurrently \"npm run server\" \"npm run client\"",
-        "server": "nodemon --exec tsx server/index.js",
-        "client": "npm start --prefix client",
+        "start": "concurrently \"npm run frontend\" \"npm run backend\"",
+        "frontend": "npm start --prefix frontend",
+        "backend": "nodemon --exec tsx backend/index.js",
         "test": "jest",
         "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,json,css,sccs,md}\"",
         "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --quiet"
