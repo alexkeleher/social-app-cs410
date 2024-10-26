@@ -16,6 +16,6 @@
         "noEmit": true,
         "jsx": "react-jsx"
     },
-    "include": ["client/**/*", "server/**/*"],
+    "include": ["frontend/**/*", "backend/**/*"],
     "exclude": ["node_modules", "client/node_modules"]
 }
