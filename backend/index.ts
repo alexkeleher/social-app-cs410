@@ -205,6 +205,45 @@ app.post(
     }
 );
 
+// UPDATE a group
+app.put('/groups/:id', async (req: Request<Parameters, unknown, { Name: string }>, res: Response) => {
+    try {
+        // Extract the group ID from the URL parameters
+        const { id } = req.params;
+        // Extract the updated group name from the request body
+        const { Name } = req.body;
+
+        // Update the group name in the database where the ID matches
+        const updateData: QueryResult = await pool.query(
+            'UPDATE groups SET name = $1 WHERE id = $2 RETURNING *',
+            [Name, id]
+        );
+        res.json({
+            Result: 'Success',
+            UpdatedEntry: updateData.rows[0],
+        });
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
+// DELETE a group
+app.delete('/groups/:id', async (req: Request<Parameters>, res: Response) => {
+    try {
+        // Extractt the group ID from the URL parameters
+        const { id } = req.params;
+
+        // Delete the group from the database where the ID matches
+        await pool.query('DELETE FROM groups WHERE id = $1', [id]);
+
+        res.json('Group was deleted');
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
 app.get('/restaurant', async (req: Request, res: Response) => {
     try {
         const allData: QueryResult = await pool.query(
