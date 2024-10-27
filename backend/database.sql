@@ -79,3 +79,31 @@ INSERT INTO Users(
 	 ('Juan', 'Mireles', 'jmireles', 'password', '3333333333', '126 E main St Baltimore MD, 21237', 'jmireles@email.com'),
 	 ('Jajuan', 'Myers', 'jmyers', 'password', '4444444444', '127 E main St Baltimore MD, 21237', 'jmyers@email.com'),
 	 ('Matt', 'Janak', 'mjanak', 'password', '5555555555', '128 E main St Baltimore MD, 21237', 'mjanak@email.com');
+
+INSERT INTO Groups (name) VALUES 
+ ('Group Red'),
+ ('The monsters'),
+ ('The sharks'),
+ ('The workaholics');
+
+ INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
+ ((SELECT id FROM Users WHERE email = 'atoledo@email.com'), (SELECT ID FROM Groups WHERE name = 'Group Red')),
+ ((SELECT id FROM Users WHERE email = 'kdouglas@email.com'), (SELECT ID FROM Groups WHERE name = 'Group Red')),
+ ((SELECT id FROM Users WHERE email = 'akeleher@email.com'), (SELECT ID FROM Groups WHERE name = 'Group Red'));
+
+INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
+ ((SELECT id FROM Users WHERE email = 'jmireles@email.com'), (SELECT ID FROM Groups WHERE name = 'The monsters')),
+ ((SELECT id FROM Users WHERE email = 'jmyers@email.com'), (SELECT ID FROM Groups WHERE name = 'The monsters')),
+ ((SELECT id FROM Users WHERE email = 'mjanak@email.com'), (SELECT ID FROM Groups WHERE name = 'The monsters'));
+
+INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
+ ((SELECT id FROM Users WHERE email = 'mjanak@email.com'), (SELECT ID FROM Groups WHERE name = 'The sharks'));
+
+INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
+ ((SELECT id FROM Users WHERE email = 'akeleher@email.com'), (SELECT ID FROM Groups WHERE name = 'The workaholics')),
+ ((SELECT id FROM Users WHERE email = 'kdouglas@email.com'), (SELECT ID FROM Groups WHERE name = 'The workaholics'));
+
+INSERT INTO Restaurant (Name, Address, PriceLevel) VALUES
+('Olive Garden', '8245 Perry Hall Blvd, Baltimore, MD 21236', 2),
+('Popeyes', '300 N Broadway, Baltimore, MD 21231', 1),
+('McDonald''s', '2501-13 W Franklin St, Baltimore, MD 21223', 1);
