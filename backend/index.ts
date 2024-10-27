@@ -22,6 +22,12 @@ interface UpdateBody {
     Address?: string;
 }
 
+interface Restaurant {
+    Name?: string;
+    Address?: string;
+    PriceLevel?: string;
+}
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -206,27 +212,33 @@ app.post(
 );
 
 // UPDATE a group
-app.put('/groups/:id', async (req: Request<Parameters, unknown, { Name: string }>, res: Response) => {
-    try {
-        // Extract the group ID from the URL parameters
-        const { id } = req.params;
-        // Extract the updated group name from the request body
-        const { Name } = req.body;
+app.put(
+    '/groups/:id',
+    async (
+        req: Request<Parameters, unknown, { Name: string }>,
+        res: Response
+    ) => {
+        try {
+            // Extract the group ID from the URL parameters
+            const { id } = req.params;
+            // Extract the updated group name from the request body
+            const { Name } = req.body;
 
-        // Update the group name in the database where the ID matches
-        const updateData: QueryResult = await pool.query(
-            'UPDATE groups SET name = $1 WHERE id = $2 RETURNING *',
-            [Name, id]
-        );
-        res.json({
-            Result: 'Success',
-            UpdatedEntry: updateData.rows[0],
-        });
-    } catch (e) {
-        console.error((e as Error).message);
-        res.status(500).json({ error: (e as Error).message });
+            // Update the group name in the database where the ID matches
+            const updateData: QueryResult = await pool.query(
+                'UPDATE groups SET name = $1 WHERE id = $2 RETURNING *',
+                [Name, id]
+            );
+            res.json({
+                Result: 'Success',
+                UpdatedEntry: updateData.rows[0],
+            });
+        } catch (e) {
+            console.error((e as Error).message);
+            res.status(500).json({ error: (e as Error).message });
+        }
     }
-});
+);
 
 // DELETE a group
 app.delete('/groups/:id', async (req: Request<Parameters>, res: Response) => {
@@ -255,6 +267,35 @@ app.get('/restaurant', async (req: Request, res: Response) => {
         res.status(500).json({ error: (e as Error).message });
     }
 });
+
+app.post(
+    // first argument is the path
+    '/restaurant',
+
+    // second argument is an anonymous function
+    async (req: Request<unknown, unknown, Restaurant>, res: Response) => {
+        try {
+            // Take the group name from the request
+            const { Name, Address, PriceLevel } = req.body;
+
+            // Store the restaurant
+            const newData: QueryResult = await pool.query(
+                `INSERT INTO Restaurant (Name, Address, PriceLevel) 
+             VALUES($1, $2, $3) RETURNING *`,
+                [Name, Address, PriceLevel]
+            );
+
+            // Send response back to the client
+            res.json({
+                Result: 'Success',
+                InsertedEntry: newData.rows,
+            });
+        } catch (e) {
+            console.error((e as Error).message);
+            res.status(500).json({ error: (e as Error).message });
+        }
+    }
+);
 
 app.get('/restauranthours', async (req: Request, res: Response) => {
     try {

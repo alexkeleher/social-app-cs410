@@ -10,6 +10,7 @@ import DietaryRestrictionsPreferences from './components/DietaryRestrictionsPref
 import CuisinePreferences from './components/CuisinePreferences';
 import SchedulingPage from './components/SchedulingPage';
 import AllPreferencesPage from './components/AllPreferencesPage';
+import TestPage from './components/TestPage';
 
 import './styles/main.css';
 
@@ -39,6 +40,7 @@ const App = () => {
                     path="/all-preferences"
                     element={<AllPreferencesPage />}
                 />
+                <Route path="/test-page" element={<TestPage />} />
             </Routes>
         </Router>
     );
