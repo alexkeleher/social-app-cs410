@@ -1,10 +1,9 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import CreateGroupPage from './components/CreateGroupPage';
 import MyGroups from './components/MyGroups';
-import Login from './components/login';
-import Register from './components/registerpage';
+import Login from './components/Login';
+import Register from './components/RegisterPage';
 import DistancePreferences from './components/DistancePreferences';
 import DietaryRestrictionsPreferences from './components/DietaryRestrictionsPreferences';
 import CuisinePreferences from './components/CuisinePreferences';

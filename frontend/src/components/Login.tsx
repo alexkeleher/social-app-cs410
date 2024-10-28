@@ -3,15 +3,15 @@ import {
     Button,
     Container,
     CssBaseline,
-    Grid,
     TextField,
     Typography,
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import logo from './Screenshot from 2024-10-07 14-11-21.png';
-import React from 'react';
+
 const Login = () => {
+    const logo = process.env.PUBLIC_URL + '/logo.png';
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
@@ -40,18 +40,6 @@ const Login = () => {
                     width: '100%',
                 }}
             >
-                {
-                    <img
-                        src={logo}
-                        alt="Group Eats Logo"
-                        style={{
-                            width: '30%',
-                            height: '30%',
-                            marginBottom: '20px',
-                        }}
-                    />
-                }
-
                 <Typography
                     variant="h5"
                     sx={{
@@ -64,7 +52,7 @@ const Login = () => {
                 </Typography>
                 <Box sx={{ width: '100%' }}>
                     <Grid container spacing={2}>
-                        <Grid item xs={12}>
+                        <Grid size={12}>
                             <TextField
                                 required
                                 fullWidth
@@ -76,7 +64,7 @@ const Login = () => {
                                 sx={{ fontFamily: "'Roboto', sans-serif" }}
                             />
                         </Grid>
-                        <Grid item xs={12}>
+                        <Grid size={12}>
                             <TextField
                                 required
                                 fullWidth
@@ -108,7 +96,7 @@ const Login = () => {
                         Login
                     </Button>
                     <Grid container justifyContent="center">
-                        <Grid item>
+                        <Grid>
                             <Link
                                 to="/register"
                                 style={{
