@@ -11,7 +11,6 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const Login = () => {
-    const logo = process.env.PUBLIC_URL + '/logo.png';
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const navigate = useNavigate();

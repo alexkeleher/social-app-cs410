@@ -1,12 +1,12 @@
 export interface User {
-    id: number;
+    id?: number | null;
     firstname: string;
     lastname: string;
-    username: string;
+    username?: string | null;
     email: string;
     password: string;
     phone?: string | null;
-    address: string;
+    address?: string | null;
 }
 
 export interface Group {

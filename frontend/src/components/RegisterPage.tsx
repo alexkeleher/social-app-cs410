@@ -7,17 +7,34 @@ import {
     Typography,
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
+import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { createUser } from '../apiService';
+import { User } from '../interfaces';
 
 const Register = () => {
-    const logo = process.env.PUBLIC_URL + '/logo.png';
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const navigate = useNavigate();
 
-    const handleRegister = async () => {};
+    const registerUser = async () => {
+        const userData: User = {
+            firstname: firstName,
+            lastname: lastName,
+            email: email,
+            password: password,
+        };
+        if (password === confirmPassword) {
+            createUser(userData);
+            navigate('/');
+        } else {
+            console.log('Passwords do not match');
+        }
+    };
 
     return (
         <Container
@@ -93,12 +110,10 @@ const Register = () => {
                             <TextField
                                 required
                                 fullWidth
-                                name="password"
-                                label="New Password"
-                                type="password"
-                                id="password"
+                                label="Password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
+                                type="password"
                                 sx={{ fontFamily: "'Roboto', sans-serif" }}
                             />
                         </Grid>
@@ -106,9 +121,12 @@ const Register = () => {
                             <TextField
                                 required
                                 fullWidth
-                                id="password-c"
                                 label="Confirm Password"
                                 name="confirm-password"
+                                value={confirmPassword}
+                                onChange={(e) =>
+                                    setConfirmPassword(e.target.value)
+                                }
                                 type="password"
                                 sx={{ fontFamily: "'Roboto', sans-serif" }}
                             />
@@ -127,7 +145,7 @@ const Register = () => {
                             color: '#fff',
                             fontFamily: "'Roboto', sans-serif",
                         }}
-                        onClick={handleRegister}
+                        onClick={registerUser}
                     >
                         Register
                     </Button>
