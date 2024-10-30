@@ -55,18 +55,18 @@ app.post(
     async (req: Request<unknown, unknown, User>, res: Response) => {
         try {
             const {
-                FirstName,
-                LastName,
-                UserName,
-                Email,
-                Password,
-                Phone,
-                Address,
+                firstname,
+                lastname,
+                username,
+                email,
+                password,
+                phone,
+                address,
             } = req.body;
             const newData: QueryResult = await pool.query(
                 `INSERT INTO Users (firstname, lastname, username, email, password, phone, address) 
              VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-                [FirstName, LastName, UserName, Email, Password, Phone, Address]
+                [firstname, lastname, username, email, password, phone, address]
             );
             res.json({
                 Result: 'Success',
@@ -190,13 +190,13 @@ app.post(
     async (req: Request<unknown, unknown, Group>, res: Response) => {
         try {
             // Take the group name from the request
-            const { Name } = req.body;
+            const { name } = req.body;
 
             // Store the groupname
             const newData: QueryResult = await pool.query(
                 `INSERT INTO Groups (Name, DateCreated) 
              VALUES($1, $2) RETURNING *`,
-                [Name, new Date()]
+                [name, new Date()]
             );
 
             // Send response back to the client
@@ -243,7 +243,7 @@ app.put(
 // DELETE a group
 app.delete('/groups/:id', async (req: Request<Parameters>, res: Response) => {
     try {
-        // Extractt the group ID from the URL parameters
+        // Extract the group ID from the URL parameters
         const { id } = req.params;
 
         // Delete the group from the database where the ID matches
