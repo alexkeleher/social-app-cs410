@@ -4,6 +4,9 @@ import pool from './db';
 import { QueryResult } from 'pg';
 import { Request, Response } from 'express';
 import { User, Group } from '../frontend/src/interfaces/index';
+import session from 'express-session';
+import connectPgSimple from 'connect-pg-simple';
+import crypto from 'crypto';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -31,6 +34,26 @@ interface Restaurant {
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Generate a strong secret for the session middleware
+const secret = crypto.randomBytes(32).toString('hex');
+
+const pgSession = connectPgSimple(session);
+
+app.use(
+    session({
+        store: new pgSession({
+            pool: pool,
+            tableName: 'user_sessions',
+        }),
+        secret: secret, // Use the generated secret
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+            maxAge: 30 * 24 * 60 * 60 * 1000,
+        },
+    })
+);
 
 // Routes
 app.get('/', (req: Request, res: Response) => {
