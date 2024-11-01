@@ -59,6 +59,15 @@ app.use(
     })
 );
 
+// function to protect routes that require authentication
+const requireAuth = (req: Request, res: Response, next: express.NextFunction) => {
+    if (req.session.user) {
+        next();
+    } else {
+        res.status(401).json({ error: 'Unauthorized' })
+    }
+};
+
 // Routes
 app.get('/', (req: Request, res: Response) => {
     res.send('This is Express working');
