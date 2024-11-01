@@ -67,16 +67,16 @@ app.get('/', (req: Request, res: Response) => {
 // /* LOGIN */
 app.post('/login', async (req: Request, res: Response): Promise<void> => {
     try {
-        const {username, password }: User = req.body;
+        const {email, password }: User = req.body;
 
         //Query database to find the user
         const userResult: QueryResult = await pool.query(
-            'SELECT * FROM users WHERE username = $1',
-            [username]
+            'SELECT * FROM users WHERE email = $1',
+            [email]
         );
 
         if (userResult.rows.length === 0) {
-            res.status(401).json({ error: 'Invalid username or password' });
+            res.status(401).json({ error: 'Invalid email or password' });
             return;
         }
 
@@ -85,12 +85,12 @@ app.post('/login', async (req: Request, res: Response): Promise<void> => {
         // Compare the provided password with the stored password
         const match = await bcrypt.compare(password, user.password);
         if (!match) {
-            res.status(401).json({ error: 'Invalid username or password' });
+            res.status(401).json({ error: 'Invalid email or password' });
             return;
         }
 
         // set the session
-        req.session.user = { id: user.id, username: user.username };
+        req.session.user = { id: user.id, email: user.email };
 
         res.json({ message: 'Login successful' });
     } catch (e) {
