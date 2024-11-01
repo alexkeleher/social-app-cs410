@@ -108,6 +108,20 @@ app.post('/login', async (req: Request, res: Response): Promise<void> => {
     }
 });
 
+// /* LOGOUT */
+app.post('/logout', (req: Request, res: Response) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('Error destroying session:', err);
+            res.status(500).json({ error: 'Logout failed' });
+        } else {
+            res.json({
+                message: 'Logout successful'
+            });
+        }
+    });
+});
+
 /*-- CRUD Operations --*/
 
 /* USERS */
