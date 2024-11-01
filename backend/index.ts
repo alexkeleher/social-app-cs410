@@ -60,7 +60,7 @@ app.use(
 );
 
 // function to protect routes that require authentication
-const requireAuth = (req: Request, res: Response, next: express.NextFunction) => {
+const requireAuth = (req: Request< { id: string }>, res: Response, next: express.NextFunction) => {
     if (req.session.user) {
         next();
     } else {
@@ -167,6 +167,7 @@ app.post(
 // UPDATE a user
 app.put(
     '/users/:id',
+    requireAuth,
     async (req: Request<Parameters, unknown, UpdateBody>, res: Response) => {
         try {
             const { id } = req.params;
@@ -245,7 +246,10 @@ app.put(
 );
 
 // DELETE a user
-app.delete('/users/:id', async (req: Request<Parameters>, res: Response) => {
+app.delete(
+    '/users/:id',
+    requireAuth,
+    async (req: Request<Parameters>, res: Response) => {
     try {
         const { id } = req.params;
         await pool.query('DELETE FROM users WHERE id = $1', [id]);
