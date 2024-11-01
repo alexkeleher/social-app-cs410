@@ -2,13 +2,15 @@ import express from 'express';
 import cors from 'cors';
 import pool from './db';
 import { QueryResult } from 'pg';
-import { Request, Response } from 'express';
+import { Application, Request, Response } from 'express';
 import { User, Group } from '../frontend/src/interfaces/index';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import crypto from 'crypto';
+import bcrypt from 'bcrypt';
 
-const app = express();
+
+const app: Application = express();
 const PORT = process.env.PORT || 5000;
 
 interface Parameters {
@@ -30,6 +32,8 @@ interface Restaurant {
     Address?: string;
     PriceLevel?: string;
 }
+
+
 
 // Middleware
 app.use(cors());
@@ -58,6 +62,41 @@ app.use(
 // Routes
 app.get('/', (req: Request, res: Response) => {
     res.send('This is Express working');
+});
+
+// /* LOGIN */
+app.post('/login', async (req: Request, res: Response): Promise<void> => {
+    try {
+        const {username, password }: User = req.body;
+
+        //Query database to find the user
+        const userResult: QueryResult = await pool.query(
+            'SELECT * FROM users WHERE username = $1',
+            [username]
+        );
+
+        if (userResult.rows.length === 0) {
+            res.status(401).json({ error: 'Invalid username or password' });
+            return;
+        }
+
+        const user = userResult.rows[0];
+
+        // Compare the provided password with the stored password
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) {
+            res.status(401).json({ error: 'Invalid username or password' });
+            return;
+        }
+
+        // set the session
+        req.session.user = { id: user.id, username: user.username };
+
+        res.json({ message: 'Login successful' });
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
 });
 
 /*-- CRUD Operations --*/
