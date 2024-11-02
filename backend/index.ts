@@ -164,7 +164,7 @@ app.post(
     }
 );
 
-// UPDATE a user
+// UPDATE a user (protected)
 app.put(
     '/users/:id',
     requireAuth,
@@ -245,7 +245,7 @@ app.put(
     }
 );
 
-// DELETE a user
+// DELETE a user (protected)
 app.delete(
     '/users/:id',
     requireAuth,
@@ -271,10 +271,11 @@ app.get('/groups', async (req: Request, res: Response) => {
     }
 });
 
+// ADD a new group (protected)
 app.post(
     // first argument is the path
     '/groups',
-
+    requireAuth,
     // second argument is an anonymous function
     async (req: Request<unknown, unknown, Group>, res: Response) => {
         try {
@@ -300,9 +301,10 @@ app.post(
     }
 );
 
-// UPDATE a group
+// UPDATE a group (protected)
 app.put(
     '/groups/:id',
+    requireAuth,
     async (
         req: Request<Parameters, unknown, { Name: string }>,
         res: Response
@@ -329,8 +331,11 @@ app.put(
     }
 );
 
-// DELETE a group
-app.delete('/groups/:id', async (req: Request<Parameters>, res: Response) => {
+// DELETE a group (protected)
+app.delete(
+    '/groups/:id',
+    requireAuth,
+    async (req: Request<Parameters>, res: Response) => {
     try {
         // Extract the group ID from the URL parameters
         const { id } = req.params;
