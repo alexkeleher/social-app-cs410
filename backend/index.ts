@@ -36,7 +36,11 @@ interface Restaurant {
 
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3000',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true
+}));
 app.use(express.json());
 
 // Generate a strong secret for the session middleware
@@ -73,39 +77,48 @@ app.get('/', (req: Request, res: Response) => {
     res.send('This is Express working');
 });
 
+const jwt = require('jsonwebtoken');
 // /* LOGIN */
 app.post('/login', async (req: Request, res: Response): Promise<void> => {
     try {
-        const {email, password }: User = req.body;
-
-        //Query database to find the user
+        console.log("Request body:", req.body);
+        const { email, password }: User = req.body;
+    
+        // Query database to find the user
         const userResult: QueryResult = await pool.query(
-            'SELECT * FROM users WHERE email = $1',
-            [email]
+          'SELECT * FROM users WHERE email = $1',
+          [email]
         );
-
+        console.log("User result:", userResult.rows);
+    
         if (userResult.rows.length === 0) {
-            res.status(401).json({ error: 'Invalid email or password' });
-            return;
+          res.status(401).json({ error: 'Invalid email or password' });
+          return;
         }
-
+    
         const user = userResult.rows[0];
-
+    
         // Compare the provided password with the stored password
         const match = await bcrypt.compare(password, user.password);
+        console.log("Password match:", match);
+    
         if (!match) {
-            res.status(401).json({ error: 'Invalid email or password' });
-            return;
+          res.status(401).json({ error: 'Invalid email or password' });
+          return;
         }
-
-        // set the session
+    
+        const token = jwt.sign({ id: user.id, email: user.email }, 'your-secret-key');
+    
+        console.log("Generated token:", token); // Log the generated token
+    
         req.session.user = { id: user.id, email: user.email };
-
-        res.json({ message: 'Login successful' });
-    } catch (e) {
+        console.log("Session:", req.session);
+    
+        res.json({ message: 'Login successful', token }); // Send the token in the response
+      } catch (e) {
         console.error((e as Error).message);
         res.status(500).json({ error: (e as Error).message });
-    }
+      }
 });
 
 // /* LOGOUT */

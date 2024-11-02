@@ -11,6 +11,7 @@ import CuisinePreferences from './components/CuisinePreferences';
 import SchedulingPage from './components/SchedulingPage';
 import AllPreferencesPage from './components/AllPreferencesPage';
 import TestPage from './components/TestPage';
+import Dashboard from './components/Dashboard';
 
 import './styles/main.css';
 
@@ -41,6 +42,9 @@ const App: React.FC = () => {
                             Authorization: `Bearer ${token}`,
                         },
                     });
+
+                    console.log("Token verification response status:", response.status); // Log the response status
+
                     if (response.ok) {
                         setIsAuthenticated(true);
                     } else {
@@ -50,6 +54,7 @@ const App: React.FC = () => {
             } catch (error) {
                 console.error('Error checking authentication:', error);
             }
+            console.log("isAuthenticated:", isAuthenticated); // Log the authentication state
         };
         
         checkAuthentication();
@@ -61,6 +66,8 @@ const App: React.FC = () => {
                 <Route path="/register" element={<Register />} />
                 <Route path="/create-group" element={<CreateGroupPage />} />
                 <Route path="/my-groups" element={<MyGroups />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/dashboard" element={<Dashboard />} /> 
                 <Route
                     path="/distance-preferences"
                     element={<DistancePreferences />}
@@ -79,8 +86,7 @@ const App: React.FC = () => {
                     element={<AllPreferencesPage />}
                 />
                 <Route path="/test-page" element={<TestPage />} />
-                <Route path="/login" element={ <ProtectedRoute element={<Login />} authenticated={isAuthenticated} />} />
-                <Route path="/groups" element={ <ProtectedRoute element={<CreateGroupPage />} authenticated={isAuthenticated} />} 
+                <Route path="/groups" element={ <ProtectedRoute element={<CreateGroupPage />} authenticated={isAuthenticated} />}
                />
             </Routes>
         </Router>

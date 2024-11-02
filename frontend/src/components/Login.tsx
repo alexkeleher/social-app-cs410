@@ -22,15 +22,24 @@ const Login: React.FC = () => {
         setError(null);
 
         try {
-            const response = await axios.post('/login', {
-                username: email,
+            const response = await axios.post('http://localhost:5000/login', {
+                email: email,
                 password: password
             });
-            console.log(response.data); // Handle successful login
-
-            // Store authentication data
-            // redirect to the dashboard
-            navigate('/dashboard');
+            console.log("Response data:", response.data); // Log the response data
+            
+            const token = response.data.token;
+            
+            if (token) {
+                console.log("Token:", token); // Log the token
+                localStorage.setItem('token', token);
+                // redirect to the dashboard
+                navigate('/dashboard');
+            } else {
+                console.error('Login failed: Token not received.');
+                setError('Login failed. Please try again');
+            }
+            
         } catch (error: any) {
             if (error.response) {
                 setError(error.response.data.error);
