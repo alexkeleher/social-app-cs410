@@ -3,7 +3,7 @@ import cors from 'cors';
 import pool from './db';
 import { QueryResult } from 'pg';
 import { Request, Response } from 'express';
-import { User, Group } from '../frontend/src/interfaces/index';
+import { User, Group } from '@types';
 
 const app = express();
 const PORT = process.env.PORT || 5000;

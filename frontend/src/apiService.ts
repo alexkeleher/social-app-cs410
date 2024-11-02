@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { User, Group } from './interfaces/index';
+import { User, Group } from '@types';
 
 const API_URL = process.env.REACT_APP_API_URL;
 

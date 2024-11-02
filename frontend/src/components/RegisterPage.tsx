@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createUser } from '../apiService';
-import { User } from '../interfaces';
+import { User } from '@types';
 
 const Register = () => {
     const [firstName, setFirstName] = useState('');

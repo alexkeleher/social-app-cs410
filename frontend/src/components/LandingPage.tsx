@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { User } from '../interfaces';
+import { User } from '@types';
 import { getUsers } from '../apiService';
 
 const LandingPage: React.FC = () => {
