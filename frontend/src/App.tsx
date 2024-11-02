@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import CreateGroupPage from './components/CreateGroupPage';
 import MyGroups from './components/MyGroups';
@@ -13,7 +14,46 @@ import TestPage from './components/TestPage';
 
 import './styles/main.css';
 
-const App = () => {
+interface ProtectedRouteProps {
+    element: JSX.Element;
+    authenticated: boolean;
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({element, authenticated, ...rest}) => {
+    return authenticated ? (
+        <Route {...rest} element={element} />
+    )   :   (
+        <Navigate to="/login" replace />
+    );
+};
+
+const App: React.FC = () => {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    useEffect(() => {
+        const checkAuthentication = async () => {
+            try {
+                const token = localStorage.getItem('token');
+
+                if (token) {
+                    const response = await fetch('/verify-token', {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
+                    if (response.ok) {
+                        setIsAuthenticated(true);
+                    } else {
+                        localStorage.removeItem('token');
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking authentication:', error);
+            }
+        };
+        
+        checkAuthentication();
+    }, []);
     return (
         <Router>
             <Routes>
@@ -40,6 +80,17 @@ const App = () => {
                     element={<AllPreferencesPage />}
                 />
                 <Route path="/test-page" element={<TestPage />} />
+
+               {/* Protected Routes (Groups) */}
+               <Route
+               path="/groups"
+               element={
+                <ProtectedRoute
+                element={<CreateGroupPage />}
+                authenticated={isAuthenticated}
+                />
+               }
+               />
             </Routes>
         </Router>
     );
