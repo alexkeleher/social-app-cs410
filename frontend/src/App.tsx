@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import CreateGroupPage from './components/CreateGroupPage';
 import MyGroups from './components/MyGroups';
@@ -10,18 +11,63 @@ import CuisinePreferences from './components/CuisinePreferences';
 import SchedulingPage from './components/SchedulingPage';
 import AllPreferencesPage from './components/AllPreferencesPage';
 import TestPage from './components/TestPage';
+import Dashboard from './components/Dashboard';
 
 import './styles/main.css';
 
-const App = () => {
+interface ProtectedRouteProps {
+    element: JSX.Element;
+    authenticated: boolean;
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({element, authenticated, ...rest}) => {
+    return authenticated ? (
+        <Route {...rest} element={element} />
+    )   :   (
+        <Navigate to="/login" replace />
+    );
+};
+
+const App: React.FC = () => {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    useEffect(() => {
+        const checkAuthentication = async () => {
+            try {
+                const token = localStorage.getItem('token');
+
+                if (token) {
+                    const response = await fetch('/verify-token', {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
+
+                    console.log("Token verification response status:", response.status); // Log the response status
+
+                    if (response.ok) {
+                        setIsAuthenticated(true);
+                    } else {
+                        localStorage.removeItem('token');
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking authentication:', error);
+            }
+            console.log("isAuthenticated:", isAuthenticated); // Log the authentication state
+        };
+        
+        checkAuthentication();
+    }, []);
     return (
         <Router>
             <Routes>
                 <Route path="/" element={<LandingPage />} />
-                <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/create-group" element={<CreateGroupPage />} />
                 <Route path="/my-groups" element={<MyGroups />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/dashboard" element={<Dashboard />} /> 
                 <Route
                     path="/distance-preferences"
                     element={<DistancePreferences />}
@@ -40,6 +86,8 @@ const App = () => {
                     element={<AllPreferencesPage />}
                 />
                 <Route path="/test-page" element={<TestPage />} />
+                <Route path="/groups" element={ <ProtectedRoute element={<CreateGroupPage />} authenticated={isAuthenticated} />}
+               />
             </Routes>
         </Router>
     );

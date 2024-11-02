@@ -2,10 +2,16 @@ import express from 'express';
 import cors from 'cors';
 import pool from './db';
 import { QueryResult } from 'pg';
-import { Request, Response } from 'express';
+import { Application, Request, Response } from 'express';
 import { User, Group } from '@types';
+import session from 'express-session';
+import connectPgSimple from 'connect-pg-simple';
+import crypto from 'crypto';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
-const app = express();
+
+const app: Application = express();
 const PORT = process.env.PORT || 5000;
 
 interface Parameters {
@@ -29,12 +35,102 @@ interface Restaurant {
 }
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3000',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true
+}));
 app.use(express.json());
+
+// Generate a strong secret for the session middleware
+const secret = crypto.randomBytes(32).toString('hex');
+
+const pgSession = connectPgSimple(session);
+
+app.use(
+    session({
+        store: new pgSession({
+            pool: pool,
+            tableName: 'user_sessions',
+        }),
+        secret: secret, // Use the generated secret
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+            maxAge: 30 * 24 * 60 * 60 * 1000,
+        },
+    })
+);
+
+// function to protect routes that require authentication
+const requireAuth = (req: Request< { id: string }>, res: Response, next: express.NextFunction) => {
+    if (req.session.user) {
+        next();
+    } else {
+        res.status(401).json({ error: 'Unauthorized' })
+    }
+};
 
 // Routes
 app.get('/', (req: Request, res: Response) => {
     res.send('This is Express working');
+});
+
+// /* LOGIN */
+app.post('/login', async (req: Request, res: Response): Promise<void> => {
+    try {
+        console.log("Request body:", req.body);
+        const { email, password }: User = req.body;
+    
+        // Query database to find the user
+        const userResult: QueryResult = await pool.query(
+          'SELECT * FROM users WHERE email = $1',
+          [email]
+        );
+        console.log("User result:", userResult.rows);
+    
+        if (userResult.rows.length === 0) {
+          res.status(401).json({ error: 'Invalid email or password' });
+          return;
+        }
+    
+        const user = userResult.rows[0];
+    
+        // Compare the provided password with the stored password
+        const match = await bcrypt.compare(password, user.password);
+        console.log("Password match:", match);
+    
+        if (!match) {
+          res.status(401).json({ error: 'Invalid email or password' });
+          return;
+        }
+    
+        const token = jwt.sign({ id: user.id, email: user.email }, 'your-secret-key');
+    
+        console.log("Generated token:", token); // Log the generated token
+    
+        req.session.user = { id: user.id, email: user.email };
+        console.log("Session:", req.session);
+    
+        res.json({ message: 'Login successful', token }); // Send the token in the response
+      } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+      }
+});
+
+// /* LOGOUT */
+app.post('/logout', (req: Request, res: Response) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('Error destroying session:', err);
+            res.status(500).json({ error: 'Logout failed' });
+        } else {
+            res.json({
+                message: 'Logout successful'
+            });
+        }
+    });
 });
 
 /*-- CRUD Operations --*/
@@ -50,6 +146,7 @@ app.get('/users', async (req: Request, res: Response) => {
     }
 });
 
+// CREATE a user
 app.post(
     '/users',
     async (req: Request<unknown, unknown, User>, res: Response) => {
@@ -63,10 +160,16 @@ app.post(
                 phone,
                 address,
             } = req.body;
+
+            // Hash the new password
+            const saltRounds = 10;
+            const hashedPassword = await bcrypt.hash(password, saltRounds);
+            
+            // Store the hashed password in the database
             const newData: QueryResult = await pool.query(
                 `INSERT INTO Users (firstname, lastname, username, email, password, phone, address) 
              VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-                [firstname, lastname, username, email, password, phone, address]
+                [firstname, lastname, username, email, hashedPassword, phone, address]
             );
             res.json({
                 Result: 'Success',
@@ -79,9 +182,10 @@ app.post(
     }
 );
 
-// UPDATE a user
+// UPDATE a user (protected)
 app.put(
     '/users/:id',
+    requireAuth,
     async (req: Request<Parameters, unknown, UpdateBody>, res: Response) => {
         try {
             const { id } = req.params;
@@ -127,8 +231,12 @@ app.put(
                 count++;
             }
             if (Password) {
+                // Hash the new password
+                const saltRounds = 10;
+                const hashedPassword = await bcrypt.hash(Password, saltRounds);
+
                 updates.push(`password = $${count}`);
-                values.push(Password);
+                values.push(hashedPassword); // Store the hashed password
                 count++;
             }
             if (Phone) {
@@ -159,8 +267,11 @@ app.put(
     }
 );
 
-// DELETE a user
-app.delete('/users/:id', async (req: Request<Parameters>, res: Response) => {
+// DELETE a user (protected)
+app.delete(
+    '/users/:id',
+    requireAuth,
+    async (req: Request<Parameters>, res: Response) => {
     try {
         const { id } = req.params;
         await pool.query('DELETE FROM users WHERE id = $1', [id]);
@@ -182,10 +293,11 @@ app.get('/groups', async (req: Request, res: Response) => {
     }
 });
 
+// ADD a new group (protected)
 app.post(
     // first argument is the path
     '/groups',
-
+    requireAuth,
     // second argument is an anonymous function
     async (req: Request<unknown, unknown, Group>, res: Response) => {
         try {
@@ -211,9 +323,10 @@ app.post(
     }
 );
 
-// UPDATE a group
+// UPDATE a group (protected)
 app.put(
     '/groups/:id',
+    requireAuth,
     async (
         req: Request<Parameters, unknown, { Name: string }>,
         res: Response
@@ -240,8 +353,11 @@ app.put(
     }
 );
 
-// DELETE a group
-app.delete('/groups/:id', async (req: Request<Parameters>, res: Response) => {
+// DELETE a group (protected)
+app.delete(
+    '/groups/:id',
+    requireAuth,
+    async (req: Request<Parameters>, res: Response) => {
     try {
         // Extract the group ID from the URL parameters
         const { id } = req.params;
