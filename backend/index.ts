@@ -8,6 +8,7 @@ import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
 
 const app: Application = express();
@@ -32,8 +33,6 @@ interface Restaurant {
     Address?: string;
     PriceLevel?: string;
 }
-
-
 
 // Middleware
 app.use(cors({
@@ -77,7 +76,6 @@ app.get('/', (req: Request, res: Response) => {
     res.send('This is Express working');
 });
 
-const jwt = require('jsonwebtoken');
 // /* LOGIN */
 app.post('/login', async (req: Request, res: Response): Promise<void> => {
     try {
@@ -207,7 +205,7 @@ app.put(
             const updates: string[] = [];
 
             // An array to store the corresponding values for the SET clauses.
-            const values: any[] = [];
+            const values: string[] = [];
 
             // Counter to track parameter index ($1, $2, etc.)
             let count = 1;
