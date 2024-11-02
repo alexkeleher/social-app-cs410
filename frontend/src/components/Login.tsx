@@ -9,14 +9,36 @@ import {
 import Grid from '@mui/material/Grid2';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
-const Login = () => {
+const Login: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
 
+
     const handleLogin = async () => {
-        navigate('/dashboard');
+        setError(null);
+
+        try {
+            const response = await axios.post('/login', {
+                username: email,
+                password: password
+            });
+            console.log(response.data); // Handle successful login
+
+            // Store authentication data
+            // redirect to the dashboard
+            navigate('/dashboard');
+        } catch (error: any) {
+            if (error.response) {
+                setError(error.response.data.error);
+            } else {
+                setError('An error occured during login.');
+            }
+        }
+
     };
 
     return (
