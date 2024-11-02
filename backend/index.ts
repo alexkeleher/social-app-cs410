@@ -135,6 +135,7 @@ app.get('/users', async (req: Request, res: Response) => {
     }
 });
 
+// CREATE a user
 app.post(
     '/users',
     async (req: Request<unknown, unknown, User>, res: Response) => {
@@ -148,10 +149,16 @@ app.post(
                 phone,
                 address,
             } = req.body;
+
+            // Hash the new password
+            const saltRounds = 10;
+            const hashedPassword = await bcrypt.hash(password, saltRounds);
+            
+            // Store the hashed password in the database
             const newData: QueryResult = await pool.query(
                 `INSERT INTO Users (firstname, lastname, username, email, password, phone, address) 
              VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-                [firstname, lastname, username, email, password, phone, address]
+                [firstname, lastname, username, email, hashedPassword, phone, address]
             );
             res.json({
                 Result: 'Success',
@@ -187,7 +194,7 @@ app.put(
             const updates: string[] = [];
 
             // An array to store the corresponding values for the SET clauses.
-            const values: string[] = [];
+            const values: any[] = [];
 
             // Counter to track parameter index ($1, $2, etc.)
             let count = 1;
@@ -213,8 +220,12 @@ app.put(
                 count++;
             }
             if (Password) {
+                // Hash the new password
+                const saltRounds = 10;
+                const hashedPassword = await bcrypt.hash(Password, saltRounds);
+
                 updates.push(`password = $${count}`);
-                values.push(Password);
+                values.push(hashedPassword); // Store the hashed password
                 count++;
             }
             if (Phone) {
