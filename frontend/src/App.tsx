@@ -58,7 +58,6 @@ const App: React.FC = () => {
         <Router>
             <Routes>
                 <Route path="/" element={<LandingPage />} />
-                <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/create-group" element={<CreateGroupPage />} />
                 <Route path="/my-groups" element={<MyGroups />} />
@@ -80,16 +79,8 @@ const App: React.FC = () => {
                     element={<AllPreferencesPage />}
                 />
                 <Route path="/test-page" element={<TestPage />} />
-
-               {/* Protected Routes (Groups) */}
-               <Route
-               path="/groups"
-               element={
-                <ProtectedRoute
-                element={<CreateGroupPage />}
-                authenticated={isAuthenticated}
-                />
-               }
+                <Route path="/login" element={ <ProtectedRoute element={<Login />} authenticated={isAuthenticated} />} />
+                <Route path="/groups" element={ <ProtectedRoute element={<CreateGroupPage />} authenticated={isAuthenticated} />} 
                />
             </Routes>
         </Router>
