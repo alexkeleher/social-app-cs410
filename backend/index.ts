@@ -10,9 +10,9 @@ import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
+const FRONT_URL = process.env.REACT_APP_FRONTEND_URL || 'http://localhost:3000';
 
 interface Parameters {
     id: string;
@@ -35,11 +35,13 @@ interface Restaurant {
 }
 
 // Middleware
-app.use(cors({
-    origin: 'http://localhost:3000',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true
-}));
+app.use(
+    cors({
+        origin: FRONT_URL, // Fix CORS error when deploying to Live server
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+        credentials: true,
+    })
+);
 app.use(express.json());
 
 // Generate a strong secret for the session middleware
@@ -63,11 +65,15 @@ app.use(
 );
 
 // function to protect routes that require authentication
-const requireAuth = (req: Request< { id: string }>, res: Response, next: express.NextFunction) => {
+const requireAuth = (
+    req: Request<{ id: string }>,
+    res: Response,
+    next: express.NextFunction
+) => {
     if (req.session.user) {
         next();
     } else {
-        res.status(401).json({ error: 'Unauthorized' })
+        res.status(401).json({ error: 'Unauthorized' });
     }
 };
 
@@ -79,44 +85,47 @@ app.get('/', (req: Request, res: Response) => {
 // /* LOGIN */
 app.post('/login', async (req: Request, res: Response): Promise<void> => {
     try {
-        console.log("Request body:", req.body);
+        console.log('Request body:', req.body);
         const { email, password }: User = req.body;
-    
+
         // Query database to find the user
         const userResult: QueryResult = await pool.query(
-          'SELECT * FROM users WHERE email = $1',
-          [email]
+            'SELECT * FROM users WHERE email = $1',
+            [email]
         );
-        console.log("User result:", userResult.rows);
-    
+        console.log('User result:', userResult.rows);
+
         if (userResult.rows.length === 0) {
-          res.status(401).json({ error: 'Invalid email or password' });
-          return;
+            res.status(401).json({ error: 'Invalid email or password' });
+            return;
         }
-    
+
         const user = userResult.rows[0];
-    
+
         // Compare the provided password with the stored password
         const match = await bcrypt.compare(password, user.password);
-        console.log("Password match:", match);
-    
+        console.log('Password match:', match);
+
         if (!match) {
-          res.status(401).json({ error: 'Invalid email or password' });
-          return;
+            res.status(401).json({ error: 'Invalid email or password' });
+            return;
         }
-    
-        const token = jwt.sign({ id: user.id, email: user.email }, 'your-secret-key');
-    
-        console.log("Generated token:", token); // Log the generated token
-    
+
+        const token = jwt.sign(
+            { id: user.id, email: user.email },
+            'your-secret-key'
+        );
+
+        console.log('Generated token:', token); // Log the generated token
+
         req.session.user = { id: user.id, email: user.email };
-        console.log("Session:", req.session);
-    
+        console.log('Session:', req.session);
+
         res.json({ message: 'Login successful', token }); // Send the token in the response
-      } catch (e) {
+    } catch (e) {
         console.error((e as Error).message);
         res.status(500).json({ error: (e as Error).message });
-      }
+    }
 });
 
 // /* LOGOUT */
@@ -127,7 +136,7 @@ app.post('/logout', (req: Request, res: Response) => {
             res.status(500).json({ error: 'Logout failed' });
         } else {
             res.json({
-                message: 'Logout successful'
+                message: 'Logout successful',
             });
         }
     });
@@ -164,12 +173,20 @@ app.post(
             // Hash the new password
             const saltRounds = 10;
             const hashedPassword = await bcrypt.hash(password, saltRounds);
-            
+
             // Store the hashed password in the database
             const newData: QueryResult = await pool.query(
                 `INSERT INTO Users (firstname, lastname, username, email, password, phone, address) 
              VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-                [firstname, lastname, username, email, hashedPassword, phone, address]
+                [
+                    firstname,
+                    lastname,
+                    username,
+                    email,
+                    hashedPassword,
+                    phone,
+                    address,
+                ]
             );
             res.json({
                 Result: 'Success',
@@ -272,15 +289,16 @@ app.delete(
     '/users/:id',
     requireAuth,
     async (req: Request<Parameters>, res: Response) => {
-    try {
-        const { id } = req.params;
-        await pool.query('DELETE FROM users WHERE id = $1', [id]);
-        res.json('User was deleted');
-    } catch (e) {
-        console.error((e as Error).message);
-        res.status(500).json({ error: (e as Error).message });
+        try {
+            const { id } = req.params;
+            await pool.query('DELETE FROM users WHERE id = $1', [id]);
+            res.json('User was deleted');
+        } catch (e) {
+            console.error((e as Error).message);
+            res.status(500).json({ error: (e as Error).message });
+        }
     }
-});
+);
 
 /* GROUPS */
 app.get('/groups', async (req: Request, res: Response) => {
@@ -358,19 +376,20 @@ app.delete(
     '/groups/:id',
     requireAuth,
     async (req: Request<Parameters>, res: Response) => {
-    try {
-        // Extract the group ID from the URL parameters
-        const { id } = req.params;
+        try {
+            // Extract the group ID from the URL parameters
+            const { id } = req.params;
 
-        // Delete the group from the database where the ID matches
-        await pool.query('DELETE FROM groups WHERE id = $1', [id]);
+            // Delete the group from the database where the ID matches
+            await pool.query('DELETE FROM groups WHERE id = $1', [id]);
 
-        res.json('Group was deleted');
-    } catch (e) {
-        console.error((e as Error).message);
-        res.status(500).json({ error: (e as Error).message });
+            res.json('Group was deleted');
+        } catch (e) {
+            console.error((e as Error).message);
+            res.status(500).json({ error: (e as Error).message });
+        }
     }
-});
+);
 
 app.get('/restaurant', async (req: Request, res: Response) => {
     try {
