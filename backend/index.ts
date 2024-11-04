@@ -3,7 +3,8 @@ import cors from 'cors';
 import pool from './db';
 import { QueryResult } from 'pg';
 import { Request, Response } from 'express';
-import { User, Group } from '../frontend/src/interfaces/index';
+//import { User, Group } from '../frontend/src/interfaces/index';
+import usersRouter from './routes/users';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -40,6 +41,9 @@ app.get('/', (req: Request, res: Response) => {
 /*-- CRUD Operations --*/
 
 /* USERS */
+
+app.use('/users', usersRouter);
+/* 
 app.get('/users', async (req: Request, res: Response) => {
     try {
         const allData: QueryResult = await pool.query('SELECT * FROM users');
@@ -49,6 +53,9 @@ app.get('/users', async (req: Request, res: Response) => {
         res.status(500).json({ error: (e as Error).message });
     }
 });
+
+
+
 
 app.post(
     '/users',
@@ -170,6 +177,81 @@ app.delete('/users/:id', async (req: Request<Parameters>, res: Response) => {
         res.status(500).json({ error: (e as Error).message });
     }
 });
+
+
+
+
+interface UserParams {
+    email: string;
+}
+
+app.get('/users/:email/groups', async (req: Request<UserParams>, res: Response) => {
+    const { email } = req.params;
+
+    try {
+        // Query to find groups associated with the user's email
+        const query = `
+            SELECT groups.* FROM groups
+            JOIN user_groups ON groups.id = user_groups.group_id
+            JOIN users ON users.id = user_groups.user_id
+            WHERE users.email = $1
+        `;
+        const result = await pool.query(query, [email]);
+
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.error('Error fetching groups for user:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+
+// Endpoint to add a user to a group
+
+interface UserGroupParams {
+    email: string;
+    groupId: string;
+}
+
+
+app.post(
+    '/users/:email/groups/:groupId', 
+    async (req: Request<UserGroupParams, any, any, any>, res: Response) => {
+        const { email, groupId } = req.params;
+
+        try {
+            // Fetch the user ID based on the provided email
+            const userResult = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+
+            if (userResult.rowCount === 0) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            const userId = userResult.rows[0].id;
+
+            // Check if the group exists
+            const groupResult = await pool.query('SELECT id FROM groups WHERE id = $1', [groupId]);
+
+            if (groupResult.rowCount === 0) {
+                return res.status(404).json({ error: 'Group not found' });
+            }
+
+            // Insert a new row in the user_groups table to link user and group
+            const query = `
+                INSERT INTO user_groups (user_id, group_id) VALUES ($1, $2)
+                ON CONFLICT DO NOTHING
+            `;
+            await pool.query(query, [userId, groupId]);
+
+            res.status(200).json({ message: 'User added to group successfully' });
+        } catch (error) {
+            console.error('Error adding user to group:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+);
+ */
 
 /* GROUPS */
 app.get('/groups', async (req: Request, res: Response) => {

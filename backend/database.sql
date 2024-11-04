@@ -7,6 +7,7 @@ CREATE TABLE Users (
 	Password VARCHAR(500),
 	Phone CHAR(10),
 	Address VARCHAR(500)
+	Groups VARCHAR(50)
 );
 
 CREATE TABLE Groups (
@@ -67,6 +68,12 @@ CREATE TABLE UserRestaurantTypeXRef (
 	RestaurantTypeID INT NOT NULL,
 	FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE,
 	FOREIGN KEY (RestaurantTypeID) REFERENCES RestaurantType(ID) ON DELETE CASCADE
+);
+
+CREATE TABLE UserGroups (
+	UserID INTEGER REFERENCES Users(ID),
+	GroupID INTEGER REFERENCES Groups(ID),
+	PRIMARY KEY (UserID, GroupID)
 );
 
 
