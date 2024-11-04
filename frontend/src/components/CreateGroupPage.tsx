@@ -1,22 +1,50 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Group } from '@types';
+import { getGroups, createGroup } from '../apiService';
 
 const CreateGroupPage: React.FC = () => {
-    const [groupName, setGroupName] = React.useState('');
-    const [groupType, setGroupType] = React.useState('');
+    const [groupName, setGroupName] = useState<string>('');
+    const [groupType, setGroupType] = useState<string>('');
+    const [groups, setGroups] = useState<Group[]>([]);
+
+    useEffect(() => {
+        const fetchGroups = async () => {
+            console.log('fetchGroups() called');
+            const usersData = await getGroups();
+            console.log('Fetched groups: ', usersData);
+            setGroups(usersData);
+        };
+
+        fetchGroups();
+    }, []);
 
     const navigate = useNavigate(); // useNavigate hook for navigation
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        console.log({ groupName, groupType });
-        // You can add form validation or submit logic here
+    const registerGroup = async () => {
+        const groupData: Group = {
+            name: groupName,
+        };
+
+        createGroup(groupData);
+        console.log('Group created');
     };
 
     return (
         <div className="form-container">
+            <h1>Groups List</h1>
+            {groups.length > 0 ? (
+                <ul>
+                    {groups.map((group, index) => (
+                        <li key={index}>{group.name}</li>
+                    ))}
+                </ul>
+            ) : (
+                <p>No users found</p>
+            )}
+
             <h2>Create Your Group</h2>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={registerGroup}>
                 <label htmlFor="groupName">Group Name</label>
                 <input
                     type="text"

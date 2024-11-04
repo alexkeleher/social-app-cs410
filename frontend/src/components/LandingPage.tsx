@@ -1,38 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { User } from '@types';
-import { getUsers } from '../apiService';
 
 const LandingPage: React.FC = () => {
-    const [users, setUsers] = useState<User[]>([]);
-
-    useEffect(() => {
-        const fetchUsers = async () => {
-            console.log('fetchUsers() called');
-            const usersData = await getUsers();
-            console.log('Fetched users: ', usersData);
-            setUsers(usersData);
-        };
-
-        fetchUsers();
-    }, []);
-
     return (
         <div className="landing-container">
-            <div>
-                <h1>User List</h1>
-                {users.length > 0 ? (
-                    <ul>
-                        {users.map((user, index) => (
-                            <li key={index}>
-                                {user.firstname} - {user.email}
-                            </li>
-                        ))}
-                    </ul>
-                ) : (
-                    <p>No users found</p>
-                )}
-            </div>
             <header className="landing-header">
                 <h1>GroupEats</h1>
                 <style>{`

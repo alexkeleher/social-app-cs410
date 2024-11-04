@@ -176,7 +176,7 @@ app.post(
 
             // Store the hashed password in the database
             const newData: QueryResult = await pool.query(
-                `INSERT INTO Users (firstname, lastname, username, email, password, phone, address) 
+                `INSERT INTO Users (firstname, lastname, username, email, password, phone, address)
              VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
                 [
                     firstname,
@@ -315,7 +315,7 @@ app.get('/groups', async (req: Request, res: Response) => {
 app.post(
     // first argument is the path
     '/groups',
-    requireAuth,
+    // requireAuth, (Temporarily taken out to make sure creating groups in frontend works)
     // second argument is an anonymous function
     async (req: Request<unknown, unknown, Group>, res: Response) => {
         try {
@@ -324,7 +324,7 @@ app.post(
 
             // Store the groupname
             const newData: QueryResult = await pool.query(
-                `INSERT INTO Groups (Name, DateCreated) 
+                `INSERT INTO Groups (Name, DateCreated)
              VALUES($1, $2) RETURNING *`,
                 [name, new Date()]
             );
@@ -415,7 +415,7 @@ app.post(
 
             // Store the restaurant
             const newData: QueryResult = await pool.query(
-                `INSERT INTO Restaurant (Name, Address, PriceLevel) 
+                `INSERT INTO Restaurant (Name, Address, PriceLevel)
              VALUES($1, $2, $3) RETURNING *`,
                 [Name, Address, PriceLevel]
             );
