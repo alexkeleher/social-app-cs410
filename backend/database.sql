@@ -81,12 +81,12 @@ ALTER TABLE "user_sessions" ADD CONSTRAINT user_sessions_pkey PRIMARY KEY ("sid"
 -- Insert Dummy Data into Users Table
 INSERT INTO Users(
 	firstname, lastname, username, password, phone, address, email)
-	VALUES ('Armando', 'Toledo', 'mandy1339', 'password', '7864475287', '123 E main St Baltimore MD, 21237', 'atoledo@email.com'),
-	 ('Kirby', 'Douglas', 'kdouglas', 'password', '1111111111', '124 E main St Baltimore MD, 21237', 'kdouglas@email.com'),
-	 ('Alex', 'Keleher', 'akeleher', 'password', '2222222222', '125 E main St Baltimore MD, 21237', 'akeleher@email.com'),
-	 ('Juan', 'Mireles', 'jmireles', 'password', '3333333333', '126 E main St Baltimore MD, 21237', 'jmireles@email.com'),
-	 ('Jajuan', 'Myers', 'jmyers', 'password', '4444444444', '127 E main St Baltimore MD, 21237', 'jmyers@email.com'),
-	 ('Matt', 'Janak', 'mjanak', 'password', '5555555555', '128 E main St Baltimore MD, 21237', 'mjanak@email.com');
+	VALUES ('Armando', 'Toledo', 'mandy1339', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '7864475287', '123 E main St Baltimore MD, 21237', 'atoledo@email.com'),
+	 ('Kirby', 'Douglas', 'kdouglas', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '1111111111', '124 E main St Baltimore MD, 21237', 'kdouglas@email.com'),
+	 ('Alex', 'Keleher', 'akeleher', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '2222222222', '125 E main St Baltimore MD, 21237', 'akeleher@email.com'),
+	 ('Juan', 'Mireles', 'jmireles', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '3333333333', '126 E main St Baltimore MD, 21237', 'jmireles@email.com'),
+	 ('Jajuan', 'Myers', 'jmyers', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '4444444444', '127 E main St Baltimore MD, 21237', 'jmyers@email.com'),
+	 ('Matt', 'Janak', 'mjanak', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '5555555555', '128 E main St Baltimore MD, 21237', 'mjanak@email.com');
 
 INSERT INTO Groups (name) VALUES 
  ('Group Red'),
