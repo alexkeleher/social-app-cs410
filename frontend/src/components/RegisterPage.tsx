@@ -28,6 +28,7 @@ const Register = () => {
             email: email,
             password: password,
         };
+
         if (password === confirmPassword) {
             createUser(userData);
             navigate('/');
