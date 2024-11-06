@@ -1,11 +1,12 @@
 import axios from 'axios';
+import api from './axios';
 import { User, Group } from '@types';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
 export const getUsers = async (): Promise<User[]> => {
     try {
-        const response = await axios.get<User[]>(`${API_URL}/users`);
+        const response = await api.get<User[]>(`${API_URL}/users`);
         return response.data;
     } catch (e) {
         console.error('Error fetching users:', e);
@@ -15,7 +16,10 @@ export const getUsers = async (): Promise<User[]> => {
 
 export const createUser = async (userData: User): Promise<User> => {
     try {
-        const response = await axios.post<{ InsertedEntry: User }>(`${API_URL}/users`, userData);
+        const response = await api.post<{ InsertedEntry: User }>(
+            `${API_URL}/users`,
+            userData
+        );
         return response.data.InsertedEntry;
     } catch (e) {
         console.error('Error creating user:', e);
@@ -25,7 +29,7 @@ export const createUser = async (userData: User): Promise<User> => {
 
 export const getGroups = async (): Promise<Group[]> => {
     try {
-        const response = await axios.get<Group[]>(`${API_URL}/groups`);
+        const response = await api.get<Group[]>(`${API_URL}/groups`);
         return response.data;
     } catch (e) {
         console.error('Error fetching groups:', e);
@@ -35,7 +39,10 @@ export const getGroups = async (): Promise<Group[]> => {
 
 export const createGroup = async (groupData: Group): Promise<Group> => {
     try {
-        const response = await axios.post<{ InsertedEntry: Group }>(`${API_URL}/groups`, groupData);
+        const response = await api.post<{ InsertedEntry: Group }>(
+            `${API_URL}/groups`,
+            groupData
+        );
         return response.data.InsertedEntry;
     } catch (e) {
         console.error('Error creating group:', e);

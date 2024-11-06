@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Group } from '@types';
-import { getGroups, createGroup } from '../apiService';
+import { getGroups, createGroup } from '../api/apiService';
 
 const CreateGroupPage: React.FC = () => {
     const [groupName, setGroupName] = useState<string>('');

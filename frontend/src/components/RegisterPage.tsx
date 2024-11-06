@@ -10,7 +10,7 @@ import Grid from '@mui/material/Grid2';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { createUser } from '../apiService';
+import { createUser } from '../api/apiService';
 import { User } from '@types';
 
 const Register = () => {
