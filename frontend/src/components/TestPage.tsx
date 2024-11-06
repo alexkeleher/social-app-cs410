@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+const API_URL = process.env.REACT_APP_API_URL;
 
 // display restaurant data in a grid
 // have a form that inserts into restaurant
@@ -25,7 +26,7 @@ function TestPage() {
                 Address: restaurantAddress,
                 PriceLevel: restaurantPriceLevel,
             };
-            const response = await fetch('http://localhost:5000/restaurant', {
+            const response = await fetch(`${API_URL}/restaurant`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
@@ -40,7 +41,7 @@ function TestPage() {
 
     const getRestaurants = async () => {
         try {
-            const response = await fetch('http://localhost:5000/restaurant');
+            const response = await fetch(`${API_URL}/restaurant`);
             const jsonData = await response.json();
             console.log('getting restaurants from Backend');
             setRestaurants(jsonData);
