@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import Logout from './Logout';
 
 const LandingPage: React.FC = () => {
     return (
@@ -33,18 +34,19 @@ const LandingPage: React.FC = () => {
                     GroupEats helps your group easily find the best places to
                     eat, taking into account everyone’s preferences.
                 </p>
-                <Link to="/create-group" className="cta-button">
+                <Link to="/create-group">
                     <button className="cta-button">Create Group</button>
                 </Link>
-                <Link to="/all-preferences" className="cta-button">
+                <Link to="/all-preferences">
                     <button className="cta-button">My Preferences</button>
                 </Link>
-                <Link to="/my-groups" className="cta-button">
+                <Link to="/my-groups">
                     <button className="cta-button">My Groups</button>
                 </Link>
-                <Link to="/login" className="cta-button">
+                <Link to="/login">
                     <button className="cta-button">Login</button>
                 </Link>
+                <Logout></Logout>
             </main>
 
             <footer className="landing-footer">

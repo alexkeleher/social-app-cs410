@@ -7,31 +7,62 @@ import {
     Typography,
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
-import { useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
+//import axios from 'axios';
+import AuthContext from '../context/AuthProvider';
+import api from '../api/axios';
+
+interface JWTPayload {
+    id: number;
+    email: string;
+    exp: number;
+    iat: number;
+}
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
+    const { auth, setAuth, loading } = useContext(AuthContext);
 
+    // Redirect if already logged in
+    useEffect(() => {
+        if (!loading && auth?.token) {
+            navigate('/dashboard');
+        }
+    }, [loading, auth, navigate]);
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
 
     const handleLogin = async () => {
         setError(null);
 
         try {
-            const response = await axios.post('http://localhost:5000/login', {
+            const response = await api.post('/login', {
                 email: email,
-                password: password
+                password: password,
             });
-            console.log("Response data:", response.data); // Log the response data
-            
+            console.log('Response data:', response.data); // Log the response data
+
             const token = response.data.token;
-            
+            const decodedPayload = jwtDecode<JWTPayload>(token);
+
+            // Store in localStorage
+            localStorage.setItem('token', token);
+
+            setAuth({
+                token,
+                id: decodedPayload.id,
+                email: decodedPayload.email,
+            });
+
             if (token) {
-                console.log("Token:", token); // Log the token
+                console.log('Token:', token); // Log the token
                 localStorage.setItem('token', token);
                 // redirect to the dashboard
                 navigate('/dashboard');
@@ -39,7 +70,6 @@ const Login: React.FC = () => {
                 console.error('Login failed: Token not received.');
                 setError('Login failed. Please try again');
             }
-            
         } catch (error: any) {
             if (error.response) {
                 setError(error.response.data.error);
@@ -47,7 +77,6 @@ const Login: React.FC = () => {
                 setError('An error occured during login.');
             }
         }
-
     };
 
     return (

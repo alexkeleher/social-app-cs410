@@ -113,7 +113,8 @@ app.post('/login', async (req: Request, res: Response): Promise<void> => {
 
         const token = jwt.sign(
             { id: user.id, email: user.email },
-            'your-secret-key'
+            'your-secret-key',
+            { expiresIn: '1h' } // 2 minutes
         );
 
         console.log('Generated token:', token); // Log the generated token
