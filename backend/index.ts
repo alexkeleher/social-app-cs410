@@ -439,6 +439,114 @@ app.delete(
     }
 );
 
+// CUISINE PREFERENCES of Users 
+app.get('/users/:id/cuisines', async (req: Request<{ id: string }>, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        const result: QueryResult = await pool.query(
+            `SELECT CuisineType FROM UserCuisinePreferences WHERE UserID = $1`,
+            [id]
+        );
+
+        //console.log("Raw database result:", result); // Log the entire result object
+        //console.log("Rows from the database:", result.rows); // Log the rows array
+
+        // Extract cuisine types from the query result
+        const cuisineTypes = result.rows.map(row => row.cuisinetype);
+
+        //console.log("Extracted cuisine types:", cuisineTypes); // Log the extracted array
+
+        res.json({
+            userId: id,
+            cuisinePreferences: cuisineTypes 
+        });
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
+// ADD a cuisine preference to a user
+// Expects "cuisineType": "some cuisine"
+app.post(
+    '/users/:id/cuisines',
+    async (req: Request<{ id: string }, unknown, { cuisineType: string }>, res: Response) => {
+    try{
+        const { id } = req.params;
+        const { cuisineType } = req.body;
+
+        const newData: QueryResult = await pool.query(
+            `INSERT INTO UserCuisinePreferences (UserID, CuisineType)
+            Values($1, $2) RETURNING *`,
+            [id, cuisineType]
+        );
+        res.json({
+            Result: 'Success',
+            InsertedEntry: newData.rows,
+        });
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
+
+// UPDATE a cuisine preference for a user
+// Expects array format "cuisineTypes": ["Chinese", "Japanese"]
+app.put(
+    '/users/:id/cuisines',
+    async (req: Request<{ id: string }, unknown, { cuisineTypes: string[] }>, res: Response) => {
+        try {
+            const { id } = req.params;
+            const { cuisineTypes } = req.body;
+
+            // Delete existing preferences
+            await pool.query(
+                `DELETE FROM UserCuisinePreferences WHERE UserID = $1`,
+                [id]
+            );
+
+            // Insert new preferences
+            const insertPromises = cuisineTypes.map(CuisineType => {
+                return pool.query(
+                    `INSERT INTO UserCuisinePreferences (UserID, CuisineType)
+                    VALUES($1, $2) RETURNING *`,
+                    [id, CuisineType]
+                );
+            });
+            const newData = await Promise.all(insertPromises);
+            res.json({
+                Result: 'Success',
+                InsertedEntries: newData.map(result=> result.rows),
+            });
+        } catch (e) {
+            console.error((e as Error).message);
+            res.status(500).json({ error: (e as Error).message });
+        }
+    });
+
+// DELETE a cuisine preference for a user
+app.delete('/users/:id/cuisines/:cuisineType', async (req: Request<{ id: string, cuisineType: string }>, res:Response) => {
+    try {
+        const { id, cuisineType } = req.params;
+
+        //console.log("Deleting cuisine type:", cuisineType, "for userId:", id); // Log before deletion
+
+        const deleteResult = await pool.query(
+            'DELETE FROM UserCuisinePreferences WHERE UserID = $1 AND CuisineType = $2',
+            [id, cuisineType]
+        );
+
+        //console.log("Deletion result:", deleteResult); // Log the result object
+
+        res.json('Cuisine preference was deleted');
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
 app.get('/restaurant', async (req: Request, res: Response) => {
     try {
         const allData: QueryResult = await pool.query(
