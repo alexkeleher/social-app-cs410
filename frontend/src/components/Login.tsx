@@ -65,7 +65,7 @@ const Login: React.FC = () => {
                 console.log('Token:', token); // Log the token
                 localStorage.setItem('token', token);
                 // redirect to the dashboard
-                navigate('/dashboard');
+                navigate('/landingpage');
             } else {
                 console.error('Login failed: Token not received.');
                 setError('Login failed. Please try again');
