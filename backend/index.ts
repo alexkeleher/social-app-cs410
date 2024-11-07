@@ -439,6 +439,17 @@ app.delete(
     }
 );
 
+// CUISINE TYPES
+app.get('/cuisine-types', async (req: Request, res: Response) => {
+    try {
+        const allCuisineTypes: QueryResult = await pool.query('SELECT * FROM CuisineTypes');
+        res.json(allCuisineTypes.rows);
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
 // CUISINE PREFERENCES of Users 
 app.get('/users/:id/cuisines', async (req: Request<{ id: string }>, res: Response) => {
     try {
