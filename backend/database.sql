@@ -77,6 +77,23 @@ CREATE TABLE user_sessions (
 
 ALTER TABLE "user_sessions" ADD CONSTRAINT user_sessions_pkey PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
 
+CREATE TABLE UserCuisinePreferences (
+	UserID INT,
+	CuisineType VARCHAR(50),
+	PRIMARY KEY (UserID, CuisineType),
+	FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE
+);
+
+CREATE TABLE CuisineTypes (
+	ID SERIAL PRIMARY KEY,
+	Name VARCHAR(50) UNIQUE
+);
+
+INSERT INTO CuisineTypes (Name) VALUES
+('American'), ('Italian'), ('Mexican'), ('Japanese'), ('Chinese'), ('Indian'), 
+('Thai'), ('Vietnamese'), ('Korean'), ('French'), ('Mediterranean'), ('Greek'), 
+('Spanish'), ('Middle Eastern'), ('African'), ('Caribbean'), ('German'), 
+('British'), ('Irish'); -- Add more as needed (all of these are on Yelp)
 
 -- Insert Dummy Data into Users Table
 INSERT INTO Users(
@@ -108,6 +125,7 @@ INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
  ((SELECT id FROM Users WHERE email = 'mjanak@email.com'), (SELECT ID FROM Groups WHERE name = 'The sharks'));
 
 INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
+ ((SELECT id FROM Users WHERE email = 'atoledo@email.com'), (SELECT ID FROM Groups WHERE name = 'The workaholics')),
  ((SELECT id FROM Users WHERE email = 'akeleher@email.com'), (SELECT ID FROM Groups WHERE name = 'The workaholics')),
  ((SELECT id FROM Users WHERE email = 'kdouglas@email.com'), (SELECT ID FROM Groups WHERE name = 'The workaholics'));
 
