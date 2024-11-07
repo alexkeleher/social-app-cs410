@@ -18,6 +18,7 @@ const ProtectedRoute = () => {
             <Outlet />
         </>
     ) : (
+        // If user is not authenticated, redirect to login page
         <Navigate to="/login" />
     );
 };
