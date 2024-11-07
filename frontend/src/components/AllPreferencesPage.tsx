@@ -75,7 +75,7 @@ const AllPreferencesPage: React.FC = () => {
                 )}
 
                 <div className="button-group">
-                    <Link to="/" className="back-button">
+                    <Link to="/landingpage" className="back-button">
                         <button className="back-button">
                             Back to Landing Page
                         </button>

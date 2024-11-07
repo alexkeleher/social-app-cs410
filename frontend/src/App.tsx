@@ -19,6 +19,7 @@ import TestPage from './components/TestPage';
 import Dashboard from './components/Dashboard';
 import { AuthProvider } from './context/AuthProvider';
 import ProtectedRoute from './components/ProtectedRoute';
+import SelectedGroup from './components/SelectedGroup';
 
 import './styles/main.css';
 
@@ -92,6 +93,10 @@ const App: React.FC = () => {
                             element={<CreateGroupPage />}
                         />
                         <Route path="/my-groups" element={<MyGroups />} />
+                        <Route
+                            path="/selected-group/:groupid"
+                            element={<SelectedGroup />}
+                        />
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route
                             path="/distance-preferences"

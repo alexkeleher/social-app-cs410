@@ -108,6 +108,7 @@ INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
  ((SELECT id FROM Users WHERE email = 'mjanak@email.com'), (SELECT ID FROM Groups WHERE name = 'The sharks'));
 
 INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
+ ((SELECT id FROM Users WHERE email = 'atoledo@email.com'), (SELECT ID FROM Groups WHERE name = 'The workaholics')),
  ((SELECT id FROM Users WHERE email = 'akeleher@email.com'), (SELECT ID FROM Groups WHERE name = 'The workaholics')),
  ((SELECT id FROM Users WHERE email = 'kdouglas@email.com'), (SELECT ID FROM Groups WHERE name = 'The workaholics'));
 
