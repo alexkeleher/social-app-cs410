@@ -19,6 +19,7 @@ import TestPage from './components/TestPage';
 import Dashboard from './components/Dashboard';
 import { AuthProvider } from './context/AuthProvider';
 import ProtectedRoute from './components/ProtectedRoute';
+import YelpRestaurants from './components/TestYelpRestaurants';
 
 import './styles/main.css';
 
@@ -82,6 +83,7 @@ const App: React.FC = () => {
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/test-page" element={<TestPage />} />
+                    <Route path="/TestYelpRestaurants" element={<YelpRestaurants />} /> 
                     {/* PUBLIC PAGES END ******************************** */}
 
                     {/* PRIVATE PAGES BEGIN ******************************** */}

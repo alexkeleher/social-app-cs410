@@ -19,7 +19,8 @@ const YelpRestaurants: React.FC = () => {
   const [longitude, setLongitude] = useState<number | null>(null);
   const [sortOption, setSortOption] = useState<string>('best_match');
   const [dietOption, setDietOption] = useState<string | null>('vegan'); 
-  const API_KEY = "";
+
+  const API_KEY = process.env.REACT_APP_YELP_API_KEY;
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
