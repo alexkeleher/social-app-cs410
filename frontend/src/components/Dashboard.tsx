@@ -6,42 +6,6 @@ import Logout from './Logout';
 
 const Dashboard: React.FC = () => {
     const { auth } = useContext(AuthContext);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const navigate = useNavigate();
-
-    useEffect(() => {
-        const checkAuthentication = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                if (token) {
-                    const response = await fetch('/verify-token', {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    });
-                    if (response.ok) {
-                        setIsLoggedIn(true);
-                    } else {
-                        localStorage.removeItem('token');
-                        setIsLoggedIn(false);
-                    }
-                } else {
-                    setIsLoggedIn(false);
-                }
-            } catch (error) {
-                console.error('Error checking authentication:', error);
-                setIsLoggedIn(false);
-            }
-        };
-
-        checkAuthentication();
-    }, []);
-
-    const handleLogout = () => {
-        localStorage.removeItem('token'); // Remove the token on logout
-        setIsLoggedIn(false); // Update the state
-        navigate('/login');
-    };
 
     return (
         <Container
@@ -64,7 +28,7 @@ const Dashboard: React.FC = () => {
                     width: '100%',
                 }}
             >
-                {isLoggedIn ? (
+                {
                     <div>
                         <Typography
                             variant="h5"
@@ -80,37 +44,9 @@ const Dashboard: React.FC = () => {
                             <br />
                             Your id is {auth.id}
                         </Typography>
-                        {/* <Button
-                            fullWidth
-                            variant="contained"
-                            sx={{
-                                mt: 3,
-                                mb: 2,
-                                backgroundColor: '#FF0000',
-                                '&:hover': {
-                                    backgroundColor: '#FF0000',
-                                },
-                                color: '#fff',
-                                fontFamily: "'Roboto', sans-serif",
-                            }}
-                            onClick={handleLogout}
-                        >
-                            Logout
-                        </Button> */}
                         <Logout></Logout>
                     </div>
-                ) : (
-                    <Typography
-                        variant="h5"
-                        sx={{
-                            fontFamily: "'Roboto', sans-serif",
-                            color: '#333',
-                            marginBottom: '20px',
-                        }}
-                    >
-                        You need to log in to view this page.
-                    </Typography>
-                )}
+                }
             </Box>
         </Container>
     );

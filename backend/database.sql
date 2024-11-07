@@ -57,17 +57,17 @@ CREATE TABLE UserHours (
 	FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE
 );
 
-CREATE TABLE RestaurantType (
-	ID SERIAL PRIMARY KEY,
-	Description VARCHAR(50)
-);
+-- CREATE TABLE RestaurantType (
+-- 	ID SERIAL PRIMARY KEY,
+-- 	Description VARCHAR(50)
+-- );
 
-CREATE TABLE UserRestaurantTypeXRef (
-	UserID INT NOT NULL,
-	RestaurantTypeID INT NOT NULL,
-	FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE,
-	FOREIGN KEY (RestaurantTypeID) REFERENCES RestaurantType(ID) ON DELETE CASCADE
-);
+-- CREATE TABLE UserRestaurantTypeXRef (
+-- 	UserID INT NOT NULL,
+-- 	RestaurantTypeID INT NOT NULL,
+-- 	FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE,
+-- 	FOREIGN KEY (RestaurantTypeID) REFERENCES RestaurantType(ID) ON DELETE CASCADE
+-- );
 
 CREATE TABLE user_sessions (
   sid varchar NOT NULL COLLATE "default",
