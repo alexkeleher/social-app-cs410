@@ -20,6 +20,7 @@ import Dashboard from './components/Dashboard';
 import { AuthProvider } from './context/AuthProvider';
 import ProtectedRoute from './components/ProtectedRoute';
 import YelpRestaurants from './components/TestYelpRestaurants';
+import SelectedGroup from './components/SelectedGroup';
 
 import './styles/main.css';
 
@@ -83,7 +84,10 @@ const App: React.FC = () => {
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/test-page" element={<TestPage />} />
-                    <Route path="/TestYelpRestaurants" element={<YelpRestaurants />} /> 
+                    <Route
+                        path="/TestYelpRestaurants"
+                        element={<YelpRestaurants />}
+                    />
                     {/* PUBLIC PAGES END ******************************** */}
 
                     {/* PRIVATE PAGES BEGIN ******************************** */}
@@ -94,6 +98,10 @@ const App: React.FC = () => {
                             element={<CreateGroupPage />}
                         />
                         <Route path="/my-groups" element={<MyGroups />} />
+                        <Route
+                            path="/selected-group/:groupid"
+                            element={<SelectedGroup />}
+                        />
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route
                             path="/distance-preferences"

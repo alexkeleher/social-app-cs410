@@ -43,9 +43,6 @@ const LandingPage: React.FC = () => {
                 <Link to="/my-groups">
                     <button className="cta-button">My Groups</button>
                 </Link>
-                <Link to="/login">
-                    <button className="cta-button">Login</button>
-                </Link>
                 <Logout></Logout>
             </main>
 

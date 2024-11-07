@@ -156,6 +156,30 @@ app.get('/users', async (req: Request, res: Response) => {
     }
 });
 
+/* Get users by GroupID */
+/*
+Input: ID of a group. Passed as a URL parameter
+Output: List of users that belong to that group
+*/
+app.get('/users-by-groupid:id', async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+        const allData: QueryResult = await pool.query(
+            `SELECT g.name as groupname, u.id, u.firstname, u.lastname, u.username, u.email
+            FROM 
+                Users as u              JOIN
+                UserGroupXRef as x      ON u.ID = x.UserID JOIN
+                Groups as g             ON g.ID = x.GroupID
+            WHERE g.ID = $1`,
+            [id]
+        );
+        res.json(allData.rows);
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
 // CREATE a user
 app.post(
     '/users',
@@ -305,6 +329,29 @@ app.delete(
 app.get('/groups', async (req: Request, res: Response) => {
     try {
         const allData: QueryResult = await pool.query('SELECT * FROM groups');
+        res.json(allData.rows);
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
+/* Get Groups By Provided User ID */
+app.get('/groups:id', async (req: Request, res: Response) => {
+    // Extract the User ID from the URL parameters
+    const { id } = req.params;
+    // console.log('ID is: ' + id); // DEBUG
+    try {
+        const allData: QueryResult = await pool.query(
+            `SELECT g.* 
+            FROM 
+                Groups as g             JOIN
+                UserGroupXRef as x      ON x.GroupID = g.ID JOIN
+                Users as u              ON u.ID = x.UserID
+            WHERE u.ID = $1`,
+            [id]
+        );
+        // console.log('/groups:id was called'); // DEBUG
         res.json(allData.rows);
     } catch (e) {
         console.error((e as Error).message);
