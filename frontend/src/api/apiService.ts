@@ -1,6 +1,6 @@
 //import axios from 'axios';
 import api from './axios';
-import { User, Group } from '@types';
+import { User, Group, GroupAndCreator } from '@types';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -37,7 +37,9 @@ export const getGroups = async (): Promise<Group[]> => {
     }
 };
 
-export const createGroup = async (groupData: Group): Promise<Group> => {
+export const createGroup = async (
+    groupData: GroupAndCreator
+): Promise<Group> => {
     try {
         const response = await api.post<{ InsertedEntry: Group }>(
             `${API_URL}/groups`,

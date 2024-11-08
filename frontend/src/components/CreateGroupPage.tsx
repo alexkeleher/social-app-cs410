@@ -1,49 +1,83 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Group } from '@types';
-import { getGroups, createGroup } from '../api/apiService';
+import { Group, GroupAndCreator } from '@types';
+import { createGroup } from '../api/apiService';
+import AuthContext from '../context/AuthProvider';
 
 const CreateGroupPage: React.FC = () => {
     const [groupName, setGroupName] = useState<string>('');
     const [groupType, setGroupType] = useState<string>('');
-    const [groups, setGroups] = useState<Group[]>([]);
+    const { auth } = useContext(AuthContext);
+    const [alert, setAlert] = useState<{
+        type: 'success' | 'error';
+        message: string;
+    } | null>(null);
 
-    useEffect(() => {
-        const fetchGroups = async () => {
-            console.log('fetchGroups() called');
-            const usersData = await getGroups();
-            console.log('Fetched groups: ', usersData);
-            setGroups(usersData);
-        };
-
-        fetchGroups();
-    }, []);
+    const dismissAlert = () => {
+        setAlert(null);
+    };
 
     const navigate = useNavigate(); // useNavigate hook for navigation
 
-    const registerGroup = async () => {
-        const groupData: Group = {
-            name: groupName,
-        };
+    const registerGroup = async (e: React.FormEvent<HTMLFormElement>) => {
+        try {
+            e.preventDefault();
+            const groupData: GroupAndCreator = {
+                groupname: groupName,
+                creatoruserid: auth.id!, // The ! sign is telling Typescript we know for sure auth.id will not be Null here
+            };
+            createGroup(groupData);
+            setGroupName(''); // Clear the group name from the input box when done
+            setAlert({
+                type: 'success',
+                message: 'Group created successfully!',
+            });
+            console.log('Group created');
+        } catch (error) {
+            setAlert({
+                type: 'error',
+                message: 'Failed to create group. Please try again.',
+            });
+            console.log(error);
+        }
+    };
 
-        createGroup(groupData);
-        console.log('Group created');
+    const alertStyle = {
+        padding: '10px',
+        marginTop: '15px',
+        borderRadius: '5px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#fff3cd', // Yellow background
+        border: '1px solid #ffeeba', // Border with yellow tone
+        color: '#856404', // Text color
+    };
+
+    const dismissButtonStyle = {
+        background: 'none',
+        border: 'none',
+        fontSize: '16px',
+        cursor: 'pointer',
     };
 
     return (
         <div className="form-container">
-            <h1>Groups List</h1>
-            {groups.length > 0 ? (
-                <ul>
-                    {groups.map((group, index) => (
-                        <li key={index}>{group.name}</li>
-                    ))}
-                </ul>
-            ) : (
-                <p>No users found</p>
+            {alert && (
+                <div style={alertStyle} className={`alert ${alert.type}`}>
+                    <span>{alert.message}</span>
+                    <button
+                        style={dismissButtonStyle}
+                        onClick={dismissAlert}
+                        className="dismiss-button"
+                    >
+                        ×
+                    </button>
+                </div>
             )}
 
             <h2>Create Your Group</h2>
+
             <form onSubmit={registerGroup}>
                 <label htmlFor="groupName">Group Name</label>
                 <input
@@ -56,7 +90,7 @@ const CreateGroupPage: React.FC = () => {
                     placeholder="Enter your group name"
                 />
 
-                <label htmlFor="groupType">Group Type</label>
+                {/* <label htmlFor="groupType">Group Type</label>
                 <select
                     id="groupType"
                     value={groupType}
@@ -69,7 +103,7 @@ const CreateGroupPage: React.FC = () => {
                     <option value="friends">Friends</option>
                     <option value="work">Work</option>
                     <option value="school">School</option>
-                </select>
+                </select> */}
 
                 <button className="create-button" type="submit">
                     Create Group
@@ -80,15 +114,15 @@ const CreateGroupPage: React.FC = () => {
                     className="create-button"
                     type="button"
                 >
-                    Go to My Groups
+                    My Groups
                 </button>
 
                 <button
                     onClick={() => navigate('/')} // Navigate to Landing Page
-                    className="back-button"
+                    className="create-button"
                     type="button"
                 >
-                    Go to Landing Page
+                    Landing Page
                 </button>
             </form>
         </div>

@@ -82,14 +82,15 @@ const SelectedGroup = () => {
                             </>
                         ))}
                     </div>
+                    <button className="cta-button">Invite Members</button>
                     <form>
                         <button className="cta-button">Create Event</button>
-                        <Link to="/my-groups">
-                            <button className="cta-button">
-                                Back To My Groups
-                            </button>
-                        </Link>
                     </form>
+                    <Link to="/my-groups">
+                        <button className="cta-button">
+                            Back To My Groups
+                        </button>
+                    </Link>
                 </main>
             </div>
         </>
