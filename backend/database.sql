@@ -6,7 +6,9 @@ CREATE TABLE Users (
 	Email VARCHAR(50) NOT NULL,
 	Password VARCHAR(500),
 	Phone CHAR(10),
-	Address VARCHAR(500)
+	Address VARCHAR(500),
+	PreferredPriceRange SMALLINT, -- Added for price range
+    PreferredMaxDistance INT     -- Added for max distance in miles
 );
 
 CREATE TABLE Groups (
@@ -57,25 +59,25 @@ CREATE TABLE UserHours (
 	FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE
 );
 
-CREATE TABLE RestaurantType (
-	ID SERIAL PRIMARY KEY,
-	Description VARCHAR(50)
-);
+-- CREATE TABLE RestaurantType (
+-- 	ID SERIAL PRIMARY KEY,
+-- 	Description VARCHAR(50)
+-- );
 
-CREATE TABLE UserRestaurantTypeXRef (
-	UserID INT NOT NULL,
-	RestaurantTypeID INT NOT NULL,
-	FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE,
-	FOREIGN KEY (RestaurantTypeID) REFERENCES RestaurantType(ID) ON DELETE CASCADE
-);
+-- CREATE TABLE UserRestaurantTypeXRef (
+-- 	UserID INT NOT NULL,
+-- 	RestaurantTypeID INT NOT NULL,
+-- 	FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE,
+-- 	FOREIGN KEY (RestaurantTypeID) REFERENCES RestaurantType(ID) ON DELETE CASCADE
+-- );
 
-CREATE TABLE user_sessions (
-  sid varchar NOT NULL COLLATE "default",
-  sess json NOT NULL,
-  expire timestamp(6) NOT NULL
-) WITH (OIDS=FALSE);
+-- CREATE TABLE user_sessions (
+--   sid varchar NOT NULL COLLATE "default",
+--   sess json NOT NULL,
+--   expire timestamp(6) NOT NULL
+-- ) WITH (OIDS=FALSE);
 
-ALTER TABLE "user_sessions" ADD CONSTRAINT user_sessions_pkey PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
+-- ALTER TABLE "user_sessions" ADD CONSTRAINT user_sessions_pkey PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
 
 CREATE TABLE UserCuisinePreferences (
 	UserID INT,
