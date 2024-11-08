@@ -223,12 +223,23 @@ app.get('/users-by-groupid:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
         const allData: QueryResult = await pool.query(
-            `SELECT g.name as groupname, u.id, u.firstname, u.lastname, u.username, u.email
-            FROM 
-                Users as u              JOIN
-                UserGroupXRef as x      ON u.ID = x.UserID JOIN
-                Groups as g             ON g.ID = x.GroupID
-            WHERE g.ID = $1`,
+            `SELECT 
+                g.name as groupname, 
+                u.id, 
+                u.firstname, 
+                u.lastname, 
+                u.username, 
+                u.email,
+                (
+                    SELECT ARRAY_AGG(cp.CuisineType)
+                    FROM UserCuisinePreferences cp
+                    WHERE cp.UserID = u.id
+                ) as cuisine_preferences
+            FROM Users u
+            JOIN UserGroupXRef x ON u.ID = x.UserID 
+            JOIN Groups g ON g.ID = x.GroupID
+            WHERE g.ID = $1
+            GROUP BY g.name, u.id, u.firstname, u.lastname, u.username, u.email`,
             [id]
         );
         res.json(allData.rows);
