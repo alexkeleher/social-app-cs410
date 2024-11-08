@@ -67,15 +67,46 @@ app.use(
 );
 
 // function to protect routes that require authentication
-const requireAuth = (
-    req: Request<{ id: string }>,
+// Update requireAuth middleware to handle token refresh
+const requireAuth = async (
+    req: Request,
     res: Response,
     next: express.NextFunction
-) => {
-    if (req.session.user) {
+): Promise<void> => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        res.status(401).json({ error: 'No token provided' });
+        return;
+    }
+
+    try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, 'your-secret-key') as { id: number; email: string };
+        req.session.user = decoded;
         next();
-    } else {
-        res.status(401).json({ error: 'Unauthorized' });
+    } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+            // Try to refresh token
+            try {
+                const decoded = jwt.verify(token, 'your-secret-key', { ignoreExpiration: true }) as { id: number; email: string };
+                const newToken = jwt.sign(
+                    { id: decoded.id, email: decoded.email },
+                    'your-secret-key',
+                    { expiresIn: '24h' }
+                );
+                
+                // Send new token in response headers
+                res.setHeader('New-Token', newToken);
+                req.session.user = decoded;
+                next();
+            } catch (refreshError) {
+                console.error('Token refresh failed:', refreshError);
+                res.status(401).json({ error: 'Token expired and refresh failed' });
+            }
+        } else {
+            console.error('Auth error:', error);
+            res.status(401).json({ error: 'Invalid token' });
+        }
     }
 };
 
@@ -116,7 +147,7 @@ app.post('/login', async (req: Request, res: Response): Promise<void> => {
         const token = jwt.sign(
             { id: user.id, email: user.email },
             'your-secret-key',
-            { expiresIn: '1h' } // 2 minutes
+            { expiresIn: '24h' } // 24 hours
         );
 
         console.log('Generated token:', token); // Log the generated token
@@ -128,6 +159,31 @@ app.post('/login', async (req: Request, res: Response): Promise<void> => {
     } catch (e) {
         console.error((e as Error).message);
         res.status(500).json({ error: (e as Error).message });
+    }
+});
+
+// Add refresh token endpoint
+app.post('/refresh-token', async (req: Request, res: Response) => {
+    const { token } = req.body;
+    
+    if (!token) {
+        return res.status(401).json({ error: 'No token provided' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, 'your-secret-key', { ignoreExpiration: true }) as { id: number; email: string };
+        
+        // Generate new token
+        const newToken = jwt.sign(
+            { id: decoded.id, email: decoded.email },
+            'your-secret-key',
+            { expiresIn: '24h' }
+        );
+
+        res.json({ token: newToken });
+    } catch (error) {
+        console.error('Token refresh error:', error);
+        res.status(401).json({ error: 'Invalid token' });
     }
 });
 
@@ -167,12 +223,23 @@ app.get('/users-by-groupid:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
         const allData: QueryResult = await pool.query(
-            `SELECT g.name as groupname, u.id, u.firstname, u.lastname, u.username, u.email
-            FROM 
-                Users as u              JOIN
-                UserGroupXRef as x      ON u.ID = x.UserID JOIN
-                Groups as g             ON g.ID = x.GroupID
-            WHERE g.ID = $1`,
+            `SELECT 
+                g.name as groupname, 
+                u.id, 
+                u.firstname, 
+                u.lastname, 
+                u.username, 
+                u.email,
+                (
+                    SELECT ARRAY_AGG(cp.CuisineType)
+                    FROM UserCuisinePreferences cp
+                    WHERE cp.UserID = u.id
+                ) as cuisine_preferences
+            FROM Users u
+            JOIN UserGroupXRef x ON u.ID = x.UserID 
+            JOIN Groups g ON g.ID = x.GroupID
+            WHERE g.ID = $1
+            GROUP BY g.name, u.id, u.firstname, u.lastname, u.username, u.email`,
             [id]
         );
         res.json(allData.rows);
@@ -378,6 +445,11 @@ Input: A GroupAndCreator object that consists on the name of the group to create
 Operation: Inserts the group to the database. Adds the user to the group in the database.
 Output: Json object with result of the operation
 */
+
+function generateJoinCode(): string {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
 app.post(
     // first argument is the path
     '/groups',
@@ -387,33 +459,169 @@ app.post(
         try {
             // Take the group name from the request
             const { groupname, creatoruserid } = req.body;
+            let joinCode: string;
+            let attempts = 0;
 
+            while (attempts <3) {
+                try {
+                    joinCode = generateJoinCode();
             // Store the groupname
-            const insertedGroupData: QueryResult = await pool.query(
-                `INSERT INTO Groups (Name)
-                VALUES($1) RETURNING *;`,
-                [groupname]
-            );
-            const newlyInsertedGroupID = insertedGroupData.rows[0].id;
-
+                    const insertedGroupData: QueryResult = await pool.query(
+                        'INSERT INTO Groups (Name, JoinCode) VALUES($1, $2) RETURNING *;',
+                        [groupname, joinCode]
+                    );
+                    const newlyCreatedGroupID = insertedGroupData.rows[0].id;
             // Add the creating user to the group
-            await pool.query(
-                `INSERT INTO UserGroupXRef (UserID, GroupID)
-                VALUES($1, $2);`,
-                [creatoruserid, newlyInsertedGroupID]
-            );
-
+                    await pool.query(
+                        'INSERT INTO UserGroupXRef (UserID, GroupID) VALUES($1, $2);',
+                        [creatoruserid, newlyCreatedGroupID]
+                    );
             // Send response back to the client
-            res.json({
-                Result: 'Success',
-                InsertedEntry: insertedGroupData.rows,
-            });
-        } catch (e) {
+                    res.json({
+                        Result: 'Success',
+                        InsertedEntry: insertedGroupData.rows,
+                    });
+                    return;
+                } catch (e) {
+                    attempts++;
+                    if (attempts === 3) throw e;
+                    }
+                }
+            }
+         catch (e) {
             console.error((e as Error).message);
             res.status(500).json({ error: (e as Error).message });
         }
     }
 );
+
+
+
+
+// Add join group endpoint
+app.post('/groups/join', requireAuth, async (req: Request, res: Response) => {
+    try {
+        const { joinCode } = req.body;
+        const userId = req.session.user?.id;
+
+        if (!userId) {
+            return res.status(401).json({ error: 'User not authenticated' });
+        }
+
+        // Add console logs for debugging
+        console.log('Join attempt:', { userId, joinCode });
+
+        const groupResult = await pool.query(
+            'SELECT id FROM Groups WHERE JoinCode = $1',
+            [joinCode]
+        );
+
+        if (groupResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Invalid join code' });
+        }
+
+        const groupId = groupResult.rows[0].id;
+
+        // Check if already member
+        const memberCheck = await pool.query(
+            'SELECT 1 FROM UserGroupXRef WHERE UserID = $1 AND GroupID = $2',
+            [userId, groupId]
+        );
+
+        if (memberCheck.rows.length > 0) {
+            return res.status(400).json({ error: 'Already a member' });
+        }
+
+        // Add user to group
+        await pool.query(
+            'INSERT INTO UserGroupXRef (UserID, GroupID) VALUES ($1, $2)',
+            [userId, groupId]
+        );
+
+        res.json({ message: 'Successfully joined group' });
+    } catch (e) {
+        console.error('Join group error:', e);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
+// Send invite
+app.post('/groups/:id/invite', requireAuth, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { email } = req.body;
+
+        //Check if user exists
+        const userExists = await pool.query(
+            'SELECT 1 FROM Users WHERE email = $1',
+            [email]
+        );
+
+        if (userExists.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Check if user is already in group
+        const isMember = await pool.query(
+            `SELECT 1 FROM UserGroupXRef u
+             JOIN Users usr ON usr.id = u.userid
+             WHERE u.groupid = $1 AND usr.email = $2`,
+            [id, email]
+        );
+
+        if (isMember.rows.length > 0) {
+            return res.status(400).json({ error: 'User is already in group' });
+        }
+
+        // Create invite
+        await pool.query(
+            'INSERT INTO GroupInvites (GroupID, Email) VALUES ($1, $2)',
+            [id, email]
+        );
+
+        res.json({ message: 'Invite sent' });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
+// Get pending invites for user
+app.get('/invites', requireAuth, async (req: Request, res: Response) => {
+        try {
+            const userId = req.session.user?.id;
+            const result = await pool.query(
+                `SELECT g.id, g.name, g.joincode, gi.invitedat 
+                FROM GroupInvites gi
+                JOIN Groups g ON g.id = gi.groupid
+                JOIN Users u ON u.email = gi.email
+                WHERE u.id = $1`,
+               [userId]
+           );
+              res.json(result.rows);
+        } catch (e) {
+            console.error(e);
+            res.status(500).json({ error: (e as Error).message });
+        }
+    });
+
+    app.delete('/invites/:id', requireAuth, async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params;
+            const userId = req.session.user?.id;
+    
+            // Delete the invitation
+            await pool.query(
+                'DELETE FROM GroupInvites WHERE GroupID = $1 AND Email = (SELECT email FROM Users WHERE id = $2)',
+                [id, userId]
+            );
+    
+            res.json({ message: 'Invitation deleted successfully' });
+        } catch (e) {
+            console.error(e);
+            res.status(500).json({ error: (e as Error).message });
+        }
+    });
 
 // UPDATE a group (protected)
 app.put(

@@ -21,6 +21,7 @@ import { AuthProvider } from './context/AuthProvider';
 import ProtectedRoute from './components/ProtectedRoute';
 import YelpRestaurants from './components/TestYelpRestaurants';
 import SelectedGroup from './components/SelectedGroup';
+import JoinGroup from './components/JoinGroup';
 
 import './styles/main.css';
 
@@ -119,6 +120,7 @@ const App: React.FC = () => {
                             path="/scheduling"
                             element={<SchedulingPage />}
                         />
+                        <Route path="/join-group" element={<JoinGroup />} />
                         <Route
                             path="/all-preferences"
                             element={<AllPreferencesPage />}
