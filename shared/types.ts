@@ -7,6 +7,8 @@ export interface User {
     password: string;
     phone?: string | null;
     address?: string | null;
+    PreferredPriceRange?: number | null;
+    PreferredMaxDistance?: number | null;
 }
 
 export interface Group {

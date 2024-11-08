@@ -26,6 +26,8 @@ interface UpdateBody {
     Password?: string;
     Phone?: string;
     Address?: string;
+    PreferredPriceRange?: number; // price range
+    PreferredMaxDistance?: number; // max distance
 }
 
 interface Restaurant {
@@ -193,6 +195,8 @@ app.post(
                 password,
                 phone,
                 address,
+                PreferredPriceRange,
+                PreferredMaxDistance,
             } = req.body;
 
             // Hash the new password
@@ -201,8 +205,8 @@ app.post(
 
             // Store the hashed password in the database
             const newData: QueryResult = await pool.query(
-                `INSERT INTO Users (firstname, lastname, username, email, password, phone, address)
-             VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+                `INSERT INTO Users (firstname, lastname, username, email, password, phone, address, PreferredPriceRange, PreferredMaxDistance)
+             VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
                 [
                     firstname,
                     lastname,
@@ -211,6 +215,8 @@ app.post(
                     hashedPassword,
                     phone,
                     address,
+                    PreferredPriceRange,
+                    PreferredMaxDistance,
                 ]
             );
             res.json({
@@ -227,7 +233,6 @@ app.post(
 // UPDATE a user (protected)
 app.put(
     '/users/:id',
-    requireAuth,
     async (req: Request<Parameters, unknown, UpdateBody>, res: Response) => {
         try {
             const { id } = req.params;
@@ -239,6 +244,8 @@ app.put(
                 Password,
                 Phone,
                 Address,
+                PreferredPriceRange,
+                PreferredMaxDistance,
             } = req.body;
 
             // Dynamically build the SET clause based on provided fields (since we don't have to provide every field)
@@ -291,6 +298,16 @@ app.put(
                 values.push(Address);
                 count++;
             }
+            if (PreferredPriceRange) {
+                updates.push(`PreferredPriceRange = $${count}`);
+                values.push(String(PreferredPriceRange));
+                count++;
+            }
+            if (PreferredMaxDistance) {
+                updates.push(`PreferredMaxDistance = $${count}`);
+                values.push(String(PreferredMaxDistance));
+                count++;
+            }
 
             // Construct SQL query to dynamically update user fields based on request body
             const query = `UPDATE users SET ${updates.join(', ')} WHERE id = $${count} RETURNING *`;
@@ -312,7 +329,6 @@ app.put(
 // DELETE a user (protected)
 app.delete(
     '/users/:id',
-    requireAuth,
     async (req: Request<Parameters>, res: Response) => {
         try {
             const { id } = req.params;

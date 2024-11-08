@@ -6,7 +6,9 @@ CREATE TABLE Users (
 	Email VARCHAR(50) NOT NULL,
 	Password VARCHAR(500),
 	Phone CHAR(10),
-	Address VARCHAR(500)
+	Address VARCHAR(500),
+	PreferredPriceRange SMALLINT, -- Added for price range
+    PreferredMaxDistance INT     -- Added for max distance in miles
 );
 
 CREATE TABLE Groups (
