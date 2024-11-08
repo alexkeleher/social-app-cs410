@@ -7,6 +7,7 @@ interface Group {
     id: number;
     name: string;
     datecreated: Date;
+    joincode: string;
 }
 
 const MyGroups: React.FC = () => {
@@ -48,6 +49,9 @@ const MyGroups: React.FC = () => {
                                 <p>
                                     Date Created: {group.datecreated.toString()}
                                 </p>
+                                <p className="join-code">
+                                    Join Code: {group.joincode}
+                                </p>
                             </div>
                         </Link>
                     ))}
@@ -69,6 +73,13 @@ const MyGroups: React.FC = () => {
                         type="button"
                     >
                         Go to My Preferences
+                    </button>
+                    <button
+                        onClick={() => navigate('/join-group')}
+                        className="cta-button"
+                        type="button"
+                    >
+                        Join a Group
                     </button>
                 </div>
 

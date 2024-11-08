@@ -14,8 +14,10 @@ CREATE TABLE Users (
 CREATE TABLE Groups (
 	ID SERIAL PRIMARY KEY,
 	Name VARCHAR(50),
-	DateCreated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	DateCreated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	JoinCode VARCHAR(6) UNIQUE NOT NULL
 );
+
 
 CREATE TABLE UserGroupXRef (
 	UserID INT,
@@ -107,11 +109,11 @@ INSERT INTO Users(
 	 ('Jajuan', 'Myers', 'jmyers', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '4444444444', '127 E main St Baltimore MD, 21237', 'jmyers@email.com'),
 	 ('Matt', 'Janak', 'mjanak', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '5555555555', '128 E main St Baltimore MD, 21237', 'mjanak@email.com');
 
-INSERT INTO Groups (name) VALUES 
- ('Group Red'),
- ('The monsters'),
- ('The sharks'),
- ('The workaholics');
+INSERT INTO Groups (name, JoinCode) VALUES 
+    ('Group Red', 'RED123'),
+    ('The monsters', 'MON456'),
+    ('The sharks', 'SHK789'),
+    ('The workaholics', 'WRK012');
 
  INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
  ((SELECT id FROM Users WHERE email = 'atoledo@email.com'), (SELECT ID FROM Groups WHERE name = 'Group Red')),
