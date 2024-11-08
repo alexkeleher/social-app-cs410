@@ -534,6 +534,84 @@ app.post('/groups/join', requireAuth, async (req: Request, res: Response) => {
     }
 });
 
+// Send invite
+app.post('/groups/:id/invite', requireAuth, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { email } = req.body;
+
+        //Check if user exists
+        const userExists = await pool.query(
+            'SELECT 1 FROM Users WHERE email = $1',
+            [email]
+        );
+
+        if (userExists.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Check if user is already in group
+        const isMember = await pool.query(
+            `SELECT 1 FROM UserGroupXRef u
+             JOIN Users usr ON usr.id = u.userid
+             WHERE u.groupid = $1 AND usr.email = $2`,
+            [id, email]
+        );
+
+        if (isMember.rows.length > 0) {
+            return res.status(400).json({ error: 'User is already in group' });
+        }
+
+        // Create invite
+        await pool.query(
+            'INSERT INTO GroupInvites (GroupID, Email) VALUES ($1, $2)',
+            [id, email]
+        );
+
+        res.json({ message: 'Invite sent' });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
+// Get pending invites for user
+app.get('/invites', requireAuth, async (req: Request, res: Response) => {
+        try {
+            const userId = req.session.user?.id;
+            const result = await pool.query(
+                `SELECT g.id, g.name, g.joincode, gi.invitedat 
+                FROM GroupInvites gi
+                JOIN Groups g ON g.id = gi.groupid
+                JOIN Users u ON u.email = gi.email
+                WHERE u.id = $1`,
+               [userId]
+           );
+              res.json(result.rows);
+        } catch (e) {
+            console.error(e);
+            res.status(500).json({ error: (e as Error).message });
+        }
+    });
+
+    app.delete('/invites/:id', requireAuth, async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params;
+            const userId = req.session.user?.id;
+    
+            // Delete the invitation
+            await pool.query(
+                'DELETE FROM GroupInvites WHERE GroupID = $1 AND Email = (SELECT email FROM Users WHERE id = $2)',
+                [id, userId]
+            );
+    
+            res.json({ message: 'Invitation deleted successfully' });
+        } catch (e) {
+            console.error(e);
+            res.status(500).json({ error: (e as Error).message });
+        }
+    });
+
 // UPDATE a group (protected)
 app.put(
     '/groups/:id',

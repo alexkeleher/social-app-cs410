@@ -20,6 +20,23 @@ const SelectedGroup = () => {
     // need a variable for group users array
     const [groupUsers, setGroupUsers] = useState<GroupUser[]>([]);
     const [groupName, setGroupName] = useState('');
+    const [inviteEmail, setInviteEmail] = useState('');
+    const [inviteError, setInviteError] = useState('');
+
+    const handleInvite = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setInviteError('');
+
+        try {
+            await api.post(`/groups/${groupid}/invite`, { email: inviteEmail });
+            setInviteEmail('');
+            alert('Invite sent successfully');
+        } catch (err: any) {
+            setInviteError(
+                err.response?.data?.error || 'Failed to send invite'
+            );
+        }
+    };
 
     useEffect(() => {
         getMyGroups();
@@ -83,6 +100,18 @@ const SelectedGroup = () => {
                         ))}
                     </div>
                     <button className="cta-button">Invite Members</button>
+                    <form onSubmit={handleInvite}>
+                        <input
+                            type="email"
+                            value={inviteEmail}
+                            onChange={(e) => setInviteEmail(e.target.value)}
+                            placeholder="Enter email to invite"
+                        />
+                        <button type="submit" className="cta-button">
+                            Send Invite
+                        </button>
+                        {inviteError && <p className="error">{inviteError}</p>}
+                    </form>
                     <form>
                         <button className="cta-button">Create Event</button>
                     </form>

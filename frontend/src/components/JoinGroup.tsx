@@ -110,6 +110,7 @@ const JoinGroup: React.FC = () => {
                     }}
                 >
                     {isLoading ? 'Joining...' : 'Join Group'}
+                    {/* Add delete invite logic here if needed */}
                 </Button>
                 <Button
                     onClick={() => navigate('/my-groups')}

@@ -27,6 +27,14 @@ CREATE TABLE UserGroupXRef (
 	FOREIGN KEY (GroupID) REFERENCES Groups(ID) ON DELETE CASCADE
 );
 
+CREATE TABLE GroupInvites (
+	ID SERIAL PRIMARY KEY,
+	GroupID INT,
+	Email VARCHAR(50) NOT NULL,
+	InvitedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (GroupID) REFERENCES Groups(ID) ON DELETE CASCADE
+);
+
 CREATE TABLE Restaurant (
 	ID SERIAL PRIMARY KEY,
 	Name VARCHAR(100),
@@ -73,13 +81,13 @@ CREATE TABLE UserHours (
 -- 	FOREIGN KEY (RestaurantTypeID) REFERENCES RestaurantType(ID) ON DELETE CASCADE
 -- );
 
--- CREATE TABLE user_sessions (
---   sid varchar NOT NULL COLLATE "default",
---   sess json NOT NULL,
---   expire timestamp(6) NOT NULL
--- ) WITH (OIDS=FALSE);
+CREATE TABLE user_sessions (
+  sid varchar NOT NULL COLLATE "default",
+  sess json NOT NULL,
+  expire timestamp(6) NOT NULL
+) WITH (OIDS=FALSE);
 
--- ALTER TABLE "user_sessions" ADD CONSTRAINT user_sessions_pkey PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "user_sessions" ADD CONSTRAINT user_sessions_pkey PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
 
 CREATE TABLE UserCuisinePreferences (
 	UserID INT,
