@@ -20,12 +20,7 @@ CREATE TABLE Groups (
 	JoinCode VARCHAR(6) UNIQUE NOT NULL
 );
 
-<<<<<<< HEAD
 CREATE TABLE IF NOT EXISTS UserGroupXRef (
-=======
-
-CREATE TABLE UserGroupXRef (
->>>>>>> main
 	UserID INT,
 	GroupID INT,
 	PRIMARY KEY (UserID, GroupID),
@@ -33,10 +28,7 @@ CREATE TABLE UserGroupXRef (
 	FOREIGN KEY (GroupID) REFERENCES Groups(ID) ON DELETE CASCADE
 );
 
-<<<<<<< HEAD
-CREATE TABLE IF NOT EXISTS Restaurant (
-=======
-CREATE TABLE GroupInvites (
+CREATE TABLE IF NOT EXISTS GroupInvites (
 	ID SERIAL PRIMARY KEY,
 	GroupID INT,
 	Email VARCHAR(50) NOT NULL,
@@ -45,7 +37,6 @@ CREATE TABLE GroupInvites (
 );
 
 CREATE TABLE Restaurant (
->>>>>>> main
 	ID SERIAL PRIMARY KEY,
 	Name VARCHAR(100),
 	Address VARCHAR(500),
@@ -127,19 +118,11 @@ INSERT INTO Users(
 	 ('Jajuan', 'Myers', 'jmyers', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '4444444444', '127 E main St Baltimore MD, 21237', 'jmyers@email.com'),
 	 ('Matt', 'Janak', 'mjanak', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '5555555555', '128 E main St Baltimore MD, 21237', 'mjanak@email.com');
 
-<<<<<<< HEAD
-INSERT INTO Groups (name) VALUES
- ('Group Red'),
- ('The monsters'),
- ('The sharks'),
- ('The workaholics');
-=======
-INSERT INTO Groups (name, JoinCode) VALUES 
+INSERT INTO Groups (name, JoinCode) VALUES
     ('Group Red', 'RED123'),
     ('The monsters', 'MON456'),
     ('The sharks', 'SHK789'),
     ('The workaholics', 'WRK012');
->>>>>>> main
 
  INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
  ((SELECT id FROM Users WHERE email = 'atoledo@email.com'), (SELECT ID FROM Groups WHERE name = 'Group Red')),
