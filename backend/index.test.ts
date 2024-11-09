@@ -2,11 +2,6 @@ import { User } from '@types';
 import request from 'supertest';
 import { app, server } from './index';
 
-interface ApiResponse<T> {
-    Result: string;
-    InsertedEntry: T[];
-}
-
 afterAll((done) => {
     server.close(() => {
         console.log('Server closed');

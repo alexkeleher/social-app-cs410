@@ -3,7 +3,7 @@ import cors from 'cors';
 import pool from './db';
 import { QueryResult } from 'pg';
 import { Application, Request, Response } from 'express';
-import { User, Group, GroupAndCreator } from '@types';
+import { User, GroupAndCreator } from '@types';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import crypto from 'crypto';
