@@ -1,4 +1,4 @@
-CREATE TABLE Users (
+CREATE TABLE IF NOT EXISTS Users (
 	ID SERIAL PRIMARY KEY,
 	FirstName VARCHAR(50),
 	LastName VARCHAR(50),
@@ -6,10 +6,12 @@ CREATE TABLE Users (
 	Email VARCHAR(50) NOT NULL,
 	Password VARCHAR(500),
 	Phone CHAR(10),
-	Address VARCHAR(500),
-	PreferredPriceRange SMALLINT, -- Added for price range
-    PreferredMaxDistance INT     -- Added for max distance in miles
+	Address VARCHAR(500)
 );
+
+ALTER TABLE Users
+    ADD COLUMN IF NOT EXISTS PreferredPriceRange SMALLINT,
+    ADD COLUMN IF NOT EXISTS PreferredMaxDistance INT;
 
 CREATE TABLE Groups (
 	ID SERIAL PRIMARY KEY,
@@ -17,7 +19,7 @@ CREATE TABLE Groups (
 	DateCreated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE UserGroupXRef (
+CREATE TABLE IF NOT EXISTS UserGroupXRef (
 	UserID INT,
 	GroupID INT,
 	PRIMARY KEY (UserID, GroupID),
@@ -25,14 +27,14 @@ CREATE TABLE UserGroupXRef (
 	FOREIGN KEY (GroupID) REFERENCES Groups(ID) ON DELETE CASCADE
 );
 
-CREATE TABLE Restaurant (
+CREATE TABLE IF NOT EXISTS Restaurant (
 	ID SERIAL PRIMARY KEY,
 	Name VARCHAR(100),
 	Address VARCHAR(500),
 	PriceLevel SMALLINT
 );
 
-CREATE TABLE RestaurantHours (
+CREATE TABLE IF NOT EXISTS RestaurantHours (
 	RestaurantID INT NOT NULL,
 	DayOfWeek SMALLINT NOT NULL,
 	StartTime TIME NOT NULL,
@@ -41,7 +43,7 @@ CREATE TABLE RestaurantHours (
 	FOREIGN KEY (RestaurantID) REFERENCES Restaurant(ID) ON DELETE CASCADE
 );
 
-CREATE TABLE Selection (
+CREATE TABLE IF NOT EXISTS Selection (
 	GroupID INT NOT NULL,
 	RestaurantID INT NOT NULL,
 	TimeStart TIMESTAMP NOT NULL,
@@ -50,7 +52,7 @@ CREATE TABLE Selection (
 	FOREIGN KEY (GroupID) REFERENCES Groups(ID) ON DELETE CASCADE
 );
 
-CREATE TABLE UserHours (
+CREATE TABLE IF NOT EXISTS UserHours (
 	UserID INT NOT NULL,
 	DayOfWeek SMALLINT NOT NULL,
 	StartTime TIME NOT NULL,
@@ -79,22 +81,22 @@ CREATE TABLE UserHours (
 
 -- ALTER TABLE "user_sessions" ADD CONSTRAINT user_sessions_pkey PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
 
-CREATE TABLE UserCuisinePreferences (
+CREATE TABLE IF NOT EXISTS UserCuisinePreferences (
 	UserID INT,
 	CuisineType VARCHAR(50),
 	PRIMARY KEY (UserID, CuisineType),
 	FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE
 );
 
-CREATE TABLE CuisineTypes (
+CREATE TABLE IF NOT EXISTS CuisineTypes (
 	ID SERIAL PRIMARY KEY,
 	Name VARCHAR(50) UNIQUE
 );
 
 INSERT INTO CuisineTypes (Name) VALUES
-('American'), ('Italian'), ('Mexican'), ('Japanese'), ('Chinese'), ('Indian'), 
-('Thai'), ('Vietnamese'), ('Korean'), ('French'), ('Mediterranean'), ('Greek'), 
-('Spanish'), ('Middle Eastern'), ('African'), ('Caribbean'), ('German'), 
+('American'), ('Italian'), ('Mexican'), ('Japanese'), ('Chinese'), ('Indian'),
+('Thai'), ('Vietnamese'), ('Korean'), ('French'), ('Mediterranean'), ('Greek'),
+('Spanish'), ('Middle Eastern'), ('African'), ('Caribbean'), ('German'),
 ('British'), ('Irish'); -- Add more as needed (all of these are on Yelp)
 
 -- Insert Dummy Data into Users Table
@@ -107,7 +109,7 @@ INSERT INTO Users(
 	 ('Jajuan', 'Myers', 'jmyers', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '4444444444', '127 E main St Baltimore MD, 21237', 'jmyers@email.com'),
 	 ('Matt', 'Janak', 'mjanak', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '5555555555', '128 E main St Baltimore MD, 21237', 'mjanak@email.com');
 
-INSERT INTO Groups (name) VALUES 
+INSERT INTO Groups (name) VALUES
  ('Group Red'),
  ('The monsters'),
  ('The sharks'),
