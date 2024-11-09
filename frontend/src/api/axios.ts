@@ -14,15 +14,39 @@ const api: AxiosInstance = axios.create({
 //      Retrieves the authentication token from localStorage
 //      If a token exists, adds it to the request headers as a Bearer token
 //      This ensures every API request includes authentication if available
-api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+api.interceptors.response.use(
+    (response) => {
+        // Check for new token in response headers
+        const newToken = response.headers['new-token'];
+        if (newToken) {
+            localStorage.setItem('token', newToken);
         }
-        return config;
+        return response;
     },
-    (error) => {
+    async (error) => {
+        if (error.response?.status === 401) {
+            try {
+                const oldToken = localStorage.getItem('token');
+                if (oldToken) {
+                    // Try to refresh token
+                    const response = await api.post('/refresh-token', {
+                        token: oldToken,
+                    });
+                    if (response.data.token) {
+                        localStorage.setItem('token', response.data.token);
+                        // Retry original request
+                        const config = error.config;
+                        config.headers.Authorization = `Bearer ${response.data.token}`;
+                        return api(config);
+                    }
+                }
+            } catch (refreshError) {
+                console.error('Token refresh failed:', refreshError);
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                return Promise.reject(refreshError);
+            }
+        }
         return Promise.reject(error);
     }
 );

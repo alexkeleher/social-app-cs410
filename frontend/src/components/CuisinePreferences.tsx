@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
+import AuthContext from '../context/AuthProvider';
+import api from '../api/axios';
 
-// Define the possible states
+// Define possible states
 enum PreferenceState {
     OFF = 'Off',
     YES = 'Yes',
-    NO = 'No',
 }
 
-// Store the image URLs in an object
+// Store image URLs
 const images = {
     italian:
         'https://www.pvristorante.com/wp-content/uploads/2019/09/blog-1.jpg',
@@ -42,7 +43,6 @@ const images = {
         'https://fooddrinklife.com/wp-content/uploads/2024/05/european-food.jpg',
 };
 
-// Array of cuisine types using image references from the object
 const cuisineOptions = [
     { name: 'Italian', img: images.italian },
     { name: 'Chinese', img: images.chinese },
@@ -62,34 +62,65 @@ const cuisineOptions = [
     { name: 'African', img: images.african },
     { name: 'Latin American', img: images.latinAmerican },
     { name: 'European', img: images.european },
-    // Add more cuisines as needed
 ];
 
 const CuisinePreferences: React.FC = () => {
-    // State to hold preferences for each cuisine type
+    const { auth } = React.useContext(AuthContext);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveMessage, setSaveMessage] = useState('');
+    const [fetchError, setFetchError] = useState<string | null>(null);
     const [preferences, setPreferences] = useState<{
         [key: string]: PreferenceState;
-    }>(
-        cuisineOptions.reduce(
-            (acc, cuisine) => {
-                acc[cuisine.name] = PreferenceState.OFF;
-                return acc;
-            },
-            {} as { [key: string]: PreferenceState }
-        )
-    );
+    }>({});
 
-    // Function to cycle through states on click
+    React.useEffect(() => {
+        const fetchPreferences = async () => {
+            setIsLoading(true);
+            setFetchError(null);
+            try {
+                const response = await api.get(`/users/${auth.id}/cuisines`, {
+                    headers: {
+                        Authorization: `Bearer ${auth.token}`,
+                    },
+                });
+
+                const savedPreferences = cuisineOptions.reduce(
+                    (acc, cuisine) => {
+                        acc[cuisine.name] =
+                            response.data.cuisinePreferences.includes(
+                                cuisine.name
+                            )
+                                ? PreferenceState.YES
+                                : PreferenceState.OFF;
+                        return acc;
+                    },
+                    {} as { [key: string]: PreferenceState }
+                );
+
+                setPreferences(savedPreferences);
+            } catch (error) {
+                console.error('Failed to fetch preferences:', error);
+                setFetchError('Failed to load preferences');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (auth.id) {
+            fetchPreferences();
+        }
+    }, [auth.id, auth.token]);
+
     const handleCuisineClick = (cuisineName: string) => {
         setPreferences((prevState) => {
             const currentPreference = prevState[cuisineName];
             let nextPreference = PreferenceState.OFF;
 
-            // Cycle through OFF -> YES -> NO -> OFF
             if (currentPreference === PreferenceState.OFF) {
                 nextPreference = PreferenceState.YES;
             } else if (currentPreference === PreferenceState.YES) {
-                nextPreference = PreferenceState.NO;
+                nextPreference = PreferenceState.OFF;
             }
 
             return {
@@ -99,24 +130,77 @@ const CuisinePreferences: React.FC = () => {
         });
     };
 
+    const handleSavePreferences = async () => {
+        setIsSaving(true);
+        setSaveMessage('');
+
+        try {
+            const selectedCuisines = Object.entries(preferences)
+                .filter(([_, state]) => state === PreferenceState.YES)
+                .map(([cuisine]) => cuisine);
+
+            await api.put(
+                `/users/${auth.id}/cuisines`,
+                { cuisineTypes: selectedCuisines },
+                {
+                    headers: {
+                        Authorization: `Bearer ${auth.token}`,
+                    },
+                }
+            );
+
+            setSaveMessage('Preferences saved successfully!');
+            setTimeout(() => setSaveMessage(''), 3000);
+        } catch (error) {
+            console.error('Failed to save preferences:', error);
+            setSaveMessage('Failed to save preferences. Please try again.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    if (isLoading) {
+        return <div className="loading-message">Loading preferences...</div>;
+    }
+
+    if (fetchError) {
+        return <div className="error-message">{fetchError}</div>;
+    }
+
     return (
         <div className="cuisine-preferences-container">
-            <h1>Select Your Cuisine Preferences</h1>
             <div className="cuisine-grid">
                 {cuisineOptions.map((cuisine) => (
-                    <div
-                        key={cuisine.name}
-                        className={`cuisine-item ${preferences[cuisine.name].toLowerCase()}`} // Apply dynamic class
-                        onClick={() => handleCuisineClick(cuisine.name)}
-                    >
-                        <img
-                            src={cuisine.img}
-                            alt={cuisine.name}
-                            className="cuisine-img"
-                        />
-                        <p>{cuisine.name}</p>
+                    <div key={cuisine.name}>
+                        <div
+                            className={`cuisine-item ${preferences[cuisine.name]?.toLowerCase()}`}
+                            onClick={() => handleCuisineClick(cuisine.name)}
+                        >
+                            <img
+                                src={cuisine.img}
+                                alt={cuisine.name}
+                                className="cuisine-img"
+                            />
+                            <p>{cuisine.name}</p>
+                        </div>
                     </div>
                 ))}
+            </div>
+            <div className="save-preferences">
+                <button
+                    onClick={handleSavePreferences}
+                    disabled={isSaving}
+                    className="save-button"
+                >
+                    {isSaving ? 'Saving...' : 'Save Preferences'}
+                </button>
+                {saveMessage && (
+                    <p
+                        className={`save-message ${saveMessage.includes('Error') ? 'error' : 'success'}`}
+                    >
+                        {saveMessage}
+                    </p>
+                )}
             </div>
         </div>
     );

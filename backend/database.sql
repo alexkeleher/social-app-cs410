@@ -16,10 +16,16 @@ ALTER TABLE Users
 CREATE TABLE Groups (
 	ID SERIAL PRIMARY KEY,
 	Name VARCHAR(50),
-	DateCreated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	DateCreated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	JoinCode VARCHAR(6) UNIQUE NOT NULL
 );
 
+<<<<<<< HEAD
 CREATE TABLE IF NOT EXISTS UserGroupXRef (
+=======
+
+CREATE TABLE UserGroupXRef (
+>>>>>>> main
 	UserID INT,
 	GroupID INT,
 	PRIMARY KEY (UserID, GroupID),
@@ -27,7 +33,19 @@ CREATE TABLE IF NOT EXISTS UserGroupXRef (
 	FOREIGN KEY (GroupID) REFERENCES Groups(ID) ON DELETE CASCADE
 );
 
+<<<<<<< HEAD
 CREATE TABLE IF NOT EXISTS Restaurant (
+=======
+CREATE TABLE GroupInvites (
+	ID SERIAL PRIMARY KEY,
+	GroupID INT,
+	Email VARCHAR(50) NOT NULL,
+	InvitedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (GroupID) REFERENCES Groups(ID) ON DELETE CASCADE
+);
+
+CREATE TABLE Restaurant (
+>>>>>>> main
 	ID SERIAL PRIMARY KEY,
 	Name VARCHAR(100),
 	Address VARCHAR(500),
@@ -73,13 +91,13 @@ CREATE TABLE IF NOT EXISTS UserHours (
 -- 	FOREIGN KEY (RestaurantTypeID) REFERENCES RestaurantType(ID) ON DELETE CASCADE
 -- );
 
--- CREATE TABLE user_sessions (
---   sid varchar NOT NULL COLLATE "default",
---   sess json NOT NULL,
---   expire timestamp(6) NOT NULL
--- ) WITH (OIDS=FALSE);
+CREATE TABLE user_sessions (
+  sid varchar NOT NULL COLLATE "default",
+  sess json NOT NULL,
+  expire timestamp(6) NOT NULL
+) WITH (OIDS=FALSE);
 
--- ALTER TABLE "user_sessions" ADD CONSTRAINT user_sessions_pkey PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "user_sessions" ADD CONSTRAINT user_sessions_pkey PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
 
 CREATE TABLE IF NOT EXISTS UserCuisinePreferences (
 	UserID INT,
@@ -109,11 +127,19 @@ INSERT INTO Users(
 	 ('Jajuan', 'Myers', 'jmyers', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '4444444444', '127 E main St Baltimore MD, 21237', 'jmyers@email.com'),
 	 ('Matt', 'Janak', 'mjanak', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '5555555555', '128 E main St Baltimore MD, 21237', 'mjanak@email.com');
 
+<<<<<<< HEAD
 INSERT INTO Groups (name) VALUES
  ('Group Red'),
  ('The monsters'),
  ('The sharks'),
  ('The workaholics');
+=======
+INSERT INTO Groups (name, JoinCode) VALUES 
+    ('Group Red', 'RED123'),
+    ('The monsters', 'MON456'),
+    ('The sharks', 'SHK789'),
+    ('The workaholics', 'WRK012');
+>>>>>>> main
 
  INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
  ((SELECT id FROM Users WHERE email = 'atoledo@email.com'), (SELECT ID FROM Groups WHERE name = 'Group Red')),

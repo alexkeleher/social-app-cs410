@@ -31,7 +31,7 @@ const Login: React.FC = () => {
     // Redirect if already logged in
     useEffect(() => {
         if (!loading && auth?.token) {
-            navigate('/dashboard');
+            navigate('/landingpage');
         }
     }, [loading, auth, navigate]);
 

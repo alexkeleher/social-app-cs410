@@ -1,10 +1,6 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import api from '../api/axios';
-import { Group } from '@types';
-import { group } from 'console';
 
 interface GroupUser {
     groupname: string;
@@ -13,86 +9,128 @@ interface GroupUser {
     lastname: string;
     username: string;
     email: string;
+    cuisine_preferences?: string[] | null;
 }
 
 const SelectedGroup = () => {
     const { groupid } = useParams();
-    // need a variable for group users array
     const [groupUsers, setGroupUsers] = useState<GroupUser[]>([]);
     const [groupName, setGroupName] = useState('');
+    const [inviteEmail, setInviteEmail] = useState('');
+    const [inviteError, setInviteError] = useState('');
 
-    useEffect(() => {
-        getMyGroups();
-    }, []);
-
-    useEffect(() => {
-        if (groupUsers.length > 0) setGroupName(groupUsers[0].groupname);
-    }, [groupUsers]);
-
-    const getMyGroups = async () => {
+    const fetchGroupUsers = useCallback(async () => {
         try {
+            console.log('Fetching users for group:', groupid);
             const response = await api.get(`/users-by-groupid${groupid}`);
-            console.log('getting group users from Backend');
+            console.log('Group users response:', response.data);
             setGroupUsers(response.data);
         } catch (err) {
-            console.error(err);
+            console.error('Error fetching group users:', err);
+        }
+    }, [groupid]);
+
+    useEffect(() => {
+        fetchGroupUsers();
+    }, [fetchGroupUsers]);
+
+    useEffect(() => {
+        if (groupUsers.length > 0) {
+            setGroupName(groupUsers[0].groupname);
+        }
+    }, [groupUsers]);
+
+    const handleInvite = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setInviteError('');
+
+        try {
+            await api.post(`/groups/${groupid}/invite`, { email: inviteEmail });
+            setInviteEmail('');
+            alert('Invite sent successfully');
+            fetchGroupUsers();
+        } catch (err: any) {
+            setInviteError(
+                err.response?.data?.error || 'Failed to send invite'
+            );
         }
     };
 
     return (
-        <>
-            <div className="landing-container">
-                <header className="landing-header">
-                    <h1>{groupName}</h1>
-                    <style>{`
-                .landing-container {
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                    height: 100vh;
-                    text-align: center;
-                }
-                .landing-header, .landing-main, .landing-footer {
-                    width: 100%;
-                }
-                .cta-button {
-                    margin-top: 20px;
-                    padding: 10px 20px;
-                    margin-right: 10px;
-                    margin-left: 5px;
-                }
-            `}</style>
-                </header>
+        <div className="landing-container">
+            <header className="landing-header">
+                <h1>{groupName}</h1>
+            </header>
 
-                <main className="landing-main">
-                    <div>
+            <main className="landing-main">
+                <section className="group-info">
+                    <div className="group-id">
                         <b>Group ID:</b> {groupid}
                     </div>
-                    <div>
-                        <h4>Group Members</h4>
 
+                    <div className="members-section">
+                        <h4>Group Members & Their Preferences</h4>
                         {groupUsers.map((gUser) => (
-                            <>
-                                <span>
-                                    {gUser.email}, {gUser.firstname}{' '}
-                                    {gUser.lastname}
-                                </span>
-                                <br />
-                            </>
+                            <div key={gUser.id} className="member-card">
+                                <div className="member-info">
+                                    <span className="member-name">
+                                        {gUser.firstname} {gUser.lastname} (
+                                        {gUser.email})
+                                    </span>
+                                    <div className="cuisine-preferences">
+                                        <h5>Preferred Cuisines:</h5>
+                                        {gUser.cuisine_preferences &&
+                                        gUser.cuisine_preferences.length > 0 ? (
+                                            <ul className="preferences-list">
+                                                {gUser.cuisine_preferences.map(
+                                                    (cuisine) => (
+                                                        <li
+                                                            key={`${gUser.id}-${cuisine}`}
+                                                            className="preference-tag"
+                                                        >
+                                                            {cuisine}
+                                                        </li>
+                                                    )
+                                                )}
+                                            </ul>
+                                        ) : (
+                                            <p className="no-preferences">
+                                                No cuisine preferences set
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         ))}
                     </div>
-                    <form>
-                        <button className="cta-button">Create Event</button>
-                        <Link to="/my-groups">
-                            <button className="cta-button">
-                                Back To My Groups
-                            </button>
-                        </Link>
+                </section>
+
+                <section className="group-actions">
+                    <form onSubmit={handleInvite} className="invite-form">
+                        <input
+                            type="email"
+                            value={inviteEmail}
+                            onChange={(e) => setInviteEmail(e.target.value)}
+                            placeholder="Enter email to invite"
+                            className="invite-input"
+                        />
+                        <button type="submit" className="cta-button">
+                            Send Invite
+                        </button>
+                        {inviteError && (
+                            <p className="error-message">{inviteError}</p>
+                        )}
                     </form>
-                </main>
-            </div>
-        </>
+
+                    <button className="cta-button">Create Event</button>
+                    <Link to="/my-groups">
+                        <button className="cta-button">
+                            Back To My Groups
+                        </button>
+                    </Link>
+                </section>
+            </main>
+        </div>
     );
 };
 
