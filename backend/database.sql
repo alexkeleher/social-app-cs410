@@ -7,8 +7,8 @@ CREATE TABLE Users (
 	Password VARCHAR(500),
 	Phone CHAR(10),
 	Address VARCHAR(500),
-	PreferredPriceRange SMALLINT, -- Added for price range
-    PreferredMaxDistance INT,     -- Added for max distance in miles
+	PreferredPriceRange SMALLINT DEFAULT 1, 	-- Added for price range
+    PreferredMaxDistance INT DEFAULT 10,     	-- Added for max distance in miles
 	SerializedScheduleMatrix VARCHAR(500)
 );
 

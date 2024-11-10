@@ -28,6 +28,7 @@ interface UpdateBody {
     Address?: string;
     PreferredPriceRange?: number; // price range
     PreferredMaxDistance?: number; // max distance
+    SerializedScheduleMatrix?: string; // user available hours schedule serialized as a single string
 }
 
 interface Restaurant {
@@ -51,64 +52,71 @@ const secret = crypto.randomBytes(32).toString('hex');
 
 const pgSession = connectPgSimple(session);
 
-app.use(
-    session({
-        store: new pgSession({
-            pool: pool,
-            tableName: 'user_sessions',
-        }),
-        secret: secret, // Use the generated secret
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            maxAge: 30 * 24 * 60 * 60 * 1000,
-        },
-    })
-);
+// app.use(
+//     session({
+//         store: new pgSession({
+//             pool: pool,
+//             tableName: 'user_sessions',
+//         }),
+//         secret: secret, // Use the generated secret
+//         resave: false,
+//         saveUninitialized: false,
+//         cookie: {
+//             maxAge: 30 * 24 * 60 * 60 * 1000,
+//         },
+//     })
+// );
 
-// function to protect routes that require authentication
-// Update requireAuth middleware to handle token refresh
-const requireAuth = async (
-    req: Request,
-    res: Response,
-    next: express.NextFunction
-): Promise<void> => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-        res.status(401).json({ error: 'No token provided' });
-        return;
-    }
+// // function to protect routes that require authentication
+// // Update requireAuth middleware to handle token refresh
+// const requireAuth = async (
+//     req: Request,
+//     res: Response,
+//     next: express.NextFunction
+// ): Promise<void> => {
+//     const authHeader = req.headers.authorization;
+//     if (!authHeader) {
+//         res.status(401).json({ error: 'No token provided' });
+//         return;
+//     }
 
-    try {
-        const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, 'your-secret-key') as { id: number; email: string };
-        req.session.user = decoded;
-        next();
-    } catch (error) {
-        if (error.name === 'TokenExpiredError') {
-            // Try to refresh token
-            try {
-                const decoded = jwt.verify(token, 'your-secret-key', { ignoreExpiration: true }) as { id: number; email: string };
-                const newToken = jwt.sign(
-                    { id: decoded.id, email: decoded.email },
-                    'your-secret-key',
-                    { expiresIn: '24h' }
-                );
-                
-                // Send new token in response headers
-                res.setHeader('New-Token', newToken);
-                req.session.user = decoded;
-                next();
-            } catch (refreshError) {
-                console.error('Token refresh failed:', refreshError);
-                res.status(401).json({ error: 'Token expired and refresh failed' });
-            }
-        } else {
-            console.error('Auth error:', error);
-            res.status(401).json({ error: 'Invalid token' });
-        }
-    }
-};
+//     try {
+//         const token = authHeader.split(' ')[1];
+//         const decoded = jwt.verify(token, 'your-secret-key') as {
+//             id: number;
+//             email: string;
+//         };
+//         req.session.user = decoded;
+//         next();
+//     } catch (error) {
+//         if (error.name === 'TokenExpiredError') {
+//             // Try to refresh token
+//             try {
+//                 const decoded = jwt.verify(token, 'your-secret-key', {
+//                     ignoreExpiration: true,
+//                 }) as { id: number; email: string };
+//                 const newToken = jwt.sign(
+//                     { id: decoded.id, email: decoded.email },
+//                     'your-secret-key',
+//                     { expiresIn: '24h' }
+//                 );
+
+//                 // Send new token in response headers
+//                 res.setHeader('New-Token', newToken);
+//                 req.session.user = decoded;
+//                 next();
+//             } catch (refreshError) {
+//                 console.error('Token refresh failed:', refreshError);
+//                 res.status(401).json({
+//                     error: 'Token expired and refresh failed',
+//                 });
+//             }
+//         } else {
+//             console.error('Auth error:', error);
+//             res.status(401).json({ error: 'Invalid token' });
+//         }
+//     }
+// };
 
 // Routes
 app.get('/', (req: Request, res: Response) => {
@@ -152,8 +160,9 @@ app.post('/login', async (req: Request, res: Response): Promise<void> => {
 
         console.log('Generated token:', token); // Log the generated token
 
-        req.session.user = { id: user.id, email: user.email };
-        console.log('Session:', req.session);
+        // Remove the session-related line
+        //req.session.user = { id: user.id, email: user.email };
+        //console.log('Session:', req.session);
 
         res.json({ message: 'Login successful', token }); // Send the token in the response
     } catch (e) {
@@ -163,29 +172,35 @@ app.post('/login', async (req: Request, res: Response): Promise<void> => {
 });
 
 // Add refresh token endpoint
-app.post('/refresh-token', async (req: Request, res: Response) => {
-    const { token } = req.body;
-    
-    if (!token) {
-        return res.status(401).json({ error: 'No token provided' });
-    }
+app.post(
+    '/refresh-token',
+    async (req: Request, res: Response): Promise<void> => {
+        const { token } = req.body;
 
-    try {
-        const decoded = jwt.verify(token, 'your-secret-key', { ignoreExpiration: true }) as { id: number; email: string };
-        
-        // Generate new token
-        const newToken = jwt.sign(
-            { id: decoded.id, email: decoded.email },
-            'your-secret-key',
-            { expiresIn: '24h' }
-        );
+        if (!token) {
+            res.status(401).json({ error: 'No token provided' });
+            return; // Explicitly return after sending a response
+        }
 
-        res.json({ token: newToken });
-    } catch (error) {
-        console.error('Token refresh error:', error);
-        res.status(401).json({ error: 'Invalid token' });
+        try {
+            const decoded = jwt.verify(token, 'your-secret-key', {
+                ignoreExpiration: true,
+            }) as { id: number; email: string };
+
+            // Generate new token
+            const newToken = jwt.sign(
+                { id: decoded.id, email: decoded.email },
+                'your-secret-key',
+                { expiresIn: '24h' }
+            );
+
+            res.json({ token: newToken });
+        } catch (error) {
+            console.error('Token refresh error:', error);
+            res.status(401).json({ error: 'Invalid token' });
+        }
     }
-});
+);
 
 // /* LOGOUT */
 app.post('/logout', (req: Request, res: Response) => {
@@ -208,6 +223,27 @@ app.get('/users', async (req: Request, res: Response) => {
     try {
         const allData: QueryResult = await pool.query('SELECT * FROM users');
         res.json(allData.rows);
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
+/*    GET /users:id    */
+/* ************************************************************************** 
+Input: The id of a single user. To be passed in as URL part of the route
+Operation: Retrieve user with specified ID from the database
+Output: Json object with user information
+*/
+app.get('/users:id', async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+        const allData: QueryResult = await pool.query(
+            `SELECT * FROM users
+             WHERE ID = $1`,
+            [id]
+        );
+        res.json(allData.rows[0]);
     } catch (e) {
         console.error((e as Error).message);
         res.status(500).json({ error: (e as Error).message });
@@ -297,7 +333,7 @@ app.post(
     }
 );
 
-// UPDATE a user (protected)
+// UPDATE a user
 app.put(
     '/users/:id',
     async (req: Request<Parameters, unknown, UpdateBody>, res: Response) => {
@@ -313,6 +349,7 @@ app.put(
                 Address,
                 PreferredPriceRange,
                 PreferredMaxDistance,
+                SerializedScheduleMatrix,
             } = req.body;
 
             // Dynamically build the SET clause based on provided fields (since we don't have to provide every field)
@@ -346,6 +383,7 @@ app.put(
                 values.push(Email);
                 count++;
             }
+            // TODO: For security updating the password should not be part of this route
             if (Password) {
                 // Hash the new password
                 const saltRounds = 10;
@@ -373,6 +411,11 @@ app.put(
             if (PreferredMaxDistance) {
                 updates.push(`PreferredMaxDistance = $${count}`);
                 values.push(String(PreferredMaxDistance));
+                count++;
+            }
+            if (SerializedScheduleMatrix) {
+                updates.push(`SerializedScheduleMatrix = $${count}`);
+                values.push(String(SerializedScheduleMatrix));
                 count++;
             }
 
@@ -462,21 +505,21 @@ app.post(
             let joinCode: string;
             let attempts = 0;
 
-            while (attempts <3) {
+            while (attempts < 3) {
                 try {
                     joinCode = generateJoinCode();
-            // Store the groupname
+                    // Store the groupname
                     const insertedGroupData: QueryResult = await pool.query(
                         'INSERT INTO Groups (Name, JoinCode) VALUES($1, $2) RETURNING *;',
                         [groupname, joinCode]
                     );
                     const newlyCreatedGroupID = insertedGroupData.rows[0].id;
-            // Add the creating user to the group
+                    // Add the creating user to the group
                     await pool.query(
                         'INSERT INTO UserGroupXRef (UserID, GroupID) VALUES($1, $2);',
                         [creatoruserid, newlyCreatedGroupID]
                     );
-            // Send response back to the client
+                    // Send response back to the client
                     res.json({
                         Result: 'Success',
                         InsertedEntry: insertedGroupData.rows,
@@ -485,27 +528,24 @@ app.post(
                 } catch (e) {
                     attempts++;
                     if (attempts === 3) throw e;
-                    }
                 }
             }
-         catch (e) {
+        } catch (e) {
             console.error((e as Error).message);
             res.status(500).json({ error: (e as Error).message });
         }
     }
 );
 
-
-
-
 // Add join group endpoint
-app.post('/groups/join', requireAuth, async (req: Request, res: Response) => {
+app.post('/groups/join', async (req: Request, res: Response): Promise<void> => {
     try {
         const { joinCode } = req.body;
         const userId = req.session.user?.id;
 
         if (!userId) {
-            return res.status(401).json({ error: 'User not authenticated' });
+            res.status(401).json({ error: 'User not authenticated' });
+            return;
         }
 
         // Add console logs for debugging
@@ -517,7 +557,8 @@ app.post('/groups/join', requireAuth, async (req: Request, res: Response) => {
         );
 
         if (groupResult.rows.length === 0) {
-            return res.status(404).json({ error: 'Invalid join code' });
+            res.status(404).json({ error: 'Invalid join code' });
+            return;
         }
 
         const groupId = groupResult.rows[0].id;
@@ -529,7 +570,8 @@ app.post('/groups/join', requireAuth, async (req: Request, res: Response) => {
         );
 
         if (memberCheck.rows.length > 0) {
-            return res.status(400).json({ error: 'Already a member' });
+            res.status(400).json({ error: 'Already a member' });
+            return;
         }
 
         // Add user to group
@@ -546,87 +588,91 @@ app.post('/groups/join', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Send invite
-app.post('/groups/:id/invite', requireAuth, async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
-        const { email } = req.body;
+app.post(
+    '/groups/:id/invite',
+    async (req: Request, res: Response): Promise<void> => {
+        try {
+            const { id } = req.params;
+            const { email } = req.body;
 
-        //Check if user exists
-        const userExists = await pool.query(
-            'SELECT 1 FROM Users WHERE email = $1',
-            [email]
-        );
+            //Check if user exists
+            const userExists = await pool.query(
+                'SELECT 1 FROM Users WHERE email = $1',
+                [email]
+            );
 
-        if (userExists.rows.length === 0) {
-            return res.status(404).json({ error: 'User not found' });
-        }
+            if (userExists.rows.length === 0) {
+                res.status(404).json({ error: 'User not found' });
+                return;
+            }
 
-        // Check if user is already in group
-        const isMember = await pool.query(
-            `SELECT 1 FROM UserGroupXRef u
+            // Check if user is already in group
+            const isMember = await pool.query(
+                `SELECT 1 FROM UserGroupXRef u
              JOIN Users usr ON usr.id = u.userid
              WHERE u.groupid = $1 AND usr.email = $2`,
-            [id, email]
-        );
+                [id, email]
+            );
 
-        if (isMember.rows.length > 0) {
-            return res.status(400).json({ error: 'User is already in group' });
+            if (isMember.rows.length > 0) {
+                res.status(400).json({ error: 'User is already in group' });
+                return;
+            }
+
+            // Create invite
+            await pool.query(
+                'INSERT INTO GroupInvites (GroupID, Email) VALUES ($1, $2)',
+                [id, email]
+            );
+
+            res.json({ message: 'Invite sent' });
+        } catch (e) {
+            console.error(e);
+            res.status(500).json({ error: (e as Error).message });
         }
+    }
+);
 
-        // Create invite
-        await pool.query(
-            'INSERT INTO GroupInvites (GroupID, Email) VALUES ($1, $2)',
-            [id, email]
+// Get pending invites for user
+app.get('/invites', async (req: Request, res: Response) => {
+    try {
+        const userId = req.session.user?.id;
+        const result = await pool.query(
+            `SELECT g.id, g.name, g.joincode, gi.invitedat 
+                FROM GroupInvites gi
+                JOIN Groups g ON g.id = gi.groupid
+                JOIN Users u ON u.email = gi.email
+                WHERE u.id = $1`,
+            [userId]
         );
-
-        res.json({ message: 'Invite sent' });
+        res.json(result.rows);
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: (e as Error).message });
     }
 });
 
-// Get pending invites for user
-app.get('/invites', requireAuth, async (req: Request, res: Response) => {
-        try {
-            const userId = req.session.user?.id;
-            const result = await pool.query(
-                `SELECT g.id, g.name, g.joincode, gi.invitedat 
-                FROM GroupInvites gi
-                JOIN Groups g ON g.id = gi.groupid
-                JOIN Users u ON u.email = gi.email
-                WHERE u.id = $1`,
-               [userId]
-           );
-              res.json(result.rows);
-        } catch (e) {
-            console.error(e);
-            res.status(500).json({ error: (e as Error).message });
-        }
-    });
+app.delete('/invites/:id', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const userId = req.session.user?.id;
 
-    app.delete('/invites/:id', requireAuth, async (req: Request, res: Response) => {
-        try {
-            const { id } = req.params;
-            const userId = req.session.user?.id;
-    
-            // Delete the invitation
-            await pool.query(
-                'DELETE FROM GroupInvites WHERE GroupID = $1 AND Email = (SELECT email FROM Users WHERE id = $2)',
-                [id, userId]
-            );
-    
-            res.json({ message: 'Invitation deleted successfully' });
-        } catch (e) {
-            console.error(e);
-            res.status(500).json({ error: (e as Error).message });
-        }
-    });
+        // Delete the invitation
+        await pool.query(
+            'DELETE FROM GroupInvites WHERE GroupID = $1 AND Email = (SELECT email FROM Users WHERE id = $2)',
+            [id, userId]
+        );
+
+        res.json({ message: 'Invitation deleted successfully' });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
 
 // UPDATE a group (protected)
 app.put(
     '/groups/:id',
-    requireAuth,
     async (
         req: Request<Parameters, unknown, { Name: string }>,
         res: Response
@@ -654,24 +700,20 @@ app.put(
 );
 
 // DELETE a group (protected)
-app.delete(
-    '/groups/:id',
-    requireAuth,
-    async (req: Request<Parameters>, res: Response) => {
-        try {
-            // Extract the group ID from the URL parameters
-            const { id } = req.params;
+app.delete('/groups/:id', async (req: Request<Parameters>, res: Response) => {
+    try {
+        // Extract the group ID from the URL parameters
+        const { id } = req.params;
 
-            // Delete the group from the database where the ID matches
-            await pool.query('DELETE FROM groups WHERE id = $1', [id]);
+        // Delete the group from the database where the ID matches
+        await pool.query('DELETE FROM groups WHERE id = $1', [id]);
 
-            res.json('Group was deleted');
-        } catch (e) {
-            console.error((e as Error).message);
-            res.status(500).json({ error: (e as Error).message });
-        }
+        res.json('Group was deleted');
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
     }
-);
+});
 
 // CUISINE TYPES
 app.get('/cuisine-types', async (req: Request, res: Response) => {

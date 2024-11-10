@@ -10,6 +10,7 @@ import {
 import Grid from '@mui/material/Grid2';
 import api from '../api/axios';
 import AuthContext from '../context/AuthProvider';
+import { AssertionError } from 'assert';
 
 // interface ChildProps {
 //     myPrettyField: string;
@@ -20,23 +21,33 @@ import AuthContext from '../context/AuthProvider';
 function LocationPreferences() {
     const { auth } = useContext(AuthContext);
     const [address, setAddress] = useState<string>('');
+    const [saveMessage, setSaveMessage] = useState('');
+
     const getCurrentAddress = async () => {
         try {
-            //const response = await api.get(`/users${auth.id}`);
+            const response = await api.get(`/users${auth.id}`);
             console.log('getting user from Backend');
-            //setAddress(response.data.address);
+            setAddress(response.data.address);
+            console.log('setting address to be ' + response.data.address);
         } catch (err) {
             console.error(err);
         }
     };
     const saveNewAddress = async () => {
+        setSaveMessage('');
         try {
-            const response = await api.post(`/save-user-address`, {
-                userid: auth.id,
-                address: address,
+            console.log(
+                'Attempting to store address on the database for this user'
+            );
+            const response = await api.put(`/users/${auth.id}`, {
+                Address: address,
             });
+            setSaveMessage('Preferences saved successfully!');
+            setTimeout(() => setSaveMessage(''), 3000);
         } catch (err) {
             console.error(err);
+            setSaveMessage('Preferences DID NOT SAVE! ERROR!');
+            setTimeout(() => setSaveMessage(''), 3000);
         }
     };
     useEffect(() => {
@@ -80,7 +91,7 @@ function LocationPreferences() {
                             />
                         </Grid>
                     </Grid>
-                    <Button
+                    {/* <Button
                         fullWidth
                         variant="contained"
                         sx={{
@@ -96,7 +107,24 @@ function LocationPreferences() {
                         onClick={saveNewAddress}
                     >
                         Save
-                    </Button>
+                    </Button> */}
+
+                    <div className="save-preferences">
+                        <button
+                            onClick={saveNewAddress}
+                            // disabled={isSaving}
+                            className="save-button"
+                        >
+                            Save Preferences
+                        </button>
+                        {saveMessage && (
+                            <p
+                                className={`save-message ${saveMessage.includes('Error') ? 'error' : 'success'}`}
+                            >
+                                {saveMessage}
+                            </p>
+                        )}
+                    </div>
                 </Box>
             </Box>
         </Container>
