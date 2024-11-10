@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CuisinePreferences from './CuisinePreferences';
-import DietaryRestrictionsPreferences from './DietaryRestrictionsPreferences';
+// import DietaryRestrictionsPreferences from './DietaryRestrictionsPreferences';
+import LocationPreferences from './LocationPreferences';
 import PriceAndDistanceSelection from './DistancePreferences';
 import SchedulingPage from './SchedulingPage';
 
@@ -9,12 +10,14 @@ const AllPreferencesPage: React.FC = () => {
     // State to toggle sections
     const [isCuisineOpen, setCuisineOpen] = useState(false);
     const [isDietaryOpen, setDietaryOpen] = useState(false);
+    const [isLocationOpen, setLocationOpen] = useState(false);
     const [isPriceDistanceOpen, setPriceDistanceOpen] = useState(false);
     const [isScheduleOpen, setScheduleOpen] = useState(false);
 
     // Toggles for sections
     const toggleCuisine = () => setCuisineOpen(!isCuisineOpen);
     const toggleDietary = () => setDietaryOpen(!isDietaryOpen);
+    const toggleLocation = () => setLocationOpen(!isLocationOpen);
     const togglePriceDistance = () =>
         setPriceDistanceOpen(!isPriceDistanceOpen);
     const toggleSchedule = () => setScheduleOpen(!isScheduleOpen);
@@ -36,6 +39,7 @@ const AllPreferencesPage: React.FC = () => {
             </div>
 
             {/* Dietary Restrictions Section */}
+            {/* Hiding this one for now. We won't focus on dietary restrictions on the algorithm unless we have extra time to work on the project
             <div className="preference-section">
                 <button onClick={toggleDietary} className="dropdown-toggle">
                     {isDietaryOpen ? 'Hide' : 'Show'} Dietary Restrictions
@@ -43,6 +47,18 @@ const AllPreferencesPage: React.FC = () => {
                 {isDietaryOpen && (
                     <div className="preference-content">
                         <DietaryRestrictionsPreferences />
+                    </div>
+                )}
+            </div> */}
+
+            {/* Price and Distance Section */}
+            <div className="preference-section">
+                <button onClick={toggleLocation} className="dropdown-toggle">
+                    {isLocationOpen ? 'Hide' : 'Show'} Location Preferences
+                </button>
+                {isLocationOpen && (
+                    <div className="preference-content">
+                        <LocationPreferences />
                     </div>
                 )}
             </div>

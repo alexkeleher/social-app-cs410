@@ -6,7 +6,10 @@ CREATE TABLE IF NOT EXISTS Users (
 	Email VARCHAR(50) NOT NULL,
 	Password VARCHAR(500),
 	Phone CHAR(10),
-	Address VARCHAR(500)
+	Address VARCHAR(500),
+	PreferredPriceRange SMALLINT DEFAULT 1, 	-- Added for price range
+    PreferredMaxDistance INT DEFAULT 10,     	-- Added for max distance in miles
+	SerializedScheduleMatrix VARCHAR(500)
 );
 
 ALTER TABLE Users
@@ -61,14 +64,14 @@ CREATE TABLE IF NOT EXISTS Selection (
 	FOREIGN KEY (GroupID) REFERENCES Groups(ID) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS UserHours (
-	UserID INT NOT NULL,
-	DayOfWeek SMALLINT NOT NULL,
-	StartTime TIME NOT NULL,
-	EndTime TIME NOT NULL,
-	PRIMARY KEY (UserID, DayOfWeek, StartTime, EndTime),
-	FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE
-);
+-- CREATE TABLE UserHours (
+-- 	UserID INT NOT NULL,
+-- 	DayOfWeek SMALLINT NOT NULL,
+-- 	StartTime TIME NOT NULL,
+-- 	EndTime TIME NOT NULL,
+-- 	PRIMARY KEY (UserID, DayOfWeek, StartTime, EndTime),
+-- 	FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE
+-- );
 
 -- CREATE TABLE RestaurantType (
 -- 	ID SERIAL PRIMARY KEY,
@@ -110,13 +113,13 @@ INSERT INTO CuisineTypes (Name) VALUES
 
 -- Insert Dummy Data into Users Table
 INSERT INTO Users(
-	firstname, lastname, username, password, phone, address, email)
-	VALUES ('Armando', 'Toledo', 'mandy1339', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '7864475287', '123 E main St Baltimore MD, 21237', 'atoledo@email.com'),
-	 ('Kirby', 'Douglas', 'kdouglas', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '1111111111', '124 E main St Baltimore MD, 21237', 'kdouglas@email.com'),
-	 ('Alex', 'Keleher', 'akeleher', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '2222222222', '125 E main St Baltimore MD, 21237', 'akeleher@email.com'),
-	 ('Juan', 'Mireles', 'jmireles', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '3333333333', '126 E main St Baltimore MD, 21237', 'jmireles@email.com'),
-	 ('Jajuan', 'Myers', 'jmyers', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '4444444444', '127 E main St Baltimore MD, 21237', 'jmyers@email.com'),
-	 ('Matt', 'Janak', 'mjanak', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '5555555555', '128 E main St Baltimore MD, 21237', 'mjanak@email.com');
+	firstname, lastname, username, password, phone, address, email, PreferredPriceRange, PreferredMaxDistance)
+	VALUES ('Armando', 'Toledo', 'mandy1339', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '7864475287', '123 E main St Baltimore MD, 21237', 'atoledo@email.com', 2, 5),
+	 ('Kirby', 'Douglas', 'kdouglas', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '1111111111', '124 E main St Baltimore MD, 21237', 'kdouglas@email.com', 1, 7),
+	 ('Alex', 'Keleher', 'akeleher', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '2222222222', '125 E main St Baltimore MD, 21237', 'akeleher@email.com', 3, 8),
+	 ('Juan', 'Mireles', 'jmireles', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '3333333333', '126 E main St Baltimore MD, 21237', 'jmireles@email.com', 2, 9),
+	 ('Jajuan', 'Myers', 'jmyers', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '4444444444', '127 E main St Baltimore MD, 21237', 'jmyers@email.com', 1, 5),
+	 ('Matt', 'Janak', 'mjanak', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '5555555555', '128 E main St Baltimore MD, 21237', 'mjanak@email.com', 2, 4);
 
 INSERT INTO Groups (name, JoinCode) VALUES
     ('Group Red', 'RED123'),

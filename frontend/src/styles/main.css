@@ -288,7 +288,7 @@ select {
 .slot {
     cursor: pointer; /* Makes the cursor a pointer (like a button) */
     user-select: none; /* Prevents text from being highlighted */
-    padding: 10px; /* Add some padding to the cells */
+    padding: 8px; /* Add some padding to the cells */
     text-align: center; /* Center text within the cell */
     border: 1px solid #ccc; /* Add a border to make it look button-like */
     transition: background-color 0.3s ease; /* Smooth transition for color changes */
