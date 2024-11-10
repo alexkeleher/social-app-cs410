@@ -547,8 +547,8 @@ app.post(
 // Add join group endpoint
 app.post('/groups/join', async (req: Request, res: Response): Promise<void> => {
     try {
-        const { joinCode } = req.body;
-        const userId = req.session.user?.id;
+        const { joinCode, userId } = req.body;
+        //const userId = req.session.user?.id;
 
         if (!userId) {
             res.status(401).json({ error: 'User not authenticated' });

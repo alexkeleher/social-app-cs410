@@ -31,7 +31,7 @@ const JoinGroup: React.FC = () => {
         try {
             const response = await api.post<JoinGroupResponse>(
                 '/groups/join',
-                { joinCode },
+                { joinCode: joinCode, userId: auth.id },
                 {
                     headers: {
                         Authorization: `Bearer ${auth.token}`,
