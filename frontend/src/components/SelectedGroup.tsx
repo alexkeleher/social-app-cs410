@@ -22,7 +22,7 @@ const SelectedGroup = () => {
     const fetchGroupUsers = useCallback(async () => {
         try {
             console.log('Fetching users for group:', groupid);
-            const response = await api.get(`/users-by-groupid${groupid}`);
+            const response = await api.get(`/users/by-groupid/${groupid}`);
             console.log('Group users response:', response.data);
             setGroupUsers(response.data);
         } catch (err) {

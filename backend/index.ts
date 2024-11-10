@@ -220,6 +220,7 @@ app.post('/logout', (req: Request, res: Response) => {
 
 /* USERS */
 app.get('/users', async (req: Request, res: Response) => {
+    console.log('Processing request for route GET /users');
     try {
         const allData: QueryResult = await pool.query('SELECT * FROM users');
         res.json(allData.rows);
@@ -236,6 +237,7 @@ Operation: Retrieve user with specified ID from the database
 Output: Json object with user information
 */
 app.get('/users:id', async (req: Request, res: Response) => {
+    console.log('Processing request for route GET /users:id');
     const { id } = req.params;
     try {
         const allData: QueryResult = await pool.query(
@@ -255,8 +257,10 @@ app.get('/users:id', async (req: Request, res: Response) => {
 Input: ID of a group. Passed as a URL parameter
 Output: List of users that belong to that group
 */
-app.get('/users-by-groupid:id', async (req: Request, res: Response) => {
+app.get('/users/by-groupid/:id', async (req: Request, res: Response) => {
+    console.log('starting to process request in route /users-by-groupid:id');
     const { id } = req.params;
+    console.log('id: ' + id);
     try {
         const allData: QueryResult = await pool.query(
             `SELECT
@@ -278,8 +282,11 @@ app.get('/users-by-groupid:id', async (req: Request, res: Response) => {
             GROUP BY g.name, u.id, u.firstname, u.lastname, u.username, u.email`,
             [id]
         );
+        console.log(allData);
+        console.log(allData.rows.toString());
         res.json(allData.rows);
     } catch (e) {
+        console.log((e as Error).toString());
         console.error((e as Error).message);
         res.status(500).json({ error: (e as Error).message });
     }
