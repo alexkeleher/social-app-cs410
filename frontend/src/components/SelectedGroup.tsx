@@ -10,6 +10,7 @@ interface GroupUser {
     username: string;
     email: string;
     cuisine_preferences?: string[] | null;
+    joincode?: string; // Add this
 }
 
 const SelectedGroup = () => {
@@ -18,13 +19,18 @@ const SelectedGroup = () => {
     const [groupName, setGroupName] = useState('');
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteError, setInviteError] = useState('');
+    const [joinCode, setJoinCode] = useState('');
 
     const fetchGroupUsers = useCallback(async () => {
         try {
-            console.log('Fetching users for group:', groupid);
             const response = await api.get(`/users/by-groupid/${groupid}`);
             console.log('Group users response:', response.data);
             setGroupUsers(response.data);
+
+            // Set join code if available in first user's data
+            if (response.data.length > 0 && response.data[0].joincode) {
+                setJoinCode(response.data[0].joincode);
+            }
         } catch (err) {
             console.error('Error fetching group users:', err);
         }
@@ -57,79 +63,77 @@ const SelectedGroup = () => {
     };
 
     return (
-        <div className="landing-container">
-            <header className="landing-header">
+        <div className="selected-group-container">
+            <header className="group-header">
                 <h1>{groupName}</h1>
+                <div className="group-info">
+                    Group ID: <span className="code-text">{groupid}</span>
+                </div>
+                {joinCode && (
+                    <div className="group-info">
+                        Join Code: <span className="code-text">{joinCode}</span>
+                    </div>
+                )}
             </header>
 
-            <main className="landing-main">
-                <section className="group-info">
-                    <div className="group-id">
-                        <b>Group ID:</b> {groupid}
-                    </div>
+            <section className="group-section">
+                <h2>Invite Members</h2>
+                <form onSubmit={handleInvite} className="invite-form">
+                    <input
+                        type="email"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                        placeholder="Enter email address"
+                        className="invite-input"
+                    />
+                    <button type="submit" className="cta-button">
+                        Send Invite
+                    </button>
+                </form>
+                {inviteError && <p className="error-message">{inviteError}</p>}
+            </section>
 
-                    <div className="members-section">
-                        <h4>Group Members & Their Preferences</h4>
-                        {groupUsers.map((gUser) => (
-                            <div key={gUser.id} className="member-card">
-                                <div className="member-info">
-                                    <span className="member-name">
-                                        {gUser.firstname} {gUser.lastname} (
-                                        {gUser.email})
-                                    </span>
-                                    <div className="cuisine-preferences">
-                                        <h5>Preferred Cuisines:</h5>
-                                        {gUser.cuisine_preferences &&
-                                        gUser.cuisine_preferences.length > 0 ? (
-                                            <ul className="preferences-list">
-                                                {gUser.cuisine_preferences.map(
-                                                    (cuisine) => (
-                                                        <li
-                                                            key={`${gUser.id}-${cuisine}`}
-                                                            className="preference-tag"
-                                                        >
-                                                            {cuisine}
-                                                        </li>
-                                                    )
-                                                )}
-                                            </ul>
-                                        ) : (
-                                            <p className="no-preferences">
-                                                No cuisine preferences set
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
+            <section className="group-section">
+                <h2>Group Members</h2>
+                {groupUsers.map((gUser) => (
+                    <div key={gUser.id} className="member-card">
+                        <div className="member-avatar">
+                            {gUser.firstname[0]}
+                            {gUser.lastname[0]}
+                        </div>
+                        <div className="member-info">
+                            <h3>
+                                {gUser.firstname} {gUser.lastname}
+                            </h3>
+                            <p className="member-email">{gUser.email}</p>
+                            <div className="cuisine-preferences">
+                                {gUser.cuisine_preferences &&
+                                gUser.cuisine_preferences.length > 0 ? (
+                                    gUser.cuisine_preferences.map((cuisine) => (
+                                        <span
+                                            key={cuisine}
+                                            className="preference-tag"
+                                        >
+                                            {cuisine}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <p className="no-preferences">
+                                        No cuisine preferences set
+                                    </p>
+                                )}
                             </div>
-                        ))}
+                        </div>
                     </div>
-                </section>
+                ))}
+            </section>
 
-                <section className="group-actions">
-                    <form onSubmit={handleInvite} className="invite-form">
-                        <input
-                            type="email"
-                            value={inviteEmail}
-                            onChange={(e) => setInviteEmail(e.target.value)}
-                            placeholder="Enter email to invite"
-                            className="invite-input"
-                        />
-                        <button type="submit" className="cta-button">
-                            Send Invite
-                        </button>
-                        {inviteError && (
-                            <p className="error-message">{inviteError}</p>
-                        )}
-                    </form>
-
-                    <button className="cta-button">Create Event</button>
-                    <Link to="/my-groups">
-                        <button className="cta-button">
-                            Back To My Groups
-                        </button>
-                    </Link>
-                </section>
-            </main>
+            <div className="group-actions">
+                <button className="cta-button">Create Event</button>
+                <Link to="/my-groups">
+                    <button className="back-button">Back to My Groups</button>
+                </Link>
+            </div>
         </div>
     );
 };

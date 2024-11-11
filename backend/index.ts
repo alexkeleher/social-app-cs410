@@ -265,6 +265,7 @@ app.get('/users/by-groupid/:id', async (req: Request, res: Response) => {
         const allData: QueryResult = await pool.query(
             `SELECT
                 g.name as groupname,
+                g.joincode,
                 u.id,
                 u.firstname,
                 u.lastname,
@@ -279,7 +280,7 @@ app.get('/users/by-groupid/:id', async (req: Request, res: Response) => {
             JOIN UserGroupXRef x ON u.ID = x.UserID
             JOIN Groups g ON g.ID = x.GroupID
             WHERE g.ID = $1
-            GROUP BY g.name, u.id, u.firstname, u.lastname, u.username, u.email`,
+            GROUP BY g.name, g.joincode, u.id, u.firstname, u.lastname, u.username, u.email`,
             [id]
         );
         console.log(allData);
