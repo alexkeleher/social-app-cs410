@@ -548,16 +548,13 @@ app.post(
 app.post('/groups/join', async (req: Request, res: Response): Promise<void> => {
     try {
         const { joinCode, userId } = req.body;
-        //const userId = req.session.user?.id;
-
-        if (!userId) {
-            res.status(401).json({ error: 'User not authenticated' });
+        
+        if (!joinCode || !userId) {
+            res.status(400).json({ error: 'Missing joinCode or userId' });
             return;
         }
 
-        // Add console logs for debugging
-        console.log('Join attempt:', { userId, joinCode });
-
+        // Find the group
         const groupResult = await pool.query(
             'SELECT id FROM Groups WHERE JoinCode = $1',
             [joinCode]
@@ -587,7 +584,7 @@ app.post('/groups/join', async (req: Request, res: Response): Promise<void> => {
             [userId, groupId]
         );
 
-        res.json({ message: 'Successfully joined group' });
+        res.json({ message: 'Successfully joined group', groupId });
     } catch (e) {
         console.error('Join group error:', e);
         res.status(500).json({ error: (e as Error).message });
@@ -595,66 +592,87 @@ app.post('/groups/join', async (req: Request, res: Response): Promise<void> => {
 });
 
 // Send invite
-app.post(
-    '/groups/:id/invite',
-    async (req: Request, res: Response): Promise<void> => {
-        try {
-            const { id } = req.params;
-            const { email } = req.body;
-
-            //Check if user exists
-            const userExists = await pool.query(
-                'SELECT 1 FROM Users WHERE email = $1',
-                [email]
-            );
-
-            if (userExists.rows.length === 0) {
-                res.status(404).json({ error: 'User not found' });
-                return;
-            }
-
-            // Check if user is already in group
-            const isMember = await pool.query(
-                `SELECT 1 FROM UserGroupXRef u
-             JOIN Users usr ON usr.id = u.userid
-             WHERE u.groupid = $1 AND usr.email = $2`,
-                [id, email]
-            );
-
-            if (isMember.rows.length > 0) {
-                res.status(400).json({ error: 'User is already in group' });
-                return;
-            }
-
-            // Create invite
-            await pool.query(
-                'INSERT INTO GroupInvites (GroupID, Email) VALUES ($1, $2)',
-                [id, email]
-            );
-
-            res.json({ message: 'Invite sent' });
-        } catch (e) {
-            console.error(e);
-            res.status(500).json({ error: (e as Error).message });
+app.post('/groups/:id/invite', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { email } = req.body;
+        
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            return res.status(401).json({ error: 'No token provided' });
         }
+
+        // Verify user exists first
+        const userExists = await pool.query(
+            'SELECT id FROM Users WHERE email = $1',
+            [email]
+        );
+
+        if (userExists.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const userId = userExists.rows[0].id;
+
+        // Check if already member
+        const isMember = await pool.query(
+            'SELECT 1 FROM UserGroupXRef WHERE UserID = $1 AND GroupID = $2',
+            [userId, id]
+        );
+
+        if (isMember.rows.length > 0) {
+            return res.status(400).json({ error: 'User is already in group' });
+        }
+
+        // Check for existing invite
+        const existingInvite = await pool.query(
+            'SELECT 1 FROM GroupInvites WHERE GroupID = $1 AND Email = $2',
+            [id, email]
+        );
+
+        if (existingInvite.rows.length > 0) {
+            return res.status(400).json({ error: 'Invite already sent' });
+        }
+
+        // Create invite
+        await pool.query(
+            'INSERT INTO GroupInvites (GroupID, Email) VALUES ($1, $2)',
+            [id, email]
+        );
+
+        res.json({ message: 'Invite sent successfully' });
+    } catch (e) {
+        console.error('Error sending invite:', e);
+        res.status(500).json({ error: (e as Error).message });
     }
-);
+});
 
 // Get pending invites for user
 app.get('/invites', async (req: Request, res: Response) => {
     try {
-        const userId = req.session.user?.id;
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            return res.status(401).json({ error: 'No token provided' });
+        }
+
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, 'your-secret-key') as { id: number; email: string };
+        const userId = decoded.id;
+
         const result = await pool.query(
             `SELECT g.id, g.name, g.joincode, gi.invitedat 
-                FROM GroupInvites gi
-                JOIN Groups g ON g.id = gi.groupid
-                JOIN Users u ON u.email = gi.email
-                WHERE u.id = $1`,
+             FROM GroupInvites gi
+             JOIN Groups g ON g.id = gi.groupid
+             JOIN Users u ON u.email = gi.email
+             WHERE u.id = $1`,
             [userId]
         );
+
+        console.log('Found invites for user:', userId, result.rows);
         res.json(result.rows);
+
     } catch (e) {
-        console.error(e);
+        console.error('Error fetching invites:', e);
         res.status(500).json({ error: (e as Error).message });
     }
 });
@@ -662,7 +680,16 @@ app.get('/invites', async (req: Request, res: Response) => {
 app.delete('/invites/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const userId = req.session.user?.id;
+        
+        // Get user ID from JWT token
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            return res.status(401).json({ error: 'No token provided' });
+        }
+
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, 'your-secret-key') as { id: number; email: string };
+        const userId = decoded.id;
 
         // Delete the invitation
         await pool.query(
@@ -672,7 +699,7 @@ app.delete('/invites/:id', async (req: Request, res: Response) => {
 
         res.json({ message: 'Invitation deleted successfully' });
     } catch (e) {
-        console.error(e);
+        console.error('Error deleting invite:', e);
         res.status(500).json({ error: (e as Error).message });
     }
 });

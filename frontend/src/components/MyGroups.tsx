@@ -49,27 +49,26 @@ const MyGroups: React.FC = () => {
         try {
             setAcceptingInvite(invite.id.toString());
 
-            // Join the group first
+            // Join the group
             await api.post(
                 '/groups/join',
-                { joinCode: invite.joincode },
                 {
-                    headers: {
-                        Authorization: `Bearer ${auth.token}`,
-                    },
+                    joinCode: invite.joincode,
+                    userId: auth.id,
+                },
+                {
+                    headers: { Authorization: `Bearer ${auth.token}` },
                 }
             );
 
-            // Then delete the invitation
+            // Delete the invitation
             await api.delete(`/invites/${invite.id}`, {
-                headers: {
-                    Authorization: `Bearer ${auth.token}`,
-                },
+                headers: { Authorization: `Bearer ${auth.token}` },
             });
 
-            // Update UI
-            setPendingInvites((prevInvites) =>
-                prevInvites.filter((inv) => inv.id !== invite.id)
+            // Update UI state
+            setPendingInvites((prev) =>
+                prev.filter((inv) => inv.id !== invite.id)
             );
 
             // Refresh groups list
