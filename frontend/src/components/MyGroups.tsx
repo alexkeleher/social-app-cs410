@@ -112,7 +112,7 @@ const MyGroups: React.FC = () => {
                 {/* Pending Invites Section */}
                 {pendingInvites.map((invite: Group) => (
                     <div key={invite.id} className="group-card">
-                        <h2>Group {invite.name}</h2>
+                        <h2>Group: {invite.name}</h2>
                         <p>Join Code: {invite.joincode}</p>
                         <p>
                             Invited:{' '}

@@ -9,7 +9,6 @@ import connectPgSimple from 'connect-pg-simple';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import axios from 'axios';
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
@@ -1026,59 +1025,6 @@ app.delete('/data/:id', async (req: Request<Parameters>, res: Response) => {
     } catch (e) {
         console.error((e as Error).message);
         res.status(500).json({ error: (e as Error).message });
-    }
-});
-
-
-
-
-// Fetch group preferences
-app.get('/groups/:id/preferences', async (req: Request, res: Response) => {
-    const { id } = req.params;
-    try {
-        const result: QueryResult = await pool.query(
-            `SELECT
-                ARRAY_AGG(cp.CuisineType) as cuisines,
-                MAX(u.PreferredPriceRange) as maxPrice,
-                MAX(u.PreferredMaxDistance) as maxDistance
-            FROM Users u
-            JOIN UserGroupXRef x ON u.ID = x.UserID
-            JOIN Groups g ON g.ID = x.GroupID
-            LEFT JOIN UserCuisinePreferences cp ON cp.UserID = u.ID
-            WHERE g.ID = $1
-            GROUP BY g.ID`,
-            [id]
-        );
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Group preferences not found' });
-        }
-        res.json(result.rows[0]);
-    } catch (e) {
-        console.error('Error fetching group preferences:', e);
-        res.status(500).json({ error: (e as Error).message });
-    }
-});
-
-app.get('/yelp/businesses/search', async (req: Request, res: Response) => {
-    try {
-        if (!process.env.YELP_API_KEY) {
-            throw new Error('Yelp API key not configured');
-        }
-
-        const response = await axios.get('https://api.yelp.com/v3/businesses/search', {
-            headers: {
-                'Authorization': `Bearer ${process.env.YELP_API_KEY}`
-            },
-            params: req.query
-        });
-
-        res.json(response.data);
-    } catch (error: any) {
-        console.error('Yelp API Error:', error.response?.data || error.message);
-        res.status(error.response?.status || 500).json({ 
-            error: 'Failed to fetch from Yelp API',
-            details: error.response?.data || error.message
-        });
     }
 });
 
