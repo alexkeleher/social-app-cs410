@@ -50,7 +50,7 @@ const cuisineOptions = [
     { name: 'Japanese', img: images.japanese },
     { name: 'Indian', img: images.indian },
     { name: 'Thai', img: images.thai },
-    { name: 'BBQ', img: images.bbq },
+    { name: 'Bbq', img: images.bbq },
     { name: 'French', img: images.french },
     { name: 'Korean', img: images.korean },
     { name: 'Vietnamese', img: images.vietnamese },

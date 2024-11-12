@@ -25,7 +25,12 @@ interface GroupInfo {
     id: string;
 }
 
-const YelpRestaurants: React.FC = () => {
+interface AggregatedPreference {
+    preference: string;
+    count: number;
+}
+
+const GroupEvent: React.FC = () => {
     const { groupid } = useParams<{ groupid: string }>();
     const [groupInfo, setGroupInfo] = useState<GroupInfo | null>(null);
     const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
@@ -36,6 +41,24 @@ const YelpRestaurants: React.FC = () => {
     const [cuisineOption, setCuisineOption] = useState<string | null>(null);
     const [restaurantLimit, setRestaurantLimit] = useState<number>(5);
     const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
+    const [aggregatedPreferences, setAggregatedPreferences] = useState<
+        AggregatedPreference[]
+    >([]);
+    const cuisineOptions = [
+        'chinese',
+        'italian',
+        'japanese',
+        'mexican',
+        'indian',
+        'thai',
+        'french',
+        'korean',
+        'mediterranean',
+        'caribbean',
+        'bbq',
+        'european',
+        'middle eastern',
+    ];
 
     const API_KEY = process.env.REACT_APP_YELP_API_KEY;
 
@@ -52,22 +75,62 @@ const YelpRestaurants: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        const fetchGroupInfo = async () => {
+        const fetchGroupData = async () => {
             if (!groupid) return;
             try {
                 const response = await api.get(`/users/by-groupid/${groupid}`);
-                if (response.data.length > 0) {
+                const groupUsers = response.data;
+                console.log('Raw group users data:', groupUsers);
+
+                if (groupUsers.length > 0) {
                     setGroupInfo({
-                        groupname: response.data[0].groupname,
+                        groupname: groupUsers[0].groupname,
                         id: groupid,
                     });
+
+                    // Debug log raw preferences
+                    groupUsers.forEach((user: any) => {
+                        console.log(
+                            `User ${user.firstname}'s preferences:`,
+                            user.cuisine_preferences
+                        );
+                    });
+
+                    const preferencesCount: { [key: string]: number } = {};
+                    groupUsers.forEach((user: any) => {
+                        user.cuisine_preferences?.forEach((pref: string) => {
+                            const normalizedPref = pref.toLowerCase();
+                            preferencesCount[normalizedPref] =
+                                (preferencesCount[normalizedPref] || 0) + 1;
+                        });
+                    });
+
+                    console.log('Aggregated counts:', preferencesCount);
+
+                    // Store aggregated preferences
+                    const aggregated = Object.entries(preferencesCount).map(
+                        ([preference, count]) => ({
+                            preference: preference.toLowerCase(),
+                            count,
+                        })
+                    );
+                    setAggregatedPreferences(aggregated);
+
+                    // Set selected cuisines based on majority preferences
+                    const memberCount = groupUsers.length;
+                    const popularCuisines = aggregated
+                        .filter(({ count }) => count >= 1)
+                        .map(({ preference }) => preference);
+
+                    console.log('Setting selected cuisines:', popularCuisines);
+                    setSelectedCuisines(popularCuisines);
                 }
             } catch (error) {
-                console.error('Error fetching group info:', error);
+                console.error('Error fetching group data:', error);
             }
         };
 
-        fetchGroupInfo();
+        fetchGroupData();
     }, [groupid]);
 
     useEffect(() => {
@@ -75,7 +138,7 @@ const YelpRestaurants: React.FC = () => {
             console.log('Fetching restaurants with options:', {
                 sortOption,
                 dietOption,
-                cuisineOption,
+                selectedCuisines,
             });
             fetchRestaurants(latitude, longitude);
         }
@@ -85,7 +148,7 @@ const YelpRestaurants: React.FC = () => {
         API_KEY,
         sortOption,
         dietOption,
-        cuisineOption,
+        selectedCuisines,
         restaurantLimit,
     ]);
 
@@ -197,34 +260,17 @@ const YelpRestaurants: React.FC = () => {
                 <option value="muslim">Muslim</option>
             </select>
 
-            <div className="cuisine-grid-container">
-                <h3>Select Cuisine Types:</h3>
-                <div className="cuisine-grid">
-                    {[
-                        'chinese',
-                        'italian',
-                        'japanese',
-                        'mexican',
-                        'indian',
-                        'thai',
-                        'french',
-                        'korean',
-                        'mediterranean',
-                        'caribbean',
-                        'bbq',
-                        'european',
-                        'middle eastern',
-                    ].map((cuisine) => (
-                        <label key={cuisine} className="cuisine-checkbox">
-                            <input
-                                type="checkbox"
-                                checked={selectedCuisines.includes(cuisine)}
-                                onChange={() => handleCuisineToggle(cuisine)}
-                            />
-                            {cuisine.charAt(0).toUpperCase() + cuisine.slice(1)}
-                        </label>
-                    ))}
-                </div>
+            <div className="cuisine-grid">
+                {cuisineOptions.map((cuisine) => (
+                    <label key={cuisine} className="cuisine-checkbox">
+                        <input
+                            type="checkbox"
+                            checked={selectedCuisines.includes(cuisine)}
+                            onChange={() => handleCuisineToggle(cuisine)}
+                        />
+                        {cuisine.charAt(0).toUpperCase() + cuisine.slice(1)}
+                    </label>
+                ))}
             </div>
 
             <label htmlFor="limit">Number of Restaurants: </label>
@@ -240,6 +286,25 @@ const YelpRestaurants: React.FC = () => {
                 <option value={40}>40</option>
                 <option value={50}>50</option>
             </select>
+
+            <div
+                className="debug-section"
+                style={{
+                    margin: '20px',
+                    padding: '20px',
+                    border: '1px solid #ccc',
+                }}
+            >
+                {/*               <h3>Debug Info:</h3>
+                <div>
+                    <h4>Group Users Preferences:</h4>
+                    <pre>{JSON.stringify(aggregatedPreferences, null, 2)}</pre>
+                </div>
+                <div>
+                    <h4>Selected Cuisines:</h4>
+                    <pre>{JSON.stringify(selectedCuisines, null, 2)}</pre>
+                </div> */}
+            </div>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
                 {restaurants.map((restaurant) => (
@@ -290,4 +355,4 @@ const YelpRestaurants: React.FC = () => {
     );
 };
 
-export default YelpRestaurants;
+export default GroupEvent;

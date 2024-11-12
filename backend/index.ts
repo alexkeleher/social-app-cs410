@@ -262,6 +262,7 @@ app.get('/users/by-groupid/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     console.log('id: ' + id);
     try {
+        // First get all users and their preferences
         const allData: QueryResult = await pool.query(
             `SELECT
                 g.name as groupname,
@@ -271,24 +272,30 @@ app.get('/users/by-groupid/:id', async (req: Request, res: Response) => {
                 u.lastname,
                 u.username,
                 u.email,
-                (
-                    SELECT ARRAY_AGG(cp.CuisineType)
-                    FROM UserCuisinePreferences cp
-                    WHERE cp.UserID = u.id
-                ) as cuisine_preferences
+                u.preferredpricerange,
+                u.preferredmaxdistance,
+                ARRAY_AGG(DISTINCT cp.CuisineType) FILTER (WHERE cp.CuisineType IS NOT NULL) as cuisine_preferences
             FROM Users u
             JOIN UserGroupXRef x ON u.ID = x.UserID
             JOIN Groups g ON g.ID = x.GroupID
+            LEFT JOIN UserCuisinePreferences cp ON cp.UserID = u.ID
             WHERE g.ID = $1
-            GROUP BY g.name, g.joincode, u.id, u.firstname, u.lastname, u.username, u.email`,
+            GROUP BY g.name, g.joincode, u.id, u.firstname, u.lastname, u.username, u.email, u.preferredpricerange, u.preferredmaxdistance`,
             [id]
         );
-        console.log(allData);
-        console.log(allData.rows.toString());
+
+        // Calculate group preferences
+        const groupPreferences = {
+            groupname: allData.rows[0]?.groupname || '',
+            joincode: allData.rows[0]?.joincode || '',
+            members: allData.rows,
+            maxPrice: Math.max(...allData.rows.map(u => u.preferredpricerange || 0)),
+            maxDistance: Math.max(...allData.rows.map(u => u.preferredmaxdistance || 0))
+        };
+
         res.json(allData.rows);
     } catch (e) {
-        console.log((e as Error).toString());
-        console.error((e as Error).message);
+        console.error('Error in /users/by-groupid/:id:', e);
         res.status(500).json({ error: (e as Error).message });
     }
 });
