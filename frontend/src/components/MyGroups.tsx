@@ -96,7 +96,7 @@ const MyGroups: React.FC = () => {
                     {myGroups.map((group: Group) => (
                         <Link key={group.id} to={`/selected-group/${group.id}`}>
                             <div className="group-card">
-                                <h2>Group {group.name}</h2>
+                                <h2>{group.name}</h2>
                                 <p>Group ID: {group.id}</p>
                                 <p>
                                     Date Created: {group.datecreated.toString()}

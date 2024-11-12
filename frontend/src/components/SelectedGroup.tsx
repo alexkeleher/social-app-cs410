@@ -10,7 +10,7 @@ interface GroupUser {
     username: string;
     email: string;
     cuisine_preferences?: string[] | null;
-    joincode?: string; // Add this
+    joincode?: string;
 }
 
 const SelectedGroup = () => {
@@ -20,6 +20,9 @@ const SelectedGroup = () => {
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteError, setInviteError] = useState('');
     const [joinCode, setJoinCode] = useState('');
+    const [aggregatedPreferences, setAggregatedPreferences] = useState<
+        { preference: string; count: number }[]
+    >([]);
 
     const fetchGroupUsers = useCallback(async () => {
         try {
@@ -43,8 +46,27 @@ const SelectedGroup = () => {
     useEffect(() => {
         if (groupUsers.length > 0) {
             setGroupName(groupUsers[0].groupname);
+            aggregatePreferences();
         }
     }, [groupUsers]);
+
+    const aggregatePreferences = () => {
+        const preferencesCount: { [key: string]: number } = {};
+        groupUsers.forEach((user) => {
+            user.cuisine_preferences?.forEach((pref) => {
+                if (preferencesCount[pref]) {
+                    preferencesCount[pref]++;
+                } else {
+                    preferencesCount[pref] = 1;
+                }
+            });
+        });
+        const aggregated = Object.entries(preferencesCount).map(
+            ([preference, count]) => ({ preference, count })
+        );
+        console.log('Aggregated preferences:', aggregated);
+        setAggregatedPreferences(aggregated);
+    };
 
     const handleInvite = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -75,6 +97,21 @@ const SelectedGroup = () => {
                     </div>
                 )}
             </header>
+
+            <section className="group-section">
+                <h2>Aggregated Preferences</h2>
+                <div className="cuisine-preferences">
+                    {aggregatedPreferences.length > 0 ? (
+                        aggregatedPreferences.map(({ preference, count }) => (
+                            <span key={preference} className="preference-tag">
+                                {preference} x {count}
+                            </span>
+                        ))
+                    ) : (
+                        <p className="no-preferences">No preferences set</p>
+                    )}
+                </div>
+            </section>
 
             <section className="group-section">
                 <h2>Invite Members</h2>
@@ -129,7 +166,10 @@ const SelectedGroup = () => {
             </section>
 
             <div className="group-actions">
-                <button className="cta-button">Create Event</button>
+                <Link to={`/group-events/${groupid}`}>
+                    <button className="cta-button">Create Event</button>
+                </Link>
+
                 <Link to="/my-groups">
                     <button className="back-button">Back to My Groups</button>
                 </Link>
