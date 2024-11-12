@@ -22,7 +22,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import YelpRestaurants from './components/TestYelpRestaurants';
 import SelectedGroup from './components/SelectedGroup';
 import JoinGroup from './components/JoinGroup';
-
+import GroupEvent from './components/GroupEvent';
 import './styles/main.css';
 
 interface ProtectedRouteProps {
@@ -124,6 +124,11 @@ const App: React.FC = () => {
                         <Route
                             path="/all-preferences"
                             element={<AllPreferencesPage />}
+                        />
+                        <Route path="/group-event" element={<GroupEvent />} />
+                        <Route
+                            path="group-event/:groupid"
+                            element={<GroupEvent />}
                         />
                         <Route path="/groups" element={<CreateGroupPage />} />
                     </Route>

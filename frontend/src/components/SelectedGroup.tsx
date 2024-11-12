@@ -166,7 +166,7 @@ const SelectedGroup = () => {
             </section>
 
             <div className="group-actions">
-                <Link to={`/group-events/${groupid}`}>
+                <Link to={`/group-event/${groupid}`}>
                     <button className="cta-button">Create Event</button>
                 </Link>
 
