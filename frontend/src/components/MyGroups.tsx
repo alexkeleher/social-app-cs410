@@ -156,13 +156,6 @@ const MyGroups: React.FC = () => {
                         Join a Group
                     </button>
                 </div>
-
-                <button
-                    onClick={() => navigate('/landingpage')}
-                    className="back-button"
-                >
-                    Back to Landing Page
-                </button>
             </div>
         </>
     );

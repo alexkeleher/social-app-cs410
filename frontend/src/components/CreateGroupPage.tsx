@@ -116,14 +116,6 @@ const CreateGroupPage: React.FC = () => {
                 >
                     My Groups
                 </button>
-
-                <button
-                    onClick={() => navigate('/')} // Navigate to Landing Page
-                    className="create-button"
-                    type="button"
-                >
-                    Landing Page
-                </button>
             </form>
         </div>
     );

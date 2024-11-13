@@ -84,10 +84,19 @@ const SchedulingPage: React.FC = () => {
                 'fetching user information from DB to get serialized schedule'
             );
             const responseUserData = await api.get(`/users${auth.id}`);
+
+            // Check if we have valid data
+            if (!responseUserData?.data?.serializedschedulematrix) {
+                console.log(
+                    'No schedule found in DB, using default empty schedule'
+                );
+                return '0'.repeat(133); // Return default empty schedule (7 days * 19 time slots)
+            }
+
             return responseUserData.data.serializedschedulematrix;
         } catch (error) {
-            console.error(error);
-            return ''; // Return default string in case of error
+            console.error('Error fetching schedule:', error);
+            return '0'.repeat(133); // Return default empty schedule on error
         }
     };
 
@@ -101,20 +110,33 @@ const SchedulingPage: React.FC = () => {
         const newTimeRows: JSX.Element[] = [];
         for (let j = 0; j < 19; j++) {
             const timeBlocks: JSX.Element[] = [];
+
+            // First column: Time selector button
+            timeBlocks.push(
+                <button
+                    key={`time-${j}`}
+                    className="time-select-button"
+                    onClick={() => handleTimeRowClick(j)}
+                >
+                    {timeSlots[j]}
+                </button>
+            );
+
+            // Add day columns
             for (let i = 0; i < 7; i++) {
                 timeBlocks.push(
-                    <>
-                        <div
-                            className={`slot ${matrix[i][j] == 0 ? 'off' : 'yes'}`}
-                            onClick={() => handleOnClickSlot(i, j)}
-                        >
-                            {timeSlots[j]}
-                        </div>
-                    </>
+                    <div
+                        key={`slot-${i}`}
+                        className={`slot ${matrix[i][j] == 0 ? 'off' : 'yes'}`}
+                        onClick={() => handleOnClickSlot(i, j)}
+                    >
+                        {timeSlots[j]}
+                    </div>
                 );
             }
+
             newTimeRows.push(
-                <div key={j} className="time-row">
+                <div key={`row-${j}`} className="time-row">
                     {timeBlocks}
                 </div>
             );
@@ -168,12 +190,26 @@ const SchedulingPage: React.FC = () => {
         return stringBuilder.join('');
     };
 
+    // Add handleTimeRowClick function
+    const handleTimeRowClick = (rowIndex: number) => {
+        const deepCopy: number[][] = matrix.map((row) =>
+            Array.isArray(row) ? [...row] : Array(19).fill(0)
+        );
+
+        // Check first slot of the row to determine current state
+        const isCurrentlyEmpty = !deepCopy[0][rowIndex];
+
+        // Fill entire row across all days
+        for (let i = 0; i < 7; i++) {
+            deepCopy[i][rowIndex] = isCurrentlyEmpty ? 1 : 0;
+        }
+
+        setMatrix(deepCopy);
+    };
+
     // Input is a day of week string (Monday, Tuesday, etc)
     const handleDayClick = (day: string) => {
-        // find the index for this day
-
-        // Below code is just a switch to map out the index for the day value passed in
-        const indexOfDayInMatrix =
+        const dayIndex =
             {
                 Monday: 0,
                 Tuesday: 1,
@@ -182,54 +218,79 @@ const SchedulingPage: React.FC = () => {
                 Friday: 4,
                 Saturday: 5,
                 Sunday: 6,
-            }[day] || -1;
+            }[day] ?? -1;
 
-        // Make deep copy
-        const deepCopy: number[][] = matrix.map((row) => [...row]);
-
-        if (deepCopy[indexOfDayInMatrix][0] == 0) {
-            // fill this whole weekday's block with 1's
-            for (let j = 0; j < 19; j++) {
-                deepCopy[indexOfDayInMatrix][j] = 1;
-            }
-        } else {
-            // fill this whole weekday's block with 0's
-            for (let j = 0; j < 19; j++) {
-                deepCopy[indexOfDayInMatrix][j] = 0;
-            }
+        // Check if dayIndex is valid
+        if (dayIndex === -1) {
+            console.error('Invalid day selected');
+            return;
         }
+
+        // Ensure matrix exists and has valid structure
+        if (!matrix || !Array.isArray(matrix) || !matrix[dayIndex]) {
+            console.error('Matrix not properly initialized');
+            return;
+        }
+
+        // Make deep copy with null check
+        const deepCopy: number[][] = matrix.map((row) =>
+            Array.isArray(row) ? [...row] : Array(19).fill(0)
+        );
+
+        // Check first time slot of the day
+        const isCurrentlyEmpty = !deepCopy[dayIndex][0];
+
+        // Fill the entire day
+        for (let j = 0; j < 19; j++) {
+            deepCopy[dayIndex][j] = isCurrentlyEmpty ? 1 : 0;
+        }
+
         setMatrix(deepCopy);
     };
 
     return (
-        <>
-            <div className="scheduling-container">
-                <h1>Select Your Availability</h1>
+        <div className="scheduling-container">
+            <h1>Select Your Availability</h1>
 
-                <div className="scheduling-grid">
-                    {/* Show the day of the week column headers */}
-                    <div className="days-row">
-                        {daysOfWeek.map((day) => (
-                            <div
-                                key={day}
-                                className="day-item"
-                                onClick={() => handleDayClick(day)} // Clickable day to select/deselect all
-                            >
-                                {day}
-                            </div>
-                        ))}
+            <div className="schedule-grid">
+                {/* Empty corner cell for alignment */}
+                <div className="corner-cell"></div>
+
+                {/* Days header */}
+                {daysOfWeek.map((day) => (
+                    <div
+                        key={day}
+                        className="day-header"
+                        onClick={() => handleDayClick(day)}
+                    >
+                        {day}
                     </div>
-                    {/* Show the time blocks */}
-                    {timeRows}
-                </div>
+                ))}
+
+                {/* Time slots and selection grid */}
+                {timeSlots.map((time, rowIndex) => (
+                    <React.Fragment key={rowIndex}>
+                        <button
+                            className="time-label"
+                            onClick={() => handleTimeRowClick(rowIndex)}
+                        >
+                            {time}
+                        </button>
+                        {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => (
+                            <div
+                                key={`${rowIndex}-${dayIndex}`}
+                                className={`grid-cell ${matrix[dayIndex][rowIndex] === 1 ? 'selected' : ''}`}
+                                onClick={() =>
+                                    handleOnClickSlot(dayIndex, rowIndex)
+                                }
+                            />
+                        ))}
+                    </React.Fragment>
+                ))}
             </div>
 
             <div className="save-preferences">
-                <button
-                    onClick={savePreferences}
-                    // disabled={isSaving}
-                    className="save-button"
-                >
+                <button onClick={savePreferences} className="save-button">
                     Save Preferences
                 </button>
                 {saveMessage && (
@@ -240,7 +301,7 @@ const SchedulingPage: React.FC = () => {
                     </p>
                 )}
             </div>
-        </>
+        </div>
     );
 };
 

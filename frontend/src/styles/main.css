@@ -1,3 +1,180 @@
+:root {
+    /* Primary Colors */
+    --primary: #e31837;
+    --primary-dark: #b31212;
+    --primary-light: #ff4d4d;
+
+    /* Accent Colors */
+    --accent-1: #2d3436;
+    --accent-2: #f9f9f9;
+    --accent-3: #00b894;
+
+    /* Neutral Colors */
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-800: #343a40;
+
+    /* Shadows */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Modern Reset & Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family:
+        'Inter',
+        -apple-system,
+        BlinkMacSystemFont,
+        sans-serif;
+    background: var(--gray-100);
+    color: var(--gray-800);
+    line-height: 1.6;
+}
+
+/* Updated Component Styles */
+.button {
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.button-primary {
+    background: var(--primary);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.button-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Modern Grid Layout */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Navigation & Header */
+.nav {
+    background: white;
+    padding: 16px 24px;
+    box-shadow: var(--shadow-sm);
+}
+
+.nav-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Form Elements */
+.input {
+    padding: 12px 16px;
+    border: 2px solid var(--gray-200);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    font-size: 16px;
+}
+
+.input:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(227, 24, 55, 0.1);
+}
+
+/* Restaurant Cards */
+.restaurant-card {
+    border-radius: 12px;
+    overflow: hidden;
+    background: white;
+    box-shadow: var(--shadow-md);
+}
+
+.restaurant-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.restaurant-card:hover img {
+    transform: scale(1.05);
+}
+
+.restaurant-info {
+    padding: 20px;
+}
+
+/* Cuisine Grid */
+.cuisine-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.cuisine-item {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.2s ease;
+}
+
+.cuisine-item:hover {
+    transform: translateY(-4px);
+}
+
+/* Buttons */
+.cta-button {
+    background: var(--primary);
+    color: white;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cta-button:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
 /* Center the entire container */
 .my-groups-container {
     display: flex;
@@ -258,40 +435,140 @@ select {
 }
 
 .scheduling-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
-.scheduling-grid {
+.schedule-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr); /* 7 columns for each day */
-    gap: 10px; /* Space between the items */
-    margin: 20px 0;
+    grid-template-columns: 120px repeat(7, 1fr);
+    gap: 1px;
+    background: var(--gray-200);
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    overflow: hidden;
 }
 
-.days-row {
-    display: contents; /* Makes the days act like grid items */
+.corner-cell {
+    background: white;
+    padding: 12px;
+}
+
+.day-header {
+    background: var(--primary);
+    color: white;
+    padding: 12px;
+    text-align: center;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.day-header:hover {
+    background: var(--primary-dark);
+}
+
+.time-label {
+    background: var(--gray-100);
+    padding: 8px;
+    text-align: left;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+.time-label:hover {
+    background: var(--primary-light);
+    color: white;
 }
 
 .day-item {
     font-weight: bold;
-    text-align: center; /* Center align the day names */
+    text-align: center;
+    padding: 8px;
+    cursor: pointer;
+    grid-column: auto; /* Reset any column spanning */
 }
 
 .time-row {
-    display: contents; /* Makes the time rows act like grid items */
+    display: grid;
+    grid-template-columns: 120px repeat(7, 1fr); /* Match parent grid */
+    gap: 10px;
+}
+
+.scheduling-grid {
+    display: grid;
+    grid-template-columns: auto repeat(7, 1fr); /* Added column for buttons */
+    gap: 10px;
+    margin: 20px 0;
+    width: 100%;
+    max-width: 1200px;
+}
+
+.time-select-button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    width: 100%;
+    transition: all 0.2s ease;
+    text-align: left;
+    grid-column: 1; /* Ensure it stays in first column */
+}
+
+.grid-cell {
+    aspect-ratio: 2.5;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.grid-cell:hover {
+    background: var(--gray-200);
+}
+
+.grid-cell.selected {
+    background: var(--accent-3);
+}
+
+.grid-cell.selected:hover {
+    background: var(--accent-3);
+    opacity: 0.8;
+}
+
+.time-select-button:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Update days-row to account for new column */
+.days-row {
+    display: grid;
+    grid-template-columns: 120px repeat(7, 1fr);
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+/* Add empty first cell for alignment */
+.days-row::before {
+    display: none;
 }
 
 /* General slot style to make it button-like */
 .slot {
-    cursor: pointer; /* Makes the cursor a pointer (like a button) */
-    user-select: none; /* Prevents text from being highlighted */
-    padding: 8px; /* Add some padding to the cells */
-    text-align: center; /* Center text within the cell */
-    border: 1px solid #ccc; /* Add a border to make it look button-like */
-    transition: background-color 0.3s ease; /* Smooth transition for color changes */
+    width: 100%;
+    padding: 8px;
+    text-align: center;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 /* Style for different preference states */
@@ -388,7 +665,7 @@ select {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
     transition:
         background-color 0.3s,
-        transform 0.3s,
+        transform 0.7s,
         box-shadow 0.3s; /* Smooth transition */
     width: 300px; /* Make the button full-width */
     max-width: 300px; /* Optional: limit the max width */
@@ -704,4 +981,71 @@ h1 {
     display: flex;
     align-items: center;
     gap: 5px;
+}
+
+.app-container {
+    min-height: 100vh;
+}
+
+.app-header {
+    background: white;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--gray-200);
+    box-shadow: var(--shadow-sm);
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-info {
+    color: var(--gray-800);
+    font-weight: 500;
+}
+
+.nav-link {
+    color: white;
+    background: var(--primary);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    border: none;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    /* Fixed dimensions */
+    width: 100px;
+    height: 36px;
+
+    /* Center content */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    /* Prevent text wrap */
+    white-space: nowrap;
+}
+
+.nav-link:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.header-nav {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.main-content {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
 }

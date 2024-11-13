@@ -1,102 +1,83 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import CuisinePreferences from './CuisinePreferences';
-// import DietaryRestrictionsPreferences from './DietaryRestrictionsPreferences';
 import LocationPreferences from './LocationPreferences';
 import PriceAndDistanceSelection from './DistancePreferences';
 import SchedulingPage from './SchedulingPage';
 
 const AllPreferencesPage: React.FC = () => {
-    // State to toggle sections
-    const [isCuisineOpen, setCuisineOpen] = useState(false);
-    const [isDietaryOpen, setDietaryOpen] = useState(false);
-    const [isLocationOpen, setLocationOpen] = useState(false);
-    const [isPriceDistanceOpen, setPriceDistanceOpen] = useState(false);
-    const [isScheduleOpen, setScheduleOpen] = useState(false);
+    // Single state to track which section is open (if any)
+    const [openSection, setOpenSection] = useState<string | null>(null);
 
-    // Toggles for sections
-    const toggleCuisine = () => setCuisineOpen(!isCuisineOpen);
-    const toggleDietary = () => setDietaryOpen(!isDietaryOpen);
-    const toggleLocation = () => setLocationOpen(!isLocationOpen);
-    const togglePriceDistance = () =>
-        setPriceDistanceOpen(!isPriceDistanceOpen);
-    const toggleSchedule = () => setScheduleOpen(!isScheduleOpen);
+    // Single toggle function that closes others
+    const toggleSection = (section: string) => {
+        setOpenSection(openSection === section ? null : section);
+    };
 
     return (
         <div className="preferences-page-container">
             <h1>Select Your Preferences</h1>
 
-            {/* Cuisine Preferences Section */}
             <div className="preference-section">
-                <button onClick={toggleCuisine} className="dropdown-toggle">
-                    {isCuisineOpen ? 'Hide' : 'Show'} Cuisine Preferences
+                <button
+                    onClick={() => toggleSection('cuisine')}
+                    className="dropdown-toggle"
+                >
+                    {openSection === 'cuisine' ? 'Hide' : 'Show'} Cuisine
+                    Preferences
                 </button>
-                {isCuisineOpen && (
+                {openSection === 'cuisine' && (
                     <div className="preference-content">
                         <CuisinePreferences />
                     </div>
                 )}
             </div>
 
-            {/* Dietary Restrictions Section */}
-            {/* Hiding this one for now. We won't focus on dietary restrictions on the algorithm unless we have extra time to work on the project
             <div className="preference-section">
-                <button onClick={toggleDietary} className="dropdown-toggle">
-                    {isDietaryOpen ? 'Hide' : 'Show'} Dietary Restrictions
+                <button
+                    onClick={() => toggleSection('location')}
+                    className="dropdown-toggle"
+                >
+                    {openSection === 'location' ? 'Hide' : 'Show'} Location
+                    Preferences
                 </button>
-                {isDietaryOpen && (
-                    <div className="preference-content">
-                        <DietaryRestrictionsPreferences />
-                    </div>
-                )}
-            </div> */}
-
-            {/* Price and Distance Section */}
-            <div className="preference-section">
-                <button onClick={toggleLocation} className="dropdown-toggle">
-                    {isLocationOpen ? 'Hide' : 'Show'} Location Preferences
-                </button>
-                {isLocationOpen && (
+                {openSection === 'location' && (
                     <div className="preference-content">
                         <LocationPreferences />
                     </div>
                 )}
             </div>
 
-            {/* Price and Distance Section */}
             <div className="preference-section">
                 <button
-                    onClick={togglePriceDistance}
+                    onClick={() => toggleSection('priceDistance')}
                     className="dropdown-toggle"
                 >
-                    {isPriceDistanceOpen ? 'Hide' : 'Show'} Price and Distance
-                    Preferences
+                    {openSection === 'priceDistance' ? 'Hide' : 'Show'} Price
+                    and Distance Preferences
                 </button>
-                {isPriceDistanceOpen && (
+                {openSection === 'priceDistance' && (
                     <div className="preference-content">
                         <PriceAndDistanceSelection />
                     </div>
                 )}
             </div>
 
-            {/* Schedule Preferences Section */}
             <div className="preference-section">
-                <button onClick={toggleSchedule} className="dropdown-toggle">
-                    {isScheduleOpen ? 'Hide' : 'Show'} Schedule Preferences
+                <button
+                    onClick={() => toggleSection('schedule')}
+                    className="dropdown-toggle"
+                >
+                    {openSection === 'schedule' ? 'Hide' : 'Show'} Schedule
+                    Preferences
                 </button>
-                {isScheduleOpen && (
+                {openSection === 'schedule' && (
                     <div className="preference-content">
                         <SchedulingPage />
                     </div>
                 )}
 
                 <div className="button-group">
-                    <Link to="/landingpage" className="back-button">
-                        <button className="back-button">
-                            Back to Landing Page
-                        </button>
-                    </Link>
-
                     <Link to="/my-groups" className="back-button">
                         <button className="back-button">Go to My Groups</button>
                     </Link>

@@ -14,7 +14,7 @@ const Logout = () => {
     };
 
     return (
-        <button className="cta-button" onClick={handleLogout}>
+        <button className="nav-link" onClick={handleLogout}>
             Logout
         </button>
     );
