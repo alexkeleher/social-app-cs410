@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import api from '../api/axios';
 import './GroupEvent.css';
 
@@ -224,20 +224,18 @@ const GroupEvent: React.FC = () => {
             <header className="group-header">
                 <h1>
                     {groupInfo ? (
-                        <>
-                            Planning Event for: {groupInfo.groupname}
-                            <div className="group-info">
-                                Group ID:{' '}
-                                <span className="code-text">
-                                    {groupInfo.id}
-                                </span>
-                            </div>
-                        </>
+                        <>Planning Event for: {groupInfo.groupname}</>
                     ) : (
                         'Loading group...'
                     )}
                 </h1>
             </header>
+
+            <div className="group-navigation">
+                <Link to={`/selected-group/${groupid}`} className="back-button">
+                    ← Back to {groupInfo ? groupInfo.groupname : 'Group'}
+                </Link>
+            </div>
 
             <label htmlFor="sort">Sort by: </label>
             <select id="sort" value={sortOption} onChange={handleSortChange}>

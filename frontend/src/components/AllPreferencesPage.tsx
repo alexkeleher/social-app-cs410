@@ -78,12 +78,12 @@ const AllPreferencesPage: React.FC = () => {
                 )}
 
                 <div className="button-group">
-                    <Link to="/my-groups" className="back-button">
-                        <button className="back-button">Go to My Groups</button>
+                    <Link to="/my-groups" className="cta-button">
+                        <button className="cta-button">Go to My Groups</button>
                     </Link>
 
-                    <Link to="/create-group" className="back-button">
-                        <button className="back-button">
+                    <Link to="/create-group" className="cta-button">
+                        <button className="cta-button">
                             Create a New Group
                         </button>
                     </Link>

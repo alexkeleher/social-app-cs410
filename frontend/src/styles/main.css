@@ -653,9 +653,13 @@ select {
 
 /* Dropdown Toggle Styling */
 .dropdown-toggle {
-    background-color: #b32222; /* More vibrant red */
-    color: white;
-    border: none;
+    background-color: linear-gradient(
+        135deg,
+        #ff1010 0%,
+        #cc0000 100%
+    ); /* More vibrant red */
+    color: rgb(179, 39, 39);
+    border: inset 2px rgba(172, 0, 0, 0.2); /* Inset border for depth */
     padding: 12px 20px; /* Increased padding for a more inviting look */
     font-size: 16px; /* Slightly larger font */
     font-weight: bold;
@@ -676,6 +680,7 @@ select {
 .dropdown-toggle:hover {
     background-color: #ff3333; /* Darker red on hover */
     transform: translateY(-2px); /* Lift the button slightly */
+    color: white; /* Change text color on hover */
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Add depth on hover */
 }
 
@@ -1048,4 +1053,71 @@ h1 {
     padding: 2rem;
     max-width: 1200px;
     margin: 0 auto;
+}
+
+.location-info {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: var(--gray-100);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+}
+
+.location-info h3 {
+    margin-bottom: 1rem;
+    color: var(--gray-800);
+    font-size: 1.1rem;
+}
+
+.coordinate-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.coordinate-text {
+    font-family: monospace;
+    color: var(--gray-800);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.member-count {
+    margin-top: 0.5rem;
+    color: var(--gray-600);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.member-address {
+    color: var(--gray-600);
+    font-size: 0.9rem;
+    margin: 0.5rem 0;
+}
+
+.availability-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.day-availability {
+    background: var(--gray-100);
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.time-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.available-slot {
+    background: var(--accent-3);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
 }

@@ -91,6 +91,11 @@ const Login: React.FC = () => {
         >
             <CssBaseline />
             <Box
+                component="form"
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    handleLogin();
+                }}
                 sx={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -138,6 +143,7 @@ const Login: React.FC = () => {
                         </Grid>
                     </Grid>
                     <Button
+                        type="submit"
                         fullWidth
                         variant="contained"
                         sx={{

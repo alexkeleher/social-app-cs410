@@ -264,23 +264,25 @@ app.get('/users/by-groupid/:id', async (req: Request, res: Response) => {
     try {
         // First get all users and their preferences
         const allData: QueryResult = await pool.query(
-            `SELECT
-                g.name as groupname,
-                g.joincode,
-                u.id,
-                u.firstname,
-                u.lastname,
-                u.username,
-                u.email,
-                u.preferredpricerange,
-                u.preferredmaxdistance,
-                ARRAY_AGG(DISTINCT cp.CuisineType) FILTER (WHERE cp.CuisineType IS NOT NULL) as cuisine_preferences
-            FROM Users u
-            JOIN UserGroupXRef x ON u.ID = x.UserID
-            JOIN Groups g ON g.ID = x.GroupID
-            LEFT JOIN UserCuisinePreferences cp ON cp.UserID = u.ID
-            WHERE g.ID = $1
-            GROUP BY g.name, g.joincode, u.id, u.firstname, u.lastname, u.username, u.email, u.preferredpricerange, u.preferredmaxdistance`,
+            `SELECT 
+    g.name as groupname,
+    g.joincode,
+    u.id,
+    u.firstname,
+    u.lastname,
+    u.username,
+    u.email,
+    u.address,  /* Add this line */
+    u.preferredpricerange,
+    u.preferredmaxdistance,
+    u.serializedschedulematrix,
+    ARRAY_AGG(DISTINCT cp.CuisineType) FILTER (WHERE cp.CuisineType IS NOT NULL) as cuisine_preferences
+FROM Users u
+JOIN UserGroupXRef x ON u.ID = x.UserID
+JOIN Groups g ON g.ID = x.GroupID
+LEFT JOIN UserCuisinePreferences cp ON cp.UserID = u.ID
+WHERE g.ID = $1
+GROUP BY g.name, g.joincode, u.id, u.firstname, u.lastname, u.username, u.email, u.address, u.serializedschedulematrix, u.preferredpricerange, u.preferredmaxdistance`,
             [id]
         );
 
