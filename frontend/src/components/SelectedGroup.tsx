@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api/axios';
+import axios from 'axios';
 
 interface GroupUser {
     groupname: string;
@@ -8,9 +9,20 @@ interface GroupUser {
     firstname: string;
     lastname: string;
     username: string;
+    address: string;
     email: string;
     cuisine_preferences?: string[] | null;
     joincode?: string;
+    serializedschedulematrix?: string;
+}
+
+interface AvailabilityMatrix {
+    [key: string]: boolean[];
+}
+
+interface Coordinates {
+    lat: number;
+    lng: number;
 }
 
 const SelectedGroup = () => {
@@ -20,6 +32,16 @@ const SelectedGroup = () => {
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteError, setInviteError] = useState('');
     const [joinCode, setJoinCode] = useState('');
+    const [groupAvailability, setGroupAvailability] =
+        useState<AvailabilityMatrix>({});
+    const [commonTimeSlots, setCommonTimeSlots] = useState<
+        { day: string; slots: number[] }[]
+    >([]);
+    const [memberCoordinates, setMemberCoordinates] = useState<Coordinates[]>(
+        []
+    );
+    const [centerPoint, setCenterPoint] = useState<Coordinates | null>(null);
+
     const [aggregatedPreferences, setAggregatedPreferences] = useState<
         { preference: string; count: number }[]
     >([]);
@@ -27,10 +49,53 @@ const SelectedGroup = () => {
     const fetchGroupUsers = useCallback(async () => {
         try {
             const response = await api.get(`/users/by-groupid/${groupid}`);
-            console.log('Group users response:', response.data);
+
+            // Add detailed logging
+            console.log(
+                'Full response data:',
+                JSON.stringify(response.data, null, 2)
+            );
+            console.log('First user data:', response.data[0]);
+
+            // Check if address is lowercase in response
+            console.log(
+                'First user address:',
+                response.data[0]?.address || response.data[0]?.Address
+            );
+
+            // Updated mapping with case check
+            const addresses = response.data.map((user: GroupUser) => {
+                console.log('User object:', user);
+                return user.address;
+            });
+            console.log('Mapped addresses:', addresses);
+
             setGroupUsers(response.data);
 
-            // Set join code if available in first user's data
+            // Get coordinates for users with addresses
+            const coords = await Promise.all(
+                response.data
+                    .filter((user: GroupUser) => user.address)
+                    .map((user: GroupUser) => getCoordinates(user.address))
+            );
+
+            const validCoords = coords.filter(
+                (coord): coord is Coordinates => coord !== null
+            );
+
+            setMemberCoordinates(validCoords);
+
+            if (validCoords.length > 0) {
+                const center = calculateCenterPoint(validCoords);
+                setCenterPoint(center);
+
+                // Save center point to localStorage for GroupEvent
+                localStorage.setItem(
+                    `group_${groupid}_center`,
+                    JSON.stringify(center)
+                );
+            }
+
             if (response.data.length > 0 && response.data[0].joincode) {
                 setJoinCode(response.data[0].joincode);
             }
@@ -66,6 +131,129 @@ const SelectedGroup = () => {
         );
         console.log('Aggregated preferences:', aggregated);
         setAggregatedPreferences(aggregated);
+    };
+
+    const processScheduleMatrix = (serializedMatrix: string): boolean[][] => {
+        const matrix: boolean[][] = [];
+        for (let i = 0; i < 7; i++) {
+            const daySlots: boolean[] = [];
+            for (let j = 0; j < 19; j++) {
+                daySlots.push(serializedMatrix[i * 19 + j] === '1');
+            }
+            matrix.push(daySlots);
+        }
+        return matrix;
+    };
+
+    const findCommonTimeSlots = (users: GroupUser[]) => {
+        const availability: AvailabilityMatrix = {
+            Monday: new Array(19).fill(true),
+            Tuesday: new Array(19).fill(true),
+            Wednesday: new Array(19).fill(true),
+            Thursday: new Array(19).fill(true),
+            Friday: new Array(19).fill(true),
+            Saturday: new Array(19).fill(true),
+            Sunday: new Array(19).fill(true),
+        };
+
+        users.forEach((user) => {
+            if (user.serializedschedulematrix) {
+                const matrix = processScheduleMatrix(
+                    user.serializedschedulematrix
+                );
+                const days = [
+                    'Monday',
+                    'Tuesday',
+                    'Wednesday',
+                    'Thursday',
+                    'Friday',
+                    'Saturday',
+                    'Sunday',
+                ];
+
+                days.forEach((day, dayIndex) => {
+                    matrix[dayIndex].forEach((slot, slotIndex) => {
+                        if (!slot) {
+                            availability[day][slotIndex] = false;
+                        }
+                    });
+                });
+            }
+        });
+
+        setGroupAvailability(availability);
+
+        const common = Object.entries(availability).map(([day, slots]) => ({
+            day,
+            slots: slots.reduce(
+                (acc, available, index) => (available ? [...acc, index] : acc),
+                [] as number[]
+            ),
+        }));
+
+        setCommonTimeSlots(common);
+    };
+
+    useEffect(() => {
+        if (groupUsers.length > 0) {
+            findCommonTimeSlots(groupUsers);
+        }
+    }, [groupUsers]);
+
+    // Add new section to render common availability
+    const timeSlots = [
+        '5:00-6:00 AM',
+        '6:00-7:00 AM',
+        '7:00-8:00 AM',
+        '8:00-9:00 AM',
+        '9:00-10:00 AM',
+        '10:00-11:00 AM',
+        '11:00-12:00 PM',
+        '12:00-1:00 PM',
+        '1:00-2:00 PM',
+        '2:00-3:00 PM',
+        '3:00-4:00 PM',
+        '4:00-5:00 PM',
+        '5:00-6:00 PM',
+        '6:00-7:00 PM',
+        '7:00-8:00 PM',
+        '8:00-9:00 PM',
+        '9:00-10:00 PM',
+        '10:00-11:00 PM',
+        '11:00-12:00 AM',
+    ];
+
+    const getCoordinates = async (
+        address: string
+    ): Promise<Coordinates | null> => {
+        try {
+            const MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
+            const response = await axios.get(
+                `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+                    address
+                )}&key=${MAPS_API_KEY}`
+            );
+
+            if (response.data.results[0]) {
+                const { lat, lng } = response.data.results[0].geometry.location;
+                return { lat, lng };
+            }
+            return null;
+        } catch (error) {
+            console.error('Geocoding error:', error);
+            return null;
+        }
+    };
+
+    const calculateCenterPoint = (coordinates: Coordinates[]): Coordinates => {
+        const total = coordinates.length;
+        return coordinates.reduce(
+            (acc, curr) => ({
+                lat: acc.lat + curr.lat / total,
+                lng: acc.lng + curr.lng / total,
+            }),
+            { lat: 0, lng: 0 }
+        );
     };
 
     const handleInvite = async (e: React.FormEvent) => {
@@ -111,6 +299,35 @@ const SelectedGroup = () => {
                         <p className="no-preferences">No preferences set</p>
                     )}
                 </div>
+
+                <div className="location-info">
+                    <h3>Group Central Location</h3>
+                    {centerPoint ? (
+                        <div className="coordinate-container">
+                            <p className="coordinate-text">
+                                Latitude:{' '}
+                                <span className="code-text">
+                                    {centerPoint.lat.toFixed(4)}°
+                                </span>
+                            </p>
+                            <p className="coordinate-text">
+                                Longitude:{' '}
+                                <span className="code-text">
+                                    {centerPoint.lng.toFixed(4)}°
+                                </span>
+                            </p>
+                            <p className="member-count">
+                                Based on {memberCoordinates.length} member
+                                location
+                                {memberCoordinates.length !== 1 ? 's' : ''}
+                            </p>
+                        </div>
+                    ) : (
+                        <p className="no-preferences">
+                            No member locations available
+                        </p>
+                    )}
+                </div>
             </section>
 
             <section className="group-section">
@@ -143,6 +360,13 @@ const SelectedGroup = () => {
                                 {gUser.firstname} {gUser.lastname}
                             </h3>
                             <p className="member-email">{gUser.email}</p>
+                            {gUser.address ? (
+                                <p className="member-address">
+                                    Address: {gUser.address}
+                                </p>
+                            ) : (
+                                <p className="no-preferences">No address set</p>
+                            )}
                             <div className="cuisine-preferences">
                                 {gUser.cuisine_preferences &&
                                 gUser.cuisine_preferences.length > 0 ? (
@@ -163,6 +387,30 @@ const SelectedGroup = () => {
                         </div>
                     </div>
                 ))}
+            </section>
+
+            <section className="group-section">
+                <h2>Group Availability</h2>
+                <div className="availability-grid">
+                    {commonTimeSlots.map(
+                        ({ day, slots }) =>
+                            slots.length > 0 && (
+                                <div key={day} className="day-availability">
+                                    <h3>{day}</h3>
+                                    <div className="time-slots">
+                                        {slots.map((slotIndex) => (
+                                            <div
+                                                key={`${day}-${slotIndex}`}
+                                                className="available-slot"
+                                            >
+                                                {timeSlots[slotIndex]}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )
+                    )}
+                </div>
             </section>
 
             <div className="group-actions">

@@ -116,7 +116,15 @@ const JoinGroup: React.FC = () => {
                     onClick={() => navigate('/my-groups')}
                     variant="outlined"
                     fullWidth
-                    sx={{ mt: 2 }}
+                    sx={{
+                        mt: 2,
+                        color: '#FF0000',
+                        borderColor: '#FF0000',
+                        '&:hover': {
+                            borderColor: '#CC0000',
+                            color: '#CC0000',
+                        },
+                    }}
                 >
                     Back to My Groups
                 </Button>
