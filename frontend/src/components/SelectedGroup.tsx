@@ -357,9 +357,8 @@ const SelectedGroup = () => {
                     </div>
                 )}
             </header>
-
+            <h2>Aggregated Preferences</h2>
             <section className="group-section">
-                <h2>Aggregated Preferences</h2>
                 <div className="cuisine-preferences">
                     {aggregatedPreferences.length > 0 ? (
                         aggregatedPreferences.map(({ preference, count }) => (
@@ -418,9 +417,8 @@ const SelectedGroup = () => {
                 </form>
                 {inviteError && <p className="error-message">{inviteError}</p>}
             </section>
-
+            <h2>Group Members</h2>
             <section className="group-section">
-                <h2>Group Members</h2>
                 {groupUsers.map((gUser) => (
                     <div key={gUser.id} className="member-card">
                         <div className="member-avatar">
@@ -460,52 +458,105 @@ const SelectedGroup = () => {
                     </div>
                 ))}
             </section>
-
-            <section className="group-section">
-                <h2>Group Availability</h2>
-
-                <div className="next-available">
-                    <h3>Next Available Time</h3>
-                    {nextAvailableTime ? (
-                        <div className="next-time-slot">
-                            <p className="available-slot">
-                                {nextAvailableTime.day} at{' '}
-                                {nextAvailableTime.time}
-                                {nextAvailableTime.daysUntil === 0
-                                    ? ' (Today)'
-                                    : nextAvailableTime.daysUntil === 1
-                                      ? ' (Tomorrow)'
-                                      : ` (in ${nextAvailableTime.daysUntil} days)`}
+            <h2>Group Availability</h2>
+            <section className="availability-section">
+                {/* Next Available Time Card */}
+                <div className="next-available-card">
+                    <div className="card-header">
+                        <h3>Next Group Availability</h3>
+                    </div>
+                    <div className="card-content">
+                        {nextAvailableTime ? (
+                            <div className="next-time">
+                                <div className="time-badge">
+                                    <span className="day">
+                                        {nextAvailableTime.day}
+                                    </span>
+                                    <span className="time">
+                                        {nextAvailableTime.time}
+                                    </span>
+                                </div>
+                                <span className="relative-time">
+                                    {nextAvailableTime.daysUntil === 0
+                                        ? 'Today'
+                                        : nextAvailableTime.daysUntil === 1
+                                          ? 'Tomorrow'
+                                          : `In ${nextAvailableTime.daysUntil} days`}
+                                </span>
+                            </div>
+                        ) : (
+                            <p className="no-time">
+                                No upcoming times available
                             </p>
-                        </div>
-                    ) : (
-                        <p className="no-preferences">
-                            No upcoming available times found
-                        </p>
-                    )}
+                        )}
+                    </div>
                 </div>
-                <div className="availability-grid">
+
+                {/* Weekly Availability */}
+                <div className="weekly-availability">
+                    <h3>Weekly Schedule</h3>
                     {commonTimeSlots.map(
                         ({ day, slots }) =>
                             slots.length > 0 && (
-                                <div key={day} className="day-availability">
-                                    <h3>{day}</h3>
-                                    <div className="time-slots">
-                                        {slots.map((slotIndex) => (
-                                            <div
-                                                key={`${day}-${slotIndex}`}
-                                                className="available-slot"
-                                            >
-                                                {timeSlots[slotIndex]}
-                                            </div>
-                                        ))}
+                                <div key={day} className="day-schedule">
+                                    <div className="day-header">{day}</div>
+                                    <div className="time-blocks">
+                                        {[
+                                            {
+                                                label: 'Morning',
+                                                slots: slots.filter(
+                                                    (i) => i < 6
+                                                ),
+                                            },
+                                            {
+                                                label: 'Afternoon',
+                                                slots: slots.filter(
+                                                    (i) => i >= 6 && i < 12
+                                                ),
+                                            },
+                                            {
+                                                label: 'Evening',
+                                                slots: slots.filter(
+                                                    (i) => i >= 12
+                                                ),
+                                            },
+                                        ].map(
+                                            ({ label, slots }) =>
+                                                slots.length > 0 && (
+                                                    <div
+                                                        key={label}
+                                                        className="time-group"
+                                                    >
+                                                        <span className="time-label">
+                                                            {label}
+                                                        </span>
+                                                        <div className="time-list">
+                                                            {slots.map(
+                                                                (slotIndex) => (
+                                                                    <span
+                                                                        key={
+                                                                            slotIndex
+                                                                        }
+                                                                        className="time-slot"
+                                                                    >
+                                                                        {
+                                                                            timeSlots[
+                                                                                slotIndex
+                                                                            ]
+                                                                        }
+                                                                    </span>
+                                                                )
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )
+                                        )}
                                     </div>
                                 </div>
                             )
                     )}
                 </div>
             </section>
-
             <div className="group-actions">
                 <Link to={`/group-event/${groupid}`}>
                     <button className="cta-button">Create Event</button>

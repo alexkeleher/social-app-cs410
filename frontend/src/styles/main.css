@@ -158,7 +158,8 @@ body {
 }
 
 /* Buttons */
-.cta-button {
+.cta-button,
+.nav-link {
     background: var(--primary);
     color: white;
     padding: 14px 28px;
@@ -167,6 +168,26 @@ body {
     border: none;
     cursor: pointer;
     transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.cta-button:after,
+.nav-link:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+}
+
+.cta-button:hover:after,
+.nav-link:hover:after {
+    transform: translateX(0);
 }
 
 .cta-button:hover {
@@ -188,14 +209,17 @@ body {
 
 /* Style for the group list */
 .group-list {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
     flex-direction: column;
     align-items: center;
     margin-bottom: 20px;
 }
 
 /* Style each group card */
-.group-card {
+.group-card,
+.member-card {
     background-color: #f9f9f9;
     border: 1px solid #ccc;
     border-radius: 10px;
@@ -203,6 +227,14 @@ body {
     width: 300px;
     margin-bottom: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(0);
+    transition: all 0.3s ease;
+}
+
+.group-card:hover,
+.member-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(227, 24, 55, 0.1);
 }
 
 /* Style the preferences card */
@@ -453,20 +485,6 @@ select {
 .corner-cell {
     background: white;
     padding: 12px;
-}
-
-.day-header {
-    background: var(--primary);
-    color: white;
-    padding: 12px;
-    text-align: center;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.day-header:hover {
-    background: var(--primary-dark);
 }
 
 .time-label {
@@ -756,13 +774,13 @@ h1 {
     color: #a94442;
 }
 
-.member-card {
+/* .member-card {
     border: 1px solid #ddd;
     border-radius: 8px;
     padding: 15px;
     margin: 10px 0;
     background-color: #fff;
-}
+} */
 
 .member-info {
     display: flex;
@@ -825,6 +843,8 @@ h1 {
 }
 
 .group-section {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     background: white;
     border-radius: 12px;
     padding: 2rem;
@@ -874,7 +894,7 @@ h1 {
     outline: none;
 }
 
-.member-card {
+/* .member-card {
     display: flex;
     align-items: center;
     gap: 1.5rem;
@@ -885,12 +905,12 @@ h1 {
     transition:
         transform 0.2s,
         box-shadow 0.2s;
-}
+} */
 
-.member-card:hover {
+/* .member-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
+} */
 
 .member-avatar {
     width: 48px;
@@ -1098,18 +1118,21 @@ h1 {
 
 .availability-grid {
     display: grid;
-    gap: 1.5rem;
+    grid-template-columns: repeat(2, 1fr); /* Creates 2 equal columns */
+    gap: 1rem;
+    margin-top: 1rem;
 }
 
 .day-availability {
     background: var(--gray-100);
     padding: 1rem;
     border-radius: 8px;
+    height: fit-content;
 }
 
 .time-slots {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 0.5rem;
     margin-top: 0.5rem;
 }
@@ -1120,6 +1143,7 @@ h1 {
     padding: 0.5rem;
     border-radius: 4px;
     font-size: 0.9rem;
+    width: 100%;
 }
 
 .next-available {
@@ -1136,4 +1160,168 @@ h1 {
 .next-time-slot .available-slot {
     display: inline-block;
     font-weight: 500;
+}
+
+.loading-skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--gray-200) 25%,
+        var(--gray-300) 50%,
+        var(--gray-200) 75%
+    );
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+.feedback-message {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.feedback-message.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.feedback-message.success {
+    background: var(--accent-3);
+    color: white;
+}
+
+.feedback-message.error {
+    background: var(--primary);
+    color: white;
+}
+
+.section-header {
+    position: relative;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.section-header:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60;
+}
+.availability-section {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 2rem;
+    background: rgb(255, 255, 255);
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+}
+
+.next-available-card {
+    background: linear-gradient(
+        100deg,
+        var(--primary-light) 10%,
+        var(--primary-dark) 90%
+    );
+    color: white;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(43, 2, 2, 0.1);
+}
+
+.card-content {
+    padding: 2rem;
+}
+
+.next-time {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.time-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(175, 42, 42, 0.1);
+    border-radius: 8px;
+}
+
+.day {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.time {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.relative-time {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.weekly-availability {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.day-schedule {
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.day-header {
+    background: var(--gray-100);
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+}
+
+.time-blocks {
+    padding: 1rem;
+}
+
+.time-group {
+    display: flex;
+    gap: 1rem;
+    padding: 0.5rem 0;
+}
+
+.time-label {
+    min-width: 100px;
+    color: var(--gray-800);
+    font-weight: 500;
+}
+
+.time-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.time-slot {
+    background: var(--accent-3);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
 }
