@@ -555,6 +555,7 @@ app.post(
 );
 
 // Add join group endpoint
+
 app.post('/groups/join', async (req: Request, res: Response): Promise<void> => {
     try {
         const { joinCode, userId, checkOnly } = req.body;
@@ -583,16 +584,18 @@ app.post('/groups/join', async (req: Request, res: Response): Promise<void> => {
             [userId, groupId]
         );
 
-        if (memberCheck.rows.length > 0) {
-            if (checkOnly) {
-                res.json({ alreadyMember: true });
-            }
-            res.status(400).json({ error: 'Already a member' });
+        const isMember = memberCheck.rows.length > 0;
+
+        // Handle membership check
+        if (checkOnly) {
+            res.json({ alreadyMember: isMember });
             return;
         }
 
-        if (checkOnly) {
-            res.json({ alreadyMember: false });
+        // Handle join attempt
+        if (isMember) {
+            res.status(400).json({ error: 'Already a member' });
+            return;
         }
 
         // Add user to group
@@ -607,7 +610,6 @@ app.post('/groups/join', async (req: Request, res: Response): Promise<void> => {
         res.status(500).json({ error: (e as Error).message });
     }
 });
-
 // Send invite
 app.post(
     '/groups/:id/invite',
