@@ -62,7 +62,7 @@ const GroupEvent: React.FC = () => {
 
     const API_KEY = process.env.REACT_APP_YELP_API_KEY;
 
-    useEffect(() => {
+    /*     useEffect(() => {
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 setLatitude(position.coords.latitude);
@@ -72,7 +72,30 @@ const GroupEvent: React.FC = () => {
                 console.error('Error fetching location', error);
             }
         );
-    }, []);
+    }, []); */
+
+    useEffect(() => {
+        // Try to get saved center point
+        const savedCenter = localStorage.getItem(`group_${groupid}_center`);
+        if (savedCenter) {
+            const center = JSON.parse(savedCenter);
+            setLatitude(center.lat);
+            setLongitude(center.lng);
+            console.log('Using group center point:', center);
+        } else {
+            // Fallback to user's location if no center point exists
+            console.log('No center point found, using user location');
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setLatitude(position.coords.latitude);
+                    setLongitude(position.coords.longitude);
+                },
+                (error) => {
+                    console.error('Error fetching location:', error);
+                }
+            );
+        }
+    }, [groupid]);
 
     useEffect(() => {
         const fetchGroupData = async () => {
@@ -87,15 +110,6 @@ const GroupEvent: React.FC = () => {
                         groupname: groupUsers[0].groupname,
                         id: groupid,
                     });
-
-                    // Debug log raw preferences
-                    groupUsers.forEach((user: any) => {
-                        console.log(
-                            `User ${user.firstname}'s preferences:`,
-                            user.cuisine_preferences
-                        );
-                    });
-
                     const preferencesCount: { [key: string]: number } = {};
                     groupUsers.forEach((user: any) => {
                         user.cuisine_preferences?.forEach((pref: string) => {
@@ -107,7 +121,20 @@ const GroupEvent: React.FC = () => {
 
                     console.log('Aggregated counts:', preferencesCount);
 
-                    // Store aggregated preferences
+                    // Find max count
+                    const maxCount = Math.max(
+                        ...Object.values(preferencesCount)
+                    );
+
+                    // Get cuisines with max count (favorites)
+                    const favoriteCuisines = Object.entries(preferencesCount)
+                        .filter(([_, count]) => count === maxCount)
+                        .map(([cuisine]) => cuisine.toLowerCase());
+
+                    console.log('Setting favorite cuisines:', favoriteCuisines);
+                    setSelectedCuisines(favoriteCuisines);
+
+                    // Store all preferences for display
                     const aggregated = Object.entries(preferencesCount).map(
                         ([preference, count]) => ({
                             preference: preference.toLowerCase(),
@@ -115,15 +142,6 @@ const GroupEvent: React.FC = () => {
                         })
                     );
                     setAggregatedPreferences(aggregated);
-
-                    // Set selected cuisines based on majority preferences
-                    const memberCount = groupUsers.length;
-                    const popularCuisines = aggregated
-                        .filter(({ count }) => count >= 1)
-                        .map(({ preference }) => preference);
-
-                    console.log('Setting selected cuisines:', popularCuisines);
-                    setSelectedCuisines(popularCuisines);
                 }
             } catch (error) {
                 console.error('Error fetching group data:', error);

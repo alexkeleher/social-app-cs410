@@ -1121,3 +1121,19 @@ h1 {
     border-radius: 4px;
     font-size: 0.9rem;
 }
+
+.next-available {
+    background: var(--gray-100);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.next-time-slot {
+    margin-top: 0.5rem;
+}
+
+.next-time-slot .available-slot {
+    display: inline-block;
+    font-weight: 500;
+}

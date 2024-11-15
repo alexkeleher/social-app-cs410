@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api/axios';
 import axios from 'axios';
+import { format } from 'date-fns';
 
 interface GroupUser {
     groupname: string;
@@ -45,6 +46,77 @@ const SelectedGroup = () => {
     const [aggregatedPreferences, setAggregatedPreferences] = useState<
         { preference: string; count: number }[]
     >([]);
+    const [nextAvailableTime, setNextAvailableTime] = useState<{
+        day: string;
+        time: string;
+        daysUntil: number;
+    } | null>(null);
+
+    const findNextAvailableTime = () => {
+        const now = new Date();
+        const currentDay = now.getDay();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+
+        const adjustedCurrentDay = currentDay === 0 ? 6 : currentDay - 1;
+
+        const dayIndices = {
+            Monday: 0,
+            Tuesday: 1,
+            Wednesday: 2,
+            Thursday: 3,
+            Friday: 4,
+            Saturday: 5,
+            Sunday: 6,
+        };
+
+        for (let daysAhead = 0; daysAhead < 7; daysAhead++) {
+            const checkingDay = (adjustedCurrentDay + daysAhead) % 7;
+            const dayName = Object.keys(dayIndices).find(
+                (key) =>
+                    dayIndices[key as keyof typeof dayIndices] === checkingDay
+            )!;
+
+            const daySlots = commonTimeSlots.find(
+                (slot) => slot.day === dayName
+            );
+
+            if (daySlots?.slots.length) {
+                // On current day, filter out past times
+                const availableSlots =
+                    daysAhead === 0
+                        ? daySlots.slots.filter((slotIndex) => {
+                              const [startHour] = timeSlots[slotIndex]
+                                  .split('-')[0]
+                                  .split(':')
+                                  .map(Number);
+                              return (
+                                  startHour > currentHour ||
+                                  (startHour === currentHour &&
+                                      currentMinute < 30)
+                              );
+                          })
+                        : daySlots.slots;
+
+                if (availableSlots.length > 0) {
+                    setNextAvailableTime({
+                        day: dayName,
+                        time: timeSlots[availableSlots[0]],
+                        daysUntil: daysAhead,
+                    });
+                    return;
+                }
+            }
+        }
+        setNextAvailableTime(null);
+    };
+
+    // Add useEffect to trigger calculation when commonTimeSlots changes
+    useEffect(() => {
+        if (commonTimeSlots.length > 0) {
+            findNextAvailableTime();
+        }
+    }, [commonTimeSlots]);
 
     const fetchGroupUsers = useCallback(async () => {
         try {
@@ -391,6 +463,27 @@ const SelectedGroup = () => {
 
             <section className="group-section">
                 <h2>Group Availability</h2>
+
+                <div className="next-available">
+                    <h3>Next Available Time</h3>
+                    {nextAvailableTime ? (
+                        <div className="next-time-slot">
+                            <p className="available-slot">
+                                {nextAvailableTime.day} at{' '}
+                                {nextAvailableTime.time}
+                                {nextAvailableTime.daysUntil === 0
+                                    ? ' (Today)'
+                                    : nextAvailableTime.daysUntil === 1
+                                      ? ' (Tomorrow)'
+                                      : ` (in ${nextAvailableTime.daysUntil} days)`}
+                            </p>
+                        </div>
+                    ) : (
+                        <p className="no-preferences">
+                            No upcoming available times found
+                        </p>
+                    )}
+                </div>
                 <div className="availability-grid">
                     {commonTimeSlots.map(
                         ({ day, slots }) =>
