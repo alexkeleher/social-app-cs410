@@ -12,10 +12,6 @@ CREATE TABLE IF NOT EXISTS Users (
 	SerializedScheduleMatrix VARCHAR(500)
 );
 
-ALTER TABLE Users
-    ADD COLUMN IF NOT EXISTS PreferredPriceRange SMALLINT,
-    ADD COLUMN IF NOT EXISTS PreferredMaxDistance INT;
-
 CREATE TABLE Groups (
 	ID SERIAL PRIMARY KEY,
 	Name VARCHAR(50),
@@ -105,47 +101,162 @@ CREATE TABLE IF NOT EXISTS CuisineTypes (
 	Name VARCHAR(50) UNIQUE
 );
 
+-- Inserts into CuisineTypes
 INSERT INTO CuisineTypes (Name) VALUES
 ('American'), ('Italian'), ('Mexican'), ('Japanese'), ('Chinese'), ('Indian'),
 ('Thai'), ('Vietnamese'), ('Korean'), ('French'), ('Mediterranean'), ('Greek'),
 ('Spanish'), ('Middle Eastern'), ('African'), ('Caribbean'), ('German'),
 ('British'), ('Irish'); -- Add more as needed (all of these are on Yelp)
 
--- Insert Dummy Data into Users Table
+-- Inserts into Users
 INSERT INTO Users(
-	firstname, lastname, username, password, phone, address, email, PreferredPriceRange, PreferredMaxDistance)
-	VALUES ('Armando', 'Toledo', 'mandy1339', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '7864475287', '123 E main St Baltimore MD, 21237', 'atoledo@email.com', 2, 5),
-	 ('Kirby', 'Douglas', 'kdouglas', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '1111111111', '124 E main St Baltimore MD, 21237', 'kdouglas@email.com', 1, 7),
-	 ('Alex', 'Keleher', 'akeleher', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '2222222222', '125 E main St Baltimore MD, 21237', 'akeleher@email.com', 3, 8),
-	 ('Juan', 'Mireles', 'jmireles', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '3333333333', '126 E main St Baltimore MD, 21237', 'jmireles@email.com', 2, 9),
-	 ('Jajuan', 'Myers', 'jmyers', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '4444444444', '127 E main St Baltimore MD, 21237', 'jmyers@email.com', 1, 5),
-	 ('Matt', 'Janak', 'mjanak', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '5555555555', '128 E main St Baltimore MD, 21237', 'mjanak@email.com', 2, 4);
+	firstname, lastname, username, password, phone, address, email, PreferredPriceRange, PreferredMaxDistance, SerializedScheduleMatrix)
+	VALUES ('Armando', 'Toledo', 'mandy1339', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '7864475287', '7918 Underhill Rd, Rosedale, MD 21237', 'atoledo@email.com', 2, 5, '0000000000000000000000000011111100000000000000000111111100000000000000000000000011110000000000000000000111111111111111111111111111111'),
+	 ('Kirby', 'Douglas', 'kdouglas', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '1111111111', '2720 Riggs Ave, Baltimore, MD 21216', 'kdouglas@email.com', 1, 7, '0000000011111111111110000000000000000000000000011111111111111111100000000001111111100000000000000111111111111111111111110000000000000'),
+	 ('Alex', 'Keleher', 'akeleher', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '2222222222', 'Hanover Woods, 6301 Hanover Crossing Way, Hanover, MD 21076', 'akeleher@email.com', 3, 8, '0000000011111111111000000000000000000000000000011111111111111000000000011111111000000000000011111111111111111110000000000000000000000'),
+	 ('Juan', 'Mireles', 'jmireles', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '3333333333', '50 6 Point Ct, Baltimore, MD 21244', 'jmireles@email.com', 2, 9, '0000001111111111100000000011111110000000000000001111111100000000000000000000000000001111100000000111111111111111111111111110000000000'),
+	 ('Jajuan', 'Myers', 'jmyers', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '4444444444', '1423 Lincoln Woods Dr, Catonsville, MD 21228', 'jmyers@email.com', 1, 5, '0000011111111111111111111100000000000111111111000000000111111111111111111110000111111111111111111110000000011000000000000000000000000'),
+	 ('Matt', 'Janak', 'mjanak', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '5555555555', '3801 Howard Park Ave, Baltimore, MD 21207', 'mjanak@email.com', 2, 4, '0000001111111000000000011111111111111000011111111000111110000000111111111110001111111111111000000000000000000000000000000000000000000'),
+	 ('Benji', 'Toledo', 'btoledo', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '5555555555', '3709 Arcadia Ave, Baltimore, MD 21215', 'btoledo@email.com', 2, 4, '0111111111111111111111110000000000000111111111111100000000000000000000000000000000000000000000000000000000000000000000000000000000000'),
+	 ('Gonzalo', 'Abreu', 'gabreu', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '5555555555', '103 Witherspoon Rd, Baltimore, MD 21212', 'gabreu@email.com', 2, 4, '0111111111100000000000001111111110000011111111100000111111111111111110000000111111111111111000000000000000000000000000000000000000000'),
+	 ('Trucutu', 'Depaquita', 'tdepaquita', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '5555555555', '3250 Gulfport Dr, Baltimore, MD 21225', 'tdepaquita@email.com', 2, 4, '0000001111111111110000000001111111100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'),
+	 ('Alejandro', 'Reyes', 'areyes', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '5555555555', '212 Bridgeview Rd, Baltimore, MD 21225', 'areyes@email.com', 2, 4, '0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000');
 
+-- Inserts into Groups
 INSERT INTO Groups (name, JoinCode) VALUES
     ('Group Red', 'RED123'),
     ('The monsters', 'MON456'),
     ('The sharks', 'SHK789'),
-    ('The workaholics', 'WRK012');
+    ('The workaholics', 'WRK012'),
+	('Stressed Boys', 'STR857'),
+	('Gargantuan Buildings', 'GAR918'),
+	('TeaTime', 'TEA745'),
+	('Techy Lunchers', 'TEC874'),
+	('Frat Friends', 'FRA897'),
+	('Coworkers Forever', 'COW791');
 
+-- Inserts into UserGroupXRef
  INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
  ((SELECT id FROM Users WHERE email = 'atoledo@email.com'), (SELECT ID FROM Groups WHERE name = 'Group Red')),
  ((SELECT id FROM Users WHERE email = 'kdouglas@email.com'), (SELECT ID FROM Groups WHERE name = 'Group Red')),
- ((SELECT id FROM Users WHERE email = 'akeleher@email.com'), (SELECT ID FROM Groups WHERE name = 'Group Red'));
+ ((SELECT id FROM Users WHERE email = 'akeleher@email.com'), (SELECT ID FROM Groups WHERE name = 'Group Red')),
+ ((SELECT id FROM Users WHERE email = 'jmireles@email.com'), (SELECT ID FROM Groups WHERE name = 'Group Red')),
+ ((SELECT id FROM Users WHERE email = 'jmyers@email.com'), (SELECT ID FROM Groups WHERE name = 'Group Red')),
+ ((SELECT id FROM Users WHERE email = 'mjanak@email.com'), (SELECT ID FROM Groups WHERE name = 'Group Red')),
+ ((SELECT id FROM Users WHERE email = 'btoledo@email.com'), (SELECT ID FROM Groups WHERE name = 'Group Red')),
+ ((SELECT id FROM Users WHERE email = 'gabreu@email.com'), (SELECT ID FROM Groups WHERE name = 'Group Red')),
+ ((SELECT id FROM Users WHERE email = 'tdepaquita@email.com'), (SELECT ID FROM Groups WHERE name = 'Group Red'));
 
 INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
  ((SELECT id FROM Users WHERE email = 'jmireles@email.com'), (SELECT ID FROM Groups WHERE name = 'The monsters')),
  ((SELECT id FROM Users WHERE email = 'jmyers@email.com'), (SELECT ID FROM Groups WHERE name = 'The monsters')),
- ((SELECT id FROM Users WHERE email = 'mjanak@email.com'), (SELECT ID FROM Groups WHERE name = 'The monsters'));
+ ((SELECT id FROM Users WHERE email = 'mjanak@email.com'), (SELECT ID FROM Groups WHERE name = 'The monsters')),
+ ((SELECT id FROM Users WHERE email = 'areyes@email.com'), (SELECT ID FROM Groups WHERE name = 'The monsters')),
+ ((SELECT id FROM Users WHERE email = 'tdepaquita@email.com'), (SELECT ID FROM Groups WHERE name = 'The monsters')),
+ ((SELECT id FROM Users WHERE email = 'gabreu@email.com'), (SELECT ID FROM Groups WHERE name = 'The monsters')),
+ ((SELECT id FROM Users WHERE email = 'btoledo@email.com'), (SELECT ID FROM Groups WHERE name = 'The monsters')),
+ ((SELECT id FROM Users WHERE email = 'akeleher@email.com'), (SELECT ID FROM Groups WHERE name = 'The monsters'));
 
 INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
- ((SELECT id FROM Users WHERE email = 'mjanak@email.com'), (SELECT ID FROM Groups WHERE name = 'The sharks'));
+ ((SELECT id FROM Users WHERE email = 'mjanak@email.com'), (SELECT ID FROM Groups WHERE name = 'The sharks')),
+ ((SELECT id FROM Users WHERE email = 'areyes@email.com'), (SELECT ID FROM Groups WHERE name = 'The sharks')),
+ ((SELECT id FROM Users WHERE email = 'tdepaquita@email.com'), (SELECT ID FROM Groups WHERE name = 'The sharks')),
+ ((SELECT id FROM Users WHERE email = 'gabreu@email.com'), (SELECT ID FROM Groups WHERE name = 'The sharks')),
+ ((SELECT id FROM Users WHERE email = 'atoledo@email.com'), (SELECT ID FROM Groups WHERE name = 'The sharks')),
+ ((SELECT id FROM Users WHERE email = 'kdouglas@email.com'), (SELECT ID FROM Groups WHERE name = 'The sharks')),
+ ((SELECT id FROM Users WHERE email = 'akeleher@email.com'), (SELECT ID FROM Groups WHERE name = 'The sharks'));
 
 INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
  ((SELECT id FROM Users WHERE email = 'atoledo@email.com'), (SELECT ID FROM Groups WHERE name = 'The workaholics')),
  ((SELECT id FROM Users WHERE email = 'akeleher@email.com'), (SELECT ID FROM Groups WHERE name = 'The workaholics')),
- ((SELECT id FROM Users WHERE email = 'kdouglas@email.com'), (SELECT ID FROM Groups WHERE name = 'The workaholics'));
+ ((SELECT id FROM Users WHERE email = 'kdouglas@email.com'), (SELECT ID FROM Groups WHERE name = 'The workaholics')),
+ ((SELECT id FROM Users WHERE email = 'mjanak@email.com'), (SELECT ID FROM Groups WHERE name = 'The workaholics')),
+ ((SELECT id FROM Users WHERE email = 'tdepaquita@email.com'), (SELECT ID FROM Groups WHERE name = 'The workaholics')),
+ ((SELECT id FROM Users WHERE email = 'gabreu@email.com'), (SELECT ID FROM Groups WHERE name = 'The workaholics'));
 
+ INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
+ ((SELECT id FROM Users WHERE email = 'atoledo@email.com'), (SELECT ID FROM Groups WHERE name = 'Stressed Boys')),
+ ((SELECT id FROM Users WHERE email = 'akeleher@email.com'), (SELECT ID FROM Groups WHERE name = 'Stressed Boys')),
+ ((SELECT id FROM Users WHERE email = 'kdouglas@email.com'), (SELECT ID FROM Groups WHERE name = 'Stressed Boys')),
+ ((SELECT id FROM Users WHERE email = 'mjanak@email.com'), (SELECT ID FROM Groups WHERE name = 'Stressed Boys')),
+ ((SELECT id FROM Users WHERE email = 'jmyers@email.com'), (SELECT ID FROM Groups WHERE name = 'Stressed Boys'));
+ 
+ INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
+ ((SELECT id FROM Users WHERE email = 'atoledo@email.com'), (SELECT ID FROM Groups WHERE name = 'Gargantuan Buildings')),
+ ((SELECT id FROM Users WHERE email = 'akeleher@email.com'), (SELECT ID FROM Groups WHERE name = 'Gargantuan Buildings')),
+ ((SELECT id FROM Users WHERE email = 'kdouglas@email.com'), (SELECT ID FROM Groups WHERE name = 'Gargantuan Buildings')),
+ ((SELECT id FROM Users WHERE email = 'mjanak@email.com'), (SELECT ID FROM Groups WHERE name = 'Gargantuan Buildings'));
+
+ INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
+ ((SELECT id FROM Users WHERE email = 'atoledo@email.com'), (SELECT ID FROM Groups WHERE name = 'TeaTime')),
+ ((SELECT id FROM Users WHERE email = 'akeleher@email.com'), (SELECT ID FROM Groups WHERE name = 'TeaTime')),
+ ((SELECT id FROM Users WHERE email = 'mjanak@email.com'), (SELECT ID FROM Groups WHERE name = 'TeaTime'));
+
+ INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
+ ((SELECT id FROM Users WHERE email = 'atoledo@email.com'), (SELECT ID FROM Groups WHERE name = 'Techy Lunchers')),
+ ((SELECT id FROM Users WHERE email = 'mjanak@email.com'), (SELECT ID FROM Groups WHERE name = 'Techy Lunchers'));
+ 
+ INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
+ ((SELECT id FROM Users WHERE email = 'atoledo@email.com'), (SELECT ID FROM Groups WHERE name = 'Frat Friends')); 
+ 
+ INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
+ ((SELECT id FROM Users WHERE email = 'mjanak@email.com'), (SELECT ID FROM Groups WHERE name = 'Coworkers Forever'));
+ 
+-- Inserts into Restaurant
 INSERT INTO Restaurant (Name, Address, PriceLevel) VALUES
 ('Olive Garden', '8245 Perry Hall Blvd, Baltimore, MD 21236', 2),
 ('Popeyes', '300 N Broadway, Baltimore, MD 21231', 1),
 ('McDonald''s', '2501-13 W Franklin St, Baltimore, MD 21223', 1);
+
+-- Inserts into GroupInvites
+INSERT INTO GroupInvites (GroupID, Email) VALUES
+(10,'atoledo@email.com'),
+(2,'kdouglas@email.com'),
+(10,'akeleher@email.com'),
+(3,'jmireles@email.com'),
+(10,'jmyers@email.com'),
+(9,'mjanak@email.com'),
+(10,'btoledo@email.com'),
+(10,'gabreu@email.com'),
+(2,'atoledo@email.com'),
+(7,'areyes@email.com');
+
+-- Inserts into UserCuisinePreferences
+INSERT INTO UserCuisinePreferences (UserID, CuisineType) VALUES
+(1, 'Caribbean'),
+(1, 'Italian'),
+(1, 'Indian'),
+(1, 'Korean'),
+(1, 'Mediterranean'),
+(1, 'German'),
+(2, 'Thai'),
+(2, 'Italian'),
+(2, 'American'),
+(2, 'Japanese'),
+(3, 'Chinese'),
+(3, 'Indian'),
+(3, 'Thai'),
+(4, 'Vietnamese'),
+(4, 'Korean'),
+(5, 'Japanese'),
+(5, 'French'),
+(5, 'Korean'),
+(6, 'Vietnamese'),
+(6, 'Thai'),
+(6, 'British'),
+(6, 'Irish'),
+(7, 'Middle Eastern'),
+(7, 'Italian'),
+(7, 'African'),
+(7, 'Chinese'),
+(7, 'German'),
+(8, 'Middle Eastern'),
+(8, 'Italian'),
+(8, 'African'),
+(8, 'Chinese'),
+(9, 'Middle Eastern'),
+(9, 'Greek'),
+(9, 'Korean'),
+(10, 'Caribbean'),
+(10, 'Greek');
+
