@@ -6,7 +6,8 @@ import AuthContext from '../context/AuthProvider';
 interface Group {
     id: number;
     name: string;
-    datecreated: Date;
+    datecreated?: string;
+    invitedat?: string;
     joincode: string;
 }
 
@@ -26,13 +27,24 @@ const MyGroups: React.FC = () => {
         const fetchInvites = async () => {
             try {
                 const response = await api.get('/invites');
-                setPendingInvites(response.data);
+                console.log('Invite data:', response.data);
+
+                // Filter out invites for groups user is already in
+                const validInvites = [];
+                for (const invite of response.data) {
+                    const wasDeleted = await checkAndDeleteInvite(invite);
+                    if (!wasDeleted) {
+                        validInvites.push(invite);
+                    }
+                }
+
+                setPendingInvites(validInvites);
             } catch (err) {
                 console.error('Error fetching invites:', err);
             }
         };
         fetchInvites();
-    }, []);
+    }, [auth.id, auth.token]);
 
     const getMyGroups = async () => {
         try {
@@ -81,6 +93,35 @@ const MyGroups: React.FC = () => {
         }
     };
 
+    const checkAndDeleteInvite = async (invite: Group) => {
+        try {
+            // Check if user is already member
+            const memberCheckRes = await api.post(
+                '/groups/join',
+                {
+                    joinCode: invite.joincode,
+                    userId: auth.id,
+                    checkOnly: true, // Add this flag to backend
+                },
+                {
+                    headers: { Authorization: `Bearer ${auth.token}` },
+                }
+            );
+
+            // If response indicates already member, delete invite
+            if (memberCheckRes.data.alreadyMember) {
+                await api.delete(`/invites/${invite.id}`, {
+                    headers: { Authorization: `Bearer ${auth.token}` },
+                });
+                return true; // Invite was deleted
+            }
+            return false; // Invite still valid
+        } catch (error) {
+            console.error('Error checking membership:', error);
+            return false;
+        }
+    };
+
     // on page loading, populate the page using axious http get
 
     // need a component for the group cards
@@ -99,7 +140,18 @@ const MyGroups: React.FC = () => {
                                 <h2>{group.name}</h2>
                                 <p>Group ID: {group.id}</p>
                                 <p>
-                                    Date Created: {group.datecreated.toString()}
+                                    Date Created:{' '}
+                                    {group.datecreated
+                                        ? new Date(
+                                              group.datecreated
+                                          ).toLocaleString('en-US', {
+                                              year: 'numeric',
+                                              month: 'short',
+                                              day: 'numeric',
+                                              hour: '2-digit',
+                                              minute: '2-digit',
+                                          })
+                                        : 'N/A'}
                                 </p>
                                 <p className="join-code">
                                     Join Code: {group.joincode}
@@ -116,7 +168,16 @@ const MyGroups: React.FC = () => {
                         <p>Join Code: {invite.joincode}</p>
                         <p>
                             Invited:{' '}
-                            {new Date(invite.datecreated).toLocaleDateString()}
+                            {new Date(invite.invitedat || '').toLocaleString(
+                                'en-US',
+                                {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                }
+                            )}
                         </p>
                         <button
                             onClick={() => handleAcceptInvite(invite)}

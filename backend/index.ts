@@ -557,7 +557,7 @@ app.post(
 // Add join group endpoint
 app.post('/groups/join', async (req: Request, res: Response): Promise<void> => {
     try {
-        const { joinCode, userId } = req.body;
+        const { joinCode, userId, checkOnly } = req.body;
 
         if (!joinCode || !userId) {
             res.status(400).json({ error: 'Missing joinCode or userId' });
@@ -584,8 +584,15 @@ app.post('/groups/join', async (req: Request, res: Response): Promise<void> => {
         );
 
         if (memberCheck.rows.length > 0) {
+            if (checkOnly) {
+                res.json({ alreadyMember: true });
+            }
             res.status(400).json({ error: 'Already a member' });
             return;
+        }
+
+        if (checkOnly) {
+            res.json({ alreadyMember: false });
         }
 
         // Add user to group
@@ -681,7 +688,11 @@ app.get('/invites', async (req: Request, res: Response): Promise<void> => {
         const userId = decoded.id;
 
         const result = await pool.query(
-            `SELECT g.id, g.name, g.joincode, gi.invitedat 
+            `SELECT 
+                g.id, 
+                g.name, 
+                g.joincode, 
+                TO_CHAR(gi.invitedat, 'YYYY-MM-DD"T"HH24:MI:SS.MSZ') as datecreated
              FROM GroupInvites gi
              JOIN Groups g ON g.id = gi.groupid
              JOIN Users u ON u.email = gi.email

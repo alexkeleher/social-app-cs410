@@ -333,7 +333,12 @@ const SelectedGroup = () => {
         setInviteError('');
 
         try {
-            await api.post(`/groups/${groupid}/invite`, { email: inviteEmail });
+            const inviteData = {
+                email: inviteEmail,
+                invitedAt: new Date().toISOString(), // Add current date in ISO format
+            };
+
+            await api.post(`/groups/${groupid}/invite`, inviteData);
             setInviteEmail('');
             alert('Invite sent successfully');
             fetchGroupUsers();
