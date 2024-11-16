@@ -98,15 +98,16 @@ CREATE TABLE IF NOT EXISTS UserCuisinePreferences (
 
 CREATE TABLE IF NOT EXISTS CuisineTypes (
 	ID SERIAL PRIMARY KEY,
-	Name VARCHAR(50) UNIQUE
+	Name VARCHAR(50) UNIQUE,
+	Alias VARCHAR(50) UNIQUE
 );
 
 -- Inserts into CuisineTypes
-INSERT INTO CuisineTypes (Name) VALUES
-('American'), ('Italian'), ('Mexican'), ('Japanese'), ('Chinese'), ('Indian'),
-('Thai'), ('Vietnamese'), ('Korean'), ('French'), ('Mediterranean'), ('Greek'),
-('Spanish'), ('Middle Eastern'), ('African'), ('Caribbean'), ('German'),
-('British'), ('Irish'); -- Add more as needed (all of these are on Yelp)
+INSERT INTO CuisineTypes (Name, Alias) VALUES
+('American', 'tradamerican'), ('Italian', 'italian'), ('Mexican', 'mexican'), ('Japanese', 'japanese'), ('Chinese', 'chinese'), ('Indian', 'indpak'),
+('Thai', 'thai'), ('Vietnamese', 'vietnamese'), ('Korean', 'korean'), ('French', 'french'), ('Mediterranean', 'mediterranean'), ('Greek', 'greek'),
+('Spanish', 'spanish'), ('Middle Eastern', 'mideastern'), ('African', 'african'), ('Caribbean', 'caribbean'), ('German', 'german'),
+('British', 'british'), ('Irish', 'irish'); -- Add more as needed (all of these are on Yelp)
 
 -- Inserts into Users
 INSERT INTO Users(

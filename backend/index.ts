@@ -9,6 +9,7 @@ import connectPgSimple from 'connect-pg-simple';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { YelpRestaurant, SocialEvent, generateEvent } from './event-generator';
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
@@ -291,8 +292,12 @@ GROUP BY g.name, g.joincode, u.id, u.firstname, u.lastname, u.username, u.email,
             groupname: allData.rows[0]?.groupname || '',
             joincode: allData.rows[0]?.joincode || '',
             members: allData.rows,
-            maxPrice: Math.max(...allData.rows.map(u => u.preferredpricerange || 0)),
-            maxDistance: Math.max(...allData.rows.map(u => u.preferredmaxdistance || 0))
+            maxPrice: Math.max(
+                ...allData.rows.map((u) => u.preferredpricerange || 0)
+            ),
+            maxDistance: Math.max(
+                ...allData.rows.map((u) => u.preferredmaxdistance || 0)
+            ),
         };
 
         res.json(allData.rows);
@@ -1049,6 +1054,31 @@ app.delete('/data/:id', async (req: Request<Parameters>, res: Response) => {
         res.status(500).json({ error: (e as Error).message });
     }
 });
+
+/* events service */
+
+/*    GET /events/generate-new/:groupid    */
+/* ************************************************************************** 
+Input: (URL Param) Group ID
+Operation: Apply algorithm to find optimal social event for group
+Output: (JSON Object) Json object with generated social event information {Restaurant, StartTime} 
+*/
+app.get(
+    '/events/generate-new',
+    async (req: Request<Parameters>, res: Response) => {
+        try {
+            console.log('attempting to generate a social event'); // Debugging
+            const generatedSocialEvent: SocialEvent = await generateEvent();
+            res.json(generatedSocialEvent);
+        } catch (e) {
+            console.error((e as Error).message);
+            res.status(500).json({ error: (e as Error).message });
+        }
+    }
+);
+
+/* END OF ROUTES */
+/* ********************************************************************** */
 
 const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
