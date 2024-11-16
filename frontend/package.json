@@ -15,6 +15,7 @@
         "react-dom": "^18.3.1",
         "react-router-dom": "^6.27.0",
         "react-scripts": "^5.0.1",
+        "react-toastify": "^10.0.6",
         "web-vitals": "^2.1.4",
         "workbox-background-sync": "^6.6.0",
         "workbox-broadcast-update": "^6.6.0",

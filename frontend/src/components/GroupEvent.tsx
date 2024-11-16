@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api/axios';
@@ -169,6 +171,8 @@ const GroupEvent: React.FC = () => {
         selectedCuisines,
         restaurantLimit,
     ]);
+
+    const notify = () => toast('You have been invited to an event!');
 
     const fetchRestaurants = async (lat: number, lon: number) => {
         try {
@@ -366,6 +370,13 @@ const GroupEvent: React.FC = () => {
                         )}
                     </div>
                 ))}
+            </div>
+            <br />
+            <div className="finish-button-container">
+                <button className="finish-button" onClick={notify}>
+                    Finish
+                </button>
+                <ToastContainer theme="dark" />
             </div>
         </div>
     );

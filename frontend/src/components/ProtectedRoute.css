@@ -1,0 +1,11 @@
+.home-button {
+    color: #333333;
+    text-decoration: none;
+    font-size: 1.8rem;
+    font-weight: 700;
+    cursor: pointer;
+
+    /* Fixed dimensions */
+    width: 100px;
+    height: 36px;
+}

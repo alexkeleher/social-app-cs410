@@ -2,6 +2,7 @@ import { useContext } from 'react';
 import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import AuthContext from '../context/AuthProvider';
 import Logout from './Logout';
+import './ProtectedRoute.css';
 
 const ProtectedRoute = () => {
     const { auth, loading } = useContext(AuthContext);
@@ -15,18 +16,18 @@ const ProtectedRoute = () => {
     return auth?.token ? (
         <div className="app-container">
             <header className="app-header">
-                <div className="header-content">
+                <div className="left-side-content">
+                    <Link to="/landingpage" className="home-button">
+                        GroupEats
+                    </Link>
                     <div className="user-info">
                         {/* Render Logged in user info,*/}
                         User: {auth.email}
                         {/* then Render <Outlet>. <Outlet> renders the child route's element */}
                     </div>
+                </div>
+                <div className="right-side-content">
                     <nav className="header-nav">
-                        {location.pathname !== '/landingpage' && (
-                            <Link to="/landingpage" className="nav-link">
-                                Home
-                            </Link>
-                        )}
                         <Logout />
                     </nav>
                 </div>

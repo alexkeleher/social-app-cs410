@@ -19,6 +19,9 @@
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+    /* Notifications */
+    --toastify-color-progress-dark: #e31737;
 }
 
 /* Modern Reset & Base Styles */
@@ -1001,7 +1004,6 @@ h1 {
     gap: 10px;
     margin-bottom: 20px;
 }
-
 .cuisine-checkbox {
     display: flex;
     align-items: center;
@@ -1013,18 +1015,16 @@ h1 {
 }
 
 .app-header {
+    display: flex;
+    justify-content: center;
     background: white;
     padding: 1rem 2rem;
     border-bottom: 1px solid var(--gray-200);
     box-shadow: var(--shadow-sm);
 }
 
-.header-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.left-side-content {
+    flex: 1;
 }
 
 .user-info {

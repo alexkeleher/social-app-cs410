@@ -1,31 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import Logout from './Logout';
+import './LandingPage.css';
 
 const LandingPage: React.FC = () => {
     return (
         <div className="landing-container">
             <header className="landing-header">
                 <h1>GroupEats</h1>
-                <style>{`
-                .landing-container {
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                    height: 100vh;
-                    text-align: center;
-                }
-                .landing-header, .landing-main, .landing-footer {
-                    width: 100%;
-                }
-                .cta-button {
-                    margin-top: 20px;
-                    padding: 10px 20px;
-                    margin-right: 10px;
-                    margin-left: 5px;
-                }
-            `}</style>
             </header>
 
             <main className="landing-main">

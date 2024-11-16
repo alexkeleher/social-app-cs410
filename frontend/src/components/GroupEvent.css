@@ -55,3 +55,30 @@
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
 }
+
+.finish-button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.finish-button {
+    color: white;
+    background: var(--primary);
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+.finish-button:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
