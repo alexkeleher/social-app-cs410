@@ -8,12 +8,27 @@ const api: AxiosInstance = axios.create({
     baseURL: API_URL,
 });
 
+// Request interceptor - Add authentication token to all requests
+api.interceptors.request.use(
+    (config: InternalAxiosRequestConfig) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
 // The first interceptor (Request Interceptor):
 // Add token to all requests
 // This interceptor runs before every request and:
 //      Retrieves the authentication token from localStorage
 //      If a token exists, adds it to the request headers as a Bearer token
 //      This ensures every API request includes authentication if available
+// Single response interceptor handling both token refresh and errors
 api.interceptors.response.use(
     (response) => {
         // Check for new token in response headers
@@ -36,7 +51,9 @@ api.interceptors.response.use(
                         localStorage.setItem('token', response.data.token);
                         // Retry original request
                         const config = error.config;
-                        config.headers.Authorization = `Bearer ${response.data.token}`;
+                        if (config.headers) {
+                            config.headers.Authorization = `Bearer ${response.data.token}`;
+                        }
                         return api(config);
                     }
                 }
@@ -46,23 +63,8 @@ api.interceptors.response.use(
                 window.location.href = '/login';
                 return Promise.reject(refreshError);
             }
-        }
-        return Promise.reject(error);
-    }
-);
 
-// The second interceptor (Response Interceptor):
-// Handle token expiration
-// This interceptor handles responses and:
-//      Passes through successful responses unchanged
-//      Checks for 401 (Unauthorized) errors specifically
-//      If a 401 error occurs:
-//          Removes the token from localStorage (it's likely expired or invalid)
-//          Redirects the user to the login page
-api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
+            // If we couldn't refresh the token, remove it and redirect
             localStorage.removeItem('token');
             window.location.href = '/login';
         }

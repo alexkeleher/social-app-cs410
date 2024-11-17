@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../api/axios';
 import AuthContext from '../context/AuthProvider';
+import api from '../api/axios';
 
 interface Group {
     id: number;
@@ -26,6 +26,9 @@ const MyGroups: React.FC = () => {
     useEffect(() => {
         const fetchInvites = async () => {
             try {
+                if (auth.id) console.log('auth id is set'); // Debugging
+                if (auth.token) console.log('auth token is set'); // Debugging
+
                 const response = await api.get('/invites');
                 console.log('Invite data:', response.data);
 
@@ -44,7 +47,7 @@ const MyGroups: React.FC = () => {
             }
         };
         fetchInvites();
-    }, [auth.id, auth.token]);
+    }, []);
 
     const getMyGroups = async () => {
         try {
