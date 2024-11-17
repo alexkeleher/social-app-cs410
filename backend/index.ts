@@ -320,8 +320,8 @@ app.post(
                 password,
                 phone,
                 address,
-                PreferredPriceRange,
-                PreferredMaxDistance,
+                preferredpricerange,
+                preferredmaxdistance,
             } = req.body;
 
             // Hash the new password
@@ -330,7 +330,7 @@ app.post(
 
             // Store the hashed password in the database
             const newData: QueryResult = await pool.query(
-                `INSERT INTO Users (firstname, lastname, username, email, password, phone, address, PreferredPriceRange, PreferredMaxDistance)
+                `INSERT INTO Users (firstname, lastname, username, email, password, phone, address, preferredpricerange, preferredmaxdistance)
              VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
                 [
                     firstname,
@@ -340,8 +340,8 @@ app.post(
                     hashedPassword,
                     phone,
                     address,
-                    PreferredPriceRange,
-                    PreferredMaxDistance,
+                    preferredpricerange,
+                    preferredmaxdistance,
                 ]
             );
             res.json({

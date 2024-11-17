@@ -21,8 +21,8 @@ describe('Express API Endpoints', () => {
         password: 'password',
         phone: '1234567890',
         address: '123 Roanoke Island',
-        PreferredPriceRange: 10,
-        PreferredMaxDistance: 12,
+        preferredpricerange: 10,
+        preferredmaxdistance: 12,
     };
     const groupData = {
         name: "John's Fun Time",
