@@ -28,7 +28,7 @@ export type { YelpRestaurant, SocialEvent };
 // TODO: Read the group members from the database to read their schedules, addresses, and price levels
 // TODO: Add more search queries to the yelp query to filter on price level schedule
 // TODO: Don't hard code location in the yelp api query. instead of use the address of any of the group members (in the future we'll improve even more (e.g. to use central location))
-export const generateEvent = async (): Promise<SocialEvent> => {
+export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
     console.log(
         'We are in the event-generator module.\n' +
             "We are attempting to call yelp's api now"

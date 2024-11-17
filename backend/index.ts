@@ -1064,11 +1064,14 @@ Operation: Apply algorithm to find optimal social event for group
 Output: (JSON Object) Json object with generated social event information {Restaurant, StartTime} 
 */
 app.get(
-    '/events/generate-new',
-    async (req: Request<Parameters>, res: Response) => {
+    '/events/generate-new/:groupid',
+    async (req: Request, res: Response) => {
         try {
+            const { groupid } = req.params;
             console.log('attempting to generate a social event'); // Debugging
-            const generatedSocialEvent: SocialEvent = await generateEvent();
+            const generatedSocialEvent: SocialEvent = await generateEvent(
+                Number(groupid)
+            );
             res.json(generatedSocialEvent);
         } catch (e) {
             console.error((e as Error).message);
