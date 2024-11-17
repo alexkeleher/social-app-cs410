@@ -238,8 +238,6 @@ function getOptimalStartTimeForGroupAndRestaurant(
 
     // DEBUGGING
     // console.log('before frequencies added');
-    // for (const member of members) {
-    //     const userSerializedSchedule = member.serializedschedulematrix || '';
     //     for (let i = 0; i < 7; i++) {
     //         if (DEBUGGING_MODE) console.log('i: ' + i);
     //         for (let j = 0; j < 19; j++) {
@@ -247,7 +245,6 @@ function getOptimalStartTimeForGroupAndRestaurant(
     //         }
     //         if (DEBUGGING_MODE) console.log('next day\n');
     //     }
-    // }
 
     // do a frequency map by looping through all the users schedules
     for (const member of members) {
@@ -262,8 +259,6 @@ function getOptimalStartTimeForGroupAndRestaurant(
 
     // DEBUGGING
     // console.log('after  frequencies added');
-    // for (const member of members) {
-    //     const userSerializedSchedule = member.serializedschedulematrix || '';
     //     for (let i = 0; i < 7; i++) {
     //         if (DEBUGGING_MODE) console.log('i: ' + i);
     //         for (let j = 0; j < 19; j++) {
@@ -271,7 +266,6 @@ function getOptimalStartTimeForGroupAndRestaurant(
     //         }
     //         if (DEBUGGING_MODE) console.log('next day\n');
     //     }
-    // }
 
     // What's the max value of frequency at any cell?
     const maxPossible = members.length;
@@ -302,8 +296,50 @@ function getOptimalStartTimeForGroupAndRestaurant(
     if (spanBlocks == 0) throw new Error('Could not find a 2 hour block');
 
     // Convert restaurant times to matrix form
+    const restaurantHoursMatrix = Array.from({ length: 7 }, () =>
+        Array(19).fill(0)
+    );
+
+    // Check if restaurant.hours is defined before accessing it
+    // Handle case where restaurant.hours is undefined (e.g., not available from Yelp)
+    if (!restaurant.business_hours)
+        throw new Error('Restaurant hours are not available.');
+
+    console.log('Restaurant open hours:');
+    //console.log(restaurant.business_hours);
+    console.log(JSON.stringify(restaurant.business_hours, null, 2));
+
+    for (const dayHours of restaurant.business_hours) {
+        var dayIndex = dayHours.open[0].day; // Get day index directly
+        for (const timeRange of dayHours.open) {
+            const startTime = convertYelpTimeToMatrixIndex(timeRange.start);
+            const endTime = convertYelpTimeToMatrixIndex(timeRange.end);
+            for (let j = startTime; j < endTime; j++) {
+                restaurantHoursMatrix[dayIndex][j] = 1; // Mark as open
+            }
+            dayIndex++;
+        }
+    }
+
+    // DEBUGGING
+    // {
+    //     console.log('after resturant hours converted to matrix added');
+    //     for (let i = 0; i < 7; i++) {
+    //         if (DEBUGGING_MODE) console.log('i: ' + i);
+    //         for (let j = 0; j < 19; j++) {
+    //             if (DEBUGGING_MODE) console.log(restaurantHoursMatrix[i][j]);
+    //         }
+    //         if (DEBUGGING_MODE) console.log('next day\n');
+    //     }
+    // }
+
     // Verify chosen 2 hour block is within range of restaurant hours
     //      If not throw error about restaurant hours not matching found block
+    for (let j = startj; j < startj + 4; j++) {
+        if (restaurantHoursMatrix[starti][j] !== 1) {
+            throw new Error('Restaurant is closed during this time.');
+        }
+    }
 
     // convert the starti and startj to a [day of week]+[time]
     // DayOfWeekAndTime
@@ -315,4 +351,17 @@ function getOptimalStartTimeForGroupAndRestaurant(
         day: dayOfWeek,
         time: timeStart,
     };
+}
+
+function convertYelpTimeToMatrixIndex(yelpTime: string): number {
+    // if (DEBUGGING_MODE) console.log('input: ' + yelpTime);
+
+    // Example: "1000" (Yelp) -> 9 (matrix index for 10:00 AM)
+    const hour = parseInt(yelpTime.slice(0, 2));
+    const minute = parseInt(yelpTime.slice(2));
+    var index = hour - 5 + (minute === 0 ? 0 : 1); // Adding 1 when the minutes aren't zero ensures that
+    // the converted index accurately reflects the end of the time block in our matrix
+
+    // if (DEBUGGING_MODE) console.log('output: ' + index);
+    return index;
 }

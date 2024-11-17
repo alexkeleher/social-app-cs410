@@ -41,10 +41,18 @@ export interface YelpRestaurant {
         address1: string;
         city: string;
     };
-    hours?: {
-        open: { start: string; end: string; day: number }[];
-        is_open: boolean;
+    business_hours?: BusinessHours[];
+}
+
+interface BusinessHours {
+    open: {
+        is_overnight: boolean;
+        start: string; // format: "1200"
+        end: string; // format: "0200"
+        day: number; // 0-6, starting with Monday
     }[];
+    hours_type: string;
+    is_open_now: boolean;
 }
 
 export interface SocialEvent {
