@@ -67,7 +67,7 @@ export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
         var members: User[] = [];
         var averagePrice: Number = 0;
         var preferenceArr: string[] = [];
-        var mostCommonPreference: string = '';
+        var mostCommonCategory: string = '';
         var maxDistance = 0;
     }
     try {
@@ -81,15 +81,18 @@ export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
                 u.address,  /* Add this line */
                 u.preferredpricerange,
                 u.preferredmaxdistance,
-                u.serializedschedulematrix,            
+                u.serializedschedulematrix  
             FROM Users u
                 JOIN UserGroupXRef x ON u.ID = x.UserID                
-            WHERE g.ID = $1`,
+            WHERE x.GroupID = $1`,
             [groupid]
         );
         //  1. Get all the group members from the database
         // - - - - - - - - - - - - - - - - - - - - - - - - -
         members = membersQueryResult.rows;
+        if (DEBUGGING_MODE)
+            console.log('Fetched the following group members:.\n');
+        if (DEBUGGING_MODE) console.log(members);
 
         // 2. Get all the preferences for this group from the database
         // - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -102,14 +105,20 @@ export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
                 UserID IN (SELECT UserID FROM UserGroupXRef WHERE GroupID = $1)`,
             [groupid]
         );
-        preferenceArr = allPreferences.rows;
-        mostCommonPreference = getMostFrequentString(preferenceArr) || '';
+        preferenceArr = allPreferences.rows.map((itme) => itme.cuisinetype);
+        if (DEBUGGING_MODE) console.log('PREFERENCE ARR XXXXXXXXXXX');
+        if (DEBUGGING_MODE) console.log(preferenceArr);
+        mostCommonCategory = getMostFrequentString(preferenceArr) || '';
+        if (DEBUGGING_MODE)
+            console.log('Most common category: ' + mostCommonCategory + '\n');
 
         // 3. Get the average price preference and max distance
         // - - - - - - - - - - - - - - - - - - - - - - - - -
         averagePrice = calculateAndRoundAverage(
             membersQueryResult.rows.map((u) => u.preferredpricerange || 0)
         );
+        if (DEBUGGING_MODE)
+            console.log('Average Price Level: ' + averagePrice + '\n');
     } catch (e) {
         console.error('Error in generateEvent', e);
     }
@@ -119,9 +128,15 @@ export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
     const restaurants: YelpRestaurant[] = await fetchRestaurants(
         members[0].address ?? '' // Use an empty string if address is null or undefined
     );
+    if (DEBUGGING_MODE)
+        console.log('Most common category: ' + mostCommonCategory + '\n');
 
-    console.log('we have fetched the restaurants and they are the following:');
-    console.log(restaurants);
+    if (DEBUGGING_MODE) {
+        console.log(
+            'we have fetched the restaurants and they are the following:'
+        );
+        console.log(restaurants);
+    }
 
     // 5 Get the top 1 restaurant out of the list of top 3
     // - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -133,6 +148,8 @@ export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
         members,
         aRestaurant
     );
+    if (DEBUGGING_MODE) console.log('Start Time:');
+    if (DEBUGGING_MODE) console.log(startTime);
 
     // 7 Build the social event object
     // - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -140,6 +157,8 @@ export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
         restaurant: aRestaurant,
         startTime: startTime,
     };
+    if (DEBUGGING_MODE) console.log('Returning Social Event:');
+    if (DEBUGGING_MODE) console.log(socialEvent);
 
     // 8 Return the social event object
     // - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -211,7 +230,25 @@ function getOptimalStartTimeForGroupAndRestaurant(
     restaurant: YelpRestaurant
 ): DayOfWeekAndTime {
     // Build a matrix of schedules
-    const sharedUserSchedules = Array(7).fill(Array(19).fill(0));
+    //const sharedUserSchedules2 = Array(7).fill(Array(19).fill(0));
+    // Correct way to initialize a 7x19 matrix with zeros
+    const sharedUserSchedules = Array.from({ length: 7 }, () =>
+        Array(19).fill(0)
+    );
+
+    // DEBUGGING
+    // console.log('before frequencies added');
+    // for (const member of members) {
+    //     const userSerializedSchedule = member.serializedschedulematrix || '';
+    //     for (let i = 0; i < 7; i++) {
+    //         if (DEBUGGING_MODE) console.log('i: ' + i);
+    //         for (let j = 0; j < 19; j++) {
+    //             if (DEBUGGING_MODE) console.log(sharedUserSchedules[i][j]);
+    //         }
+    //         if (DEBUGGING_MODE) console.log('next day\n');
+    //     }
+    // }
+
     // do a frequency map by looping through all the users schedules
     for (const member of members) {
         const userSerializedSchedule = member.serializedschedulematrix || '';
@@ -223,8 +260,22 @@ function getOptimalStartTimeForGroupAndRestaurant(
         }
     }
 
+    // DEBUGGING
+    // console.log('after  frequencies added');
+    // for (const member of members) {
+    //     const userSerializedSchedule = member.serializedschedulematrix || '';
+    //     for (let i = 0; i < 7; i++) {
+    //         if (DEBUGGING_MODE) console.log('i: ' + i);
+    //         for (let j = 0; j < 19; j++) {
+    //             if (DEBUGGING_MODE) console.log(sharedUserSchedules[i][j]);
+    //         }
+    //         if (DEBUGGING_MODE) console.log('next day\n');
+    //     }
+    // }
+
     // What's the max value of frequency at any cell?
     const maxPossible = members.length;
+    if (DEBUGGING_MODE) console.log('maxPossible: ' + maxPossible + '\n');
 
     // Find a block of free 2 hours where the frequency = max
     let starti = -1;
