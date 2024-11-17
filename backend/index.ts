@@ -3,17 +3,18 @@ import cors from 'cors';
 import pool from './db';
 import { QueryResult } from 'pg';
 import { Application, Request, Response } from 'express';
-import { User, GroupAndCreator } from '@types';
+import { User, GroupAndCreator, YelpRestaurant, SocialEvent } from '@types';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { YelpRestaurant, SocialEvent, generateEvent } from './event-generator';
+import { generateEvent } from './event-generator';
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
 const FRONT_URL = process.env.REACT_APP_FRONTEND_URL || 'http://localhost:3000';
+const DEBUGGING_MODE = process.env.DEBUGGING_MODE === 'YES';
 
 interface Parameters {
     id: string;

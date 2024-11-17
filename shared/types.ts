@@ -9,6 +9,14 @@ export interface User {
     address?: string | null;
     preferredpricerange?: number | null;
     preferredmaxdistance?: number | null;
+    cuisine_preferences?: string | null;
+    serializedschedulematrix?: string | null;
+}
+
+// e.g. Monday 6:00 AM
+export interface DayOfWeekAndTime {
+    day: string;
+    time: string;
 }
 
 export interface Group {
@@ -21,4 +29,25 @@ export interface Group {
 export interface GroupAndCreator {
     groupname: string;
     creatoruserid: number;
+}
+
+export interface YelpRestaurant {
+    id: string;
+    name: string;
+    rating: number;
+    distance: number; // in kilometers
+    image_url: string;
+    location: {
+        address1: string;
+        city: string;
+    };
+    hours?: {
+        open: { start: string; end: string; day: number }[];
+        is_open: boolean;
+    }[];
+}
+
+export interface SocialEvent {
+    restaurant: YelpRestaurant;
+    startTime: DayOfWeekAndTime;
 }

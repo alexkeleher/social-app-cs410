@@ -2,49 +2,77 @@ import { start } from 'repl';
 import { QueryResult } from 'pg';
 import pool from './db';
 import yelp from './yelp-axios';
-import { User } from '@types';
-
-interface YelpRestaurant {
-    id: string;
-    name: string;
-    rating: number;
-    distance: number; // in kilometers
-    image_url: string;
-    location: {
-        address1: string;
-        city: string;
-    };
-    hours?: {
-        open: { start: string; end: string; day: number }[];
-        is_open: boolean;
-    }[];
-}
-
-interface SocialEvent {
-    restaurant: YelpRestaurant;
-    startTime: Date;
-}
-
-export type { YelpRestaurant, SocialEvent };
+import { User, SocialEvent, YelpRestaurant, DayOfWeekAndTime } from '@types';
+const DEBUGGING_MODE = process.env.DEBUGGING_MODE === 'YES';
+const daysOfWeek = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+];
+const timeSlots = [
+    '5:00-6:00 AM',
+    '6:00-7:00 AM',
+    '7:00-8:00 AM',
+    '8:00-9:00 AM',
+    '9:00-10:00 AM',
+    '10:00-11:00 AM',
+    '11:00-12:00 AM',
+    '12:00-1:00 PM',
+    '1:00-2:00 PM',
+    '2:00-3:00 PM',
+    '3:00-4:00 PM',
+    '4:00-5:00 PM',
+    '5:00-6:00 PM',
+    '6:00-7:00 PM',
+    '7:00-8:00 PM',
+    '8:00-9:00 PM',
+    '9:00-10:00 PM',
+    '10:00-11:00 PM',
+    '11:00-12:00 PM',
+];
+const timeStarts = [
+    '5:00 AM',
+    '6:00 AM',
+    '7:00 AM',
+    '8:00 AM',
+    '9:00 AM',
+    '10:00 AM',
+    '11:00 AM',
+    '12:00 PM',
+    '1:00 PM',
+    '2:00 PM',
+    '3:00 PM',
+    '4:00 PM',
+    '5:00 PM',
+    '6:00 PM',
+    '7:00 PM',
+    '8:00 PM',
+    '9:00 PM',
+    '10:00 PM',
+    '11:00 PM',
+];
 
 // TODO: Find optimal start time based on group users schedule and chosen restaurant's schedule
-
 // TODO: Add more search queries to the yelp query to filter on price level schedule
+// TODO: Use max distance preference in the algorithm
 
 export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
-    console.log('We are in the event-generator module.\n');
-
-    var members: User[] = [];
-    var averagePrice: Number = 0;
-    var maxDistance = 0;
-
-    //  1. Get all the group members from the database
+    if (DEBUGGING_MODE) console.log('We are in the event-generator module.\n');
+    // Variable declarations
+    {
+        var members: User[] = [];
+        var averagePrice: Number = 0;
+        var preferenceArr: string[] = [];
+        var mostCommonPreference: string = '';
+        var maxDistance = 0;
+    }
     try {
-        // First get all users and their preferences
-        const allData: QueryResult = await pool.query(
+        const membersQueryResult: QueryResult = await pool.query(
             `SELECT 
-                g.name as groupname,
-                g.joincode,
                 u.id,
                 u.firstname,
                 u.lastname,
@@ -53,29 +81,41 @@ export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
                 u.address,  /* Add this line */
                 u.preferredpricerange,
                 u.preferredmaxdistance,
-                u.serializedschedulematrix,
-            ARRAY_AGG(DISTINCT cp.CuisineType) FILTER (WHERE cp.CuisineType IS NOT NULL) as cuisine_preferences
+                u.serializedschedulematrix,            
             FROM Users u
-                JOIN UserGroupXRef x ON u.ID = x.UserID
-                JOIN Groups g ON g.ID = x.GroupID
-                LEFT JOIN UserCuisinePreferences cp ON cp.UserID = u.ID
-            WHERE g.ID = $1
-            GROUP BY g.name, g.joincode, u.id, u.firstname, u.lastname, u.username, u.email, u.address, u.serializedschedulematrix, u.preferredpricerange, u.preferredmaxdistance`,
+                JOIN UserGroupXRef x ON u.ID = x.UserID                
+            WHERE g.ID = $1`,
             [groupid]
         );
-        members = allData.rows;
-        // 2. Get the average price prefference
-        averagePrice = calculateAndRoundAverage(
-            allData.rows.map((u) => u.preferredpricerange || 0)
+        //  1. Get all the group members from the database
+        // - - - - - - - - - - - - - - - - - - - - - - - - -
+        members = membersQueryResult.rows;
+
+        // 2. Get all the preferences for this group from the database
+        // - - - - - - - - - - - - - - - - - - - - - - - - -
+        const allPreferences: QueryResult = await pool.query(
+            `SELECT
+                CuisineType
+            FROM
+                UserCuisinePreferences
+            WHERE
+                UserID IN (SELECT UserID FROM UserGroupXRef WHERE GroupID = $1)`,
+            [groupid]
         );
-        maxDistance = Math.max(
-            ...allData.rows.map((u) => u.preferredmaxdistance || 0)
+        preferenceArr = allPreferences.rows;
+        mostCommonPreference = getMostFrequentString(preferenceArr) || '';
+
+        // 3. Get the average price preference and max distance
+        // - - - - - - - - - - - - - - - - - - - - - - - - -
+        averagePrice = calculateAndRoundAverage(
+            membersQueryResult.rows.map((u) => u.preferredpricerange || 0)
         );
     } catch (e) {
         console.error('Error in generateEvent', e);
     }
 
-    // 3 Get top 3 restaurants
+    // 4 Get top 3 restaurants
+    // - - - - - - - - - - - - - - - - - - - - - - - - -
     const restaurants: YelpRestaurant[] = await fetchRestaurants(
         members[0].address ?? '' // Use an empty string if address is null or undefined
     );
@@ -83,20 +123,32 @@ export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
     console.log('we have fetched the restaurants and they are the following:');
     console.log(restaurants);
 
+    // 5 Get the top 1 restaurant out of the list of top 3
+    // - - - - - - - - - - - - - - - - - - - - - - - - -
     const aRestaurant: YelpRestaurant = restaurants[0];
 
-    // 4 Get optimal start time
-    var startTime: Date = new Date('2024-11-20T10:30:00');
+    // 6 Get optimal start time
+    // - - - - - - - - - - - - - - - - - - - - - - - - -
+    var startTime: DayOfWeekAndTime = getOptimalStartTimeForGroupAndRestaurant(
+        members,
+        aRestaurant
+    );
 
+    // 7 Build the social event object
+    // - - - - - - - - - - - - - - - - - - - - - - - - -
     const socialEvent: SocialEvent = {
         restaurant: aRestaurant,
         startTime: startTime,
     };
 
+    // 8 Return the social event object
+    // - - - - - - - - - - - - - - - - - - - - - - - - -
     return socialEvent;
 };
 
-// helpers
+/* ****************************************************************************** */
+/* Helpers */
+/* ****************************************************************************** */
 const fetchRestaurants = async (
     location: string // params go here
 ): Promise<YelpRestaurant[]> => {
@@ -127,4 +179,89 @@ function calculateAndRoundAverage(numbers: number[]): number {
     const average = total / numbers.length;
 
     return Math.round(average); // Rounds to the nearest integer
+}
+
+function getMostFrequentString(arr: string[]): string | null {
+    const countMap: { [key: string]: number } = {};
+
+    // Count the occurrences of each string in the array
+    arr.forEach((str) => {
+        countMap[str] = (countMap[str] || 0) + 1;
+    });
+
+    // Find the string with the highest count
+    let mostFrequentString = null;
+    let maxCount = 0;
+
+    for (const str in countMap) {
+        if (countMap[str] > maxCount) {
+            mostFrequentString = str;
+            maxCount = countMap[str];
+        }
+    }
+
+    return mostFrequentString;
+}
+
+// Check for a free 2 hour block of all users. Return day of week and start time.
+function getOptimalStartTimeForGroupAndRestaurant(
+    // Pass in members
+    // Pass in Yelp Restaurant
+    members: User[],
+    restaurant: YelpRestaurant
+): DayOfWeekAndTime {
+    // Build a matrix of schedules
+    const sharedUserSchedules = Array(7).fill(Array(19).fill(0));
+    // do a frequency map by looping through all the users schedules
+    for (const member of members) {
+        const userSerializedSchedule = member.serializedschedulematrix || '';
+        for (let i = 0; i < 7; i++) {
+            for (let j = 0; j < 19; j++) {
+                if (userSerializedSchedule[19 * i + j] == '1')
+                    sharedUserSchedules[i][j]++; // increment frequency map value count at each cell
+            }
+        }
+    }
+
+    // What's the max value of frequency at any cell?
+    const maxPossible = members.length;
+
+    // Find a block of free 2 hours where the frequency = max
+    let starti = -1;
+    let startj = -1;
+    let spanBlocks = 0; // Goal is for this to reach 4 blocks (2 hours)
+    outerLoop: for (let i = 0; i < 7; i++) {
+        for (let j = 0; j < 19; j++) {
+            if (sharedUserSchedules[i][j] == maxPossible) {
+                if (starti == -1) {
+                    starti = i;
+                    startj = j;
+                }
+                spanBlocks++;
+                if (spanBlocks == 4) break outerLoop; // This break both loops. We found our 4 blocks, we end here.
+            } else {
+                starti = -1;
+                startj = -1;
+                spanBlocks = 0;
+            }
+        }
+    }
+
+    // If not found throw error about no shared availability
+    if (spanBlocks == 0) throw new Error('Could not find a 2 hour block');
+
+    // Convert restaurant times to matrix form
+    // Verify chosen 2 hour block is within range of restaurant hours
+    //      If not throw error about restaurant hours not matching found block
+
+    // convert the starti and startj to a [day of week]+[time]
+    // DayOfWeekAndTime
+    const dayOfWeek: string = daysOfWeek[starti];
+    const timeStart: string = timeStarts[startj];
+
+    // Return a day of week, and a start time
+    return {
+        day: dayOfWeek,
+        time: timeStart,
+    };
 }
