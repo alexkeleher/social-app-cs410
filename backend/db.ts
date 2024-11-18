@@ -17,4 +17,6 @@ const pool = new Pool({
     port: parseInt(process.env.NODE_ENV === 'test' ? process.env.TEST_DB_PORT || '5432' : process.env.DB_PORT || '5432', 10),
 });
 
+console.log(`Connected to database: ${pool.options.database}`);
+
 export default pool;

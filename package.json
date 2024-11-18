@@ -7,10 +7,17 @@
         "start": "concurrently \"npm run frontend\" \"npm run backend\"",
         "frontend": "npm start --prefix frontend",
         "backend": "nodemon --exec tsx backend/index.js",
-        "test": "NODE_ENV=test jest --detectOpenHandles",
-        "test:watch": "NODE_ENV=test jest --watch",
+        "test": "cross-env NODE_ENV=test jest --detectOpenHandles",
+        "test:watch": "cross-env NODE_ENV=test jest --watch",
         "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,json,css,sccs,md}\"",
         "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --quiet"
+    },
+    "jest": {
+        "preset": "ts-jest",
+        "testEnvironment": "node",
+        "setupFilesAfterEnv": [
+            "./jest.setup.ts"
+        ]
     },
     "keywords": [],
     "author": "",
@@ -40,6 +47,7 @@
         "@types/pg": "^8.11.10",
         "@types/supertest": "^6.0.2",
         "concurrently": "^9.0.1",
+        "cross-env": "^7.0.3",
         "dotenv": "^16.4.5",
         "eslint": "^9.11.1",
         "eslint-config-prettier": "^9.1.0",
