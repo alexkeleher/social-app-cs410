@@ -22,3 +22,7 @@ export interface GroupAndCreator {
     groupname: string;
     creatoruserid: number;
 }
+
+export interface Invite {
+    email: string;
+}
