@@ -7,24 +7,31 @@
         "start": "concurrently \"npm run frontend\" \"npm run backend\"",
         "frontend": "npm start --prefix frontend",
         "backend": "nodemon --exec tsx backend/index.js",
-        "test": "jest",
+        "test": "cross-env NODE_ENV=test jest --detectOpenHandles",
+        "test:watch": "cross-env NODE_ENV=test jest --watch",
         "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,json,css,sccs,md}\"",
         "lint": "eslint \"./**/*.{js,jsx,ts,tsx}\" --quiet"
+    },
+    "jest": {
+        "preset": "ts-jest",
+        "testEnvironment": "node",
+        "setupFilesAfterEnv": [
+            "./jest.setup.ts"
+        ]
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "axios": "^1.7.7",
         "bcrypt": "^5.1.1",
         "connect-pg-simple": "^10.0.0",
         "cors": "^2.8.5",
-        "dotenv": "^16.4.5",
         "express": "^4.21.1",
         "express-session": "^1.18.1",
         "jsonwebtoken": "^9.0.2",
         "jwt-decode": "^4.0.0",
-        "pg": "^8.13.0",
-        "axios": "^1.7.7"
+        "pg": "^8.13.0"
     },
     "devDependencies": {
         "@eslint/js": "^9.11.1",
@@ -40,12 +47,16 @@
         "@types/pg": "^8.11.10",
         "@types/supertest": "^6.0.2",
         "concurrently": "^9.0.1",
+        "cross-env": "^7.0.3",
+        "dotenv": "^16.4.5",
         "eslint": "^9.11.1",
         "eslint-config-prettier": "^9.1.0",
         "eslint-plugin-prettier": "^5.2.1",
+        "fs": "^0.0.1-security",
         "globals": "^15.9.0",
         "jest": "^29.7.0",
         "nodemon": "^3.1.5",
+        "path": "^0.12.7",
         "prettier": "3.3.3",
         "supertest": "^7.0.0",
         "ts-jest": "^29.2.5",

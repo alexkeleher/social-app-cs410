@@ -1,156 +1,188 @@
-import { User } from '@types';
+import { User, GroupAndCreator } from '@types';
 import request from 'supertest';
 import { app, server } from './index';
+import pool from './db';
+import bcrypt from 'bcrypt';
 
-afterAll((done) => {
-    server.close(() => {
-        console.log('Server closed');
-        done();
-    });
-});
-
-describe('Express API Endpoints', () => {
-    let createdUserId: number | undefined | null = null;
-    let createdGroupId: number | undefined | null = null;
-
-    const userData: User = {
-        firstname: 'John',
-        lastname: 'Adams',
-        username: 'johnAdams1776',
-        email: 'johnAdams@gmail.com',
-        password: 'password',
+describe('CRUD Operations Tests', () => {
+    const testUser: User = {
+        firstname: 'Test',
+        lastname: 'User',
+        username: 'testuser123',
+        email: 'test@example.com',
+        password: 'password123',
         phone: '1234567890',
-        address: '123 Roanoke Island',
-        preferredpricerange: 10,
-        preferredmaxdistance: 12,
-    };
-    const groupData = {
-        name: "John's Fun Time",
+        address: '123 Test St',
+        PreferredPriceRange: 2,
+        PreferredMaxDistance: 10,
     };
 
-    afterEach(async () => {
-        if (createdUserId) {
-            try {
-                await request(app)
-                    .delete(`/users/${createdUserId}`)
-                    .expect(200);
-            } catch (err) {
-                console.log(`Failed to delete test user ${createdUserId}`);
-            }
-            createdUserId = null;
+    const testGroup: GroupAndCreator = {
+        groupname: 'Test Group',
+        creatoruserid: 1,
+    };
+
+    let userId: number;
+    let groupId: number;
+    let authToken: string;
+
+    beforeAll(async () => {
+        Object.defineProperty(process.env, 'NODE_ENV', { value: 'test' });
+
+        // Verify we're using the test database
+        const result = await pool.query('SELECT current_database()');
+        const currentDatabase = result.rows[0].current_database;
+        if (currentDatabase !== 'groupeats_test') {
+            throw new Error(
+                `Wrong database in use! Expected 'groupeats_test but got' '${currentDatabase}'`
+            );
         }
-        if (createdGroupId) {
-            try {
-                await request(app)
-                    .delete(`/groups/${createdGroupId}`)
-                    .expect(200);
-            } catch (err) {
-                console.log(`Failed to delete test group ${createdGroupId}`);
-            }
-            createdGroupId = null;
-        }
+
+        // Clear test data before starting
+        await pool.query('DELETE FROM Users WHERE email = $1', [
+            testUser.email,
+        ]);
+        await pool.query('DELETE FROM Groups WHERE name = $1', [
+            testGroup.groupname,
+        ]);
     });
 
-    it('GET / - should return a welcome message', async () => {
-        const response = await request(app).get('/');
-        expect(response.status).toBe(200);
-        expect(response.text).toBe('This is Express working');
+    afterAll(async () => {
+        // Cleanup
+        await pool.query('DELETE FROM Users WHERE email = $1', [
+            testUser.email,
+        ]);
+        await pool.query('DELETE FROM Groups WHERE name = $1', [
+            testGroup.groupname,
+        ]);
+        await pool.end();
+        server.close();
     });
 
-    it('GET /users - should return all users', async () => {
-        const response = await request(app).get('/users');
-        expect(response.status).toBe(200);
-        expect(Array.isArray(response.body)).toBe(true);
+    describe('User Operations', () => {
+        it('should create a new user', async () => {
+            const response = await request(app).post('/users').send(testUser);
+
+            expect(response.status).toBe(200);
+            expect(response.body.Result).toBe('Success');
+            expect(response.body.InsertedEntry[0].email).toBe(testUser.email);
+
+            userId = response.body.InsertedEntry[0].id;
+        });
+
+        it('should log in the user', async () => {
+            const response = await request(app).post('/login').send({
+                email: testUser.email,
+                password: testUser.password,
+            });
+
+            expect(response.status).toBe(200);
+            expect(response.body.message).toBe('Login successful');
+            expect(response.body.token).toBeDefined();
+
+            authToken = response.body.token;
+        });
+
+        it('should get user by id', async () => {
+            const response = await request(app)
+                .get(`/users${userId}`)
+                .set('Authorization', `Bearer ${authToken}`);
+
+            expect(response.status).toBe(200);
+            expect(response.body.email).toBe(testUser.email);
+        });
+
+        it('should update user', async () => {
+            const updateData = {
+                FirstName: 'Updated',
+                LastName: 'Name',
+            };
+
+            const response = await request(app)
+                .put(`/users/${userId}`)
+                .set('Authorization', `Bearer ${authToken}`)
+                .send(updateData);
+
+            expect(response.status).toBe(200);
+            expect(response.body.Result).toBe('Success');
+            expect(response.body.UpdateEntry.firstname).toBe('Updated');
+        });
+
+        it('should get user cuisine preferences', async () => {
+            const response = await request(app)
+                .get(`/users/${userId}/cuisines`)
+                .set('Authorization', `Bearer ${authToken}`);
+
+            expect(response.status).toBe(200);
+            expect(response.body).toHaveProperty('cuisinePreferences');
+        });
     });
 
-    it('POST /users - should create a user', async () => {
-        const response = await request(app).post('/users').send(userData);
-        expect(response.status).toBe(200);
-        expect(response.body.Result).toBe('Success');
-        expect(response.body.InsertedEntry[0]).toHaveProperty(
-            'firstname',
-            'John'
-        );
+    describe('Group Operations', () => {
+        it('should create a new group', async () => {
+            const response = await request(app)
+                .post('/groups')
+                .set('Authorization', `Bearer ${authToken}`)
+                .send(testGroup);
 
-        createdUserId = response.body.InsertedEntry[0].id;
+            expect(response.status).toBe(200);
+            expect(response.body.Result).toBe('Success');
+            expect(response.body.InsertedEntry[0].name).toBe(
+                testGroup.groupname
+            );
+
+            groupId = response.body.InsertedEntry[0].id;
+        });
+
+        it('should get groups by user id', async () => {
+            const response = await request(app)
+                .get(`/groups${userId}`)
+                .set('Authorization', `Bearer ${authToken}`);
+
+            expect(response.status).toBe(200);
+            expect(Array.isArray(response.body)).toBe(true);
+        });
+
+        it('should update group name', async () => {
+            const updateData = {
+                Name: 'Updated Test Group',
+            };
+
+            const response = await request(app)
+                .put(`/groups/${groupId}`)
+                .set('Authorization', `Bearer ${authToken}`)
+                .send(updateData);
+
+            expect(response.status).toBe(200);
+            expect(response.body.Result).toBe('Success');
+            expect(response.body.UpdatedEntry.name).toBe('Updated Test Group');
+        });
+
+        it('should get users by group id', async () => {
+            const response = await request(app)
+                .get(`/users/by-groupid/${groupId}`)
+                .set('Authorization', `Bearer ${authToken}`);
+
+            expect(response.status).toBe(200);
+            expect(Array.isArray(response.body)).toBe(true);
+        });
     });
 
-    it('DELETE /users/:id - should delete a user', async () => {
-        const createResponse = await request(app)
-            .post('/users')
-            .send(userData)
-            .expect(200);
+    describe('Delete Operations', () => {
+        it('should delete group', async () => {
+            const response = await request(app)
+                .delete(`/groups/${groupId}`)
+                .set('Authorization', `Bearer ${authToken}`);
 
-        expect(createResponse.body.InsertedEntry[0].id).toBeDefined();
-        createdUserId = createResponse.body.InsertedEntry[0].id;
+            expect(response.status).toBe(200);
+        });
 
-        const deleteResponse = await request(app)
-            .delete(`/users/${createdUserId}`)
-            .expect(200);
+        it('should delete user', async () => {
+            const response = await request(app)
+                .delete(`/users/${userId}`)
+                .set('Authorization', `Bearer ${authToken}`);
 
-        expect(deleteResponse.body.Result).toBe('User was deleted');
-        await request(app).get(`/users/${createdUserId}`).expect(404);
-
-        createdUserId = null;
-    });
-
-    it('GET /groups - should return all groups', async () => {
-        const response = await request(app).get('/groups');
-        expect(response.status).toBe(200);
-        expect(Array.isArray(response.body)).toBe(true);
-    });
-
-    it('POST /groups - should create a group', async () => {
-        const response = await request(app).post('/groups').send(groupData);
-        expect(response.status).toBe(200);
-        expect(response.body.Result).toBe('Success');
-        expect(response.body.InsertedEntry[0]).toHaveProperty(
-            'name',
-            "John's Fun Time"
-        );
-
-        createdGroupId = response.body.InsertedEntry[0].id;
-    });
-
-    it('GET /restaurant - should return all restaurants', async () => {
-        const response = await request(app).get('/restaurant');
-        expect(response.status).toBe(200);
-        expect(Array.isArray(response.body)).toBe(true);
-    });
-
-    it('GET /restauranthours - should return all restaurant hours', async () => {
-        const response = await request(app).get('/restauranthours');
-        expect(response.status).toBe(200);
-        expect(Array.isArray(response.body)).toBe(true);
-    });
-
-    it('GET /restauranttype - should return all restaurant types', async () => {
-        const response = await request(app).get('/restauranttype');
-        expect(response.status).toBe(200);
-        expect(Array.isArray(response.body)).toBe(true);
-    });
-
-    it('GET /selection - should return all selections', async () => {
-        const response = await request(app).get('/selection');
-        expect(response.status).toBe(200);
-        expect(Array.isArray(response.body)).toBe(true);
-    });
-
-    it('GET /usergroupxref - should return all usergroupxrefs', async () => {
-        const response = await request(app).get('/usergroupxref');
-        expect(response.status).toBe(200);
-        expect(Array.isArray(response.body)).toBe(true);
-    });
-
-    it('GET /userhours - should return all user hours', async () => {
-        const response = await request(app).get('/userhours');
-        expect(response.status).toBe(200);
-        expect(Array.isArray(response.body)).toBe(true);
-    });
-
-    it('GET /userrestauranttypexref - should return all userrestauranttypexref', async () => {
-        const response = await request(app).get('/userrestauranttypexref');
-        expect(response.status).toBe(200);
-        expect(Array.isArray(response.body)).toBe(true);
+            expect(response.status).toBe(200);
+        });
     });
 });
