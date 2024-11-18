@@ -274,7 +274,7 @@ function getOptimalStartTimeForGroupAndRestaurant(
     // Find a block of free 2 hours where the frequency = max
     let starti = -1;
     let startj = -1;
-    let spanBlocks = 0; // Goal is for this to reach 4 blocks (2 hours)
+    let spanBlocks = 0; // Goal is for this to reach 2 blocks (2 hours)
     outerLoop: for (let i = 0; i < 7; i++) {
         for (let j = 0; j < 19; j++) {
             if (sharedUserSchedules[i][j] == maxPossible) {
@@ -283,7 +283,7 @@ function getOptimalStartTimeForGroupAndRestaurant(
                     startj = j;
                 }
                 spanBlocks++;
-                if (spanBlocks == 4) break outerLoop; // This break both loops. We found our 4 blocks, we end here.
+                if (spanBlocks == 2) break outerLoop; // This break both loops. We found our 2 blocks, we end here.
             } else {
                 starti = -1;
                 startj = -1;
@@ -335,7 +335,7 @@ function getOptimalStartTimeForGroupAndRestaurant(
 
     // Verify chosen 2 hour block is within range of restaurant hours
     //      If not throw error about restaurant hours not matching found block
-    for (let j = startj; j < startj + 4; j++) {
+    for (let j = startj; j < startj + 2; j++) {
         if (restaurantHoursMatrix[starti][j] !== 1) {
             throw new Error('Restaurant is closed during this time.');
         }
