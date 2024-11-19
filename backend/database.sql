@@ -35,28 +35,38 @@ CREATE TABLE IF NOT EXISTS GroupInvites (
 	FOREIGN KEY (GroupID) REFERENCES Groups(ID) ON DELETE CASCADE
 );
 
-CREATE TABLE Restaurant (
-	ID SERIAL PRIMARY KEY,
-	Name VARCHAR(100),
-	Address VARCHAR(500),
-	PriceLevel SMALLINT
+-- This table is not really used. We can probably get rid of it soon
+-- CREATE TABLE Restaurant (
+-- 	ID SERIAL PRIMARY KEY,
+-- 	Name VARCHAR(100),
+-- 	Address VARCHAR(500),
+-- 	PriceLevel SMALLINT
+-- );
+
+-- Yelp Restaurant table is now just a reference pointer to a yelp business id which we can query with the yelp api
+-- e.g. "id": "ewtL3plKywXuLtmFZoUczw",
+CREATE TABLE YelpRestaurant (
+	YelpID VARCHAR(100) PRIMARY KEY
 );
 
-CREATE TABLE IF NOT EXISTS RestaurantHours (
-	RestaurantID INT NOT NULL,
-	DayOfWeek SMALLINT NOT NULL,
-	StartTime TIME NOT NULL,
-	EndTime TIME NOT NULL,
-	PRIMARY KEY (RestaurantID, DayOfWeek, StartTime, EndTime),
-	FOREIGN KEY (RestaurantID) REFERENCES Restaurant(ID) ON DELETE CASCADE
-);
+-- Don't need this table anymore
+-- CREATE TABLE IF NOT EXISTS RestaurantHours (
+-- 	RestaurantID INT NOT NULL,
+-- 	DayOfWeek SMALLINT NOT NULL,
+-- 	StartTime TIME NOT NULL,
+-- 	EndTime TIME NOT NULL,
+-- 	PRIMARY KEY (RestaurantID, DayOfWeek, StartTime, EndTime),
+-- 	FOREIGN KEY (RestaurantID) REFERENCES YelpRestaurant(InternalRestaurantID) ON DELETE CASCADE
+-- );
 
 CREATE TABLE IF NOT EXISTS Selection (
 	GroupID INT NOT NULL,
-	RestaurantID INT NOT NULL,
-	TimeStart TIMESTAMP NOT NULL,
-	PRIMARY KEY (GroupID, RestaurantID, TimeStart),
-	FOREIGN KEY (RestaurantID) REFERENCES Restaurant(ID) ON DELETE CASCADE,
+	YelpRestaurantID VARCHAR(100) NOT NULL,
+	TimeStart TIMESTAMP NULL,
+	DayOfWeek VARCHAR(15) NOT NULL,	-- New field
+	Time VARCHAR(10) NOT NULL,		-- New field
+	PRIMARY KEY (GroupID, YelpRestaurantID, DayOfWeek, Time),
+	FOREIGN KEY (YelpRestaurantID) REFERENCES YelpRestaurant(YelpID) ON DELETE CASCADE,
 	FOREIGN KEY (GroupID) REFERENCES Groups(ID) ON DELETE CASCADE
 );
 
@@ -121,7 +131,7 @@ INSERT INTO Users(
 	 ('Benji', 'Toledo', 'btoledo', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '5555555555', '3709 Arcadia Ave, Baltimore, MD 21215', 'btoledo@email.com', 2, 4, '0111111111111111111111110000000000000111111111111100000000000000000000000000000000000000000000000000000000000000000000000000000000000'),
 	 ('Gonzalo', 'Abreu', 'gabreu', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '5555555555', '103 Witherspoon Rd, Baltimore, MD 21212', 'gabreu@email.com', 2, 4, '0111111111100000000000001111111110000011111111100000111111111111111110000000111111111111111000000000000000000000000000000000000000000'),
 	 ('Trucutu', 'Depaquita', 'tdepaquita', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '5555555555', '3250 Gulfport Dr, Baltimore, MD 21225', 'tdepaquita@email.com', 2, 4, '0000001111111111110000000001111111100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'),
-	 ('Alejandro', 'Reyes', 'areyes', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '5555555555', '212 Bridgeview Rd, Baltimore, MD 21225', 'areyes@email.com', 2, 4, '0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000');
+	 ('Alejandro', 'Reyes', 'areyes', '$2b$10$qrbEWG3zVK9ABohdsvhwNOL8LcO32SeMt9gLIGsNy0XkUnBTSBp1K', '5555555555', '212 Bridgeview Rd, Baltimore, MD 21225', 'areyes@email.com', 2, 4, '0000000000001111111111111111111111111111111111111111111111111111111111111111111110000000000000000000000000000000000000000000000000000');
 
 -- Inserts into Groups
 INSERT INTO Groups (name, JoinCode) VALUES
@@ -204,10 +214,10 @@ INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
  ((SELECT id FROM Users WHERE email = 'mjanak@email.com'), (SELECT ID FROM Groups WHERE name = 'Coworkers Forever'));
  
 -- Inserts into Restaurant
-INSERT INTO Restaurant (Name, Address, PriceLevel) VALUES
-('Olive Garden', '8245 Perry Hall Blvd, Baltimore, MD 21236', 2),
-('Popeyes', '300 N Broadway, Baltimore, MD 21231', 1),
-('McDonald''s', '2501-13 W Franklin St, Baltimore, MD 21223', 1);
+-- INSERT INTO Restaurant (Name, Address, PriceLevel) VALUES
+-- ('Olive Garden', '8245 Perry Hall Blvd, Baltimore, MD 21236', 2),
+-- ('Popeyes', '300 N Broadway, Baltimore, MD 21231', 1),
+-- ('McDonald''s', '2501-13 W Franklin St, Baltimore, MD 21223', 1);
 
 -- Inserts into GroupInvites
 INSERT INTO GroupInvites (GroupID, Email) VALUES
@@ -260,4 +270,14 @@ INSERT INTO UserCuisinePreferences (UserID, CuisineType) VALUES
 (9, 'Korean'),
 (10, 'Caribbean'),
 (10, 'Greek');
+
+-- Inserts into YelpRestaurant
+INSERT INTO YelpRestaurant (YelpID) VALUES 
+('ewtL3plKywXuLtmFZoUczw'),
+('7G6v_LoHwUi1L0y8z6mlJA');
+
+-- Inserts into Selection
+INSERT INTO Selection (GroupID, YelpRestaurantID, TimeStart, DayOfWeek, Time) VALUES
+(1, 'ewtL3plKywXuLtmFZoUczw', NULL, 'Monday', '2:00 PM'),
+(1, '7G6v_LoHwUi1L0y8z6mlJA', NULL, 'Tuesday', '11:00 AM');
 

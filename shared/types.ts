@@ -34,13 +34,30 @@ export interface GroupAndCreator {
 export interface YelpRestaurant {
     id: string;
     name: string;
+    alias: string;
     rating: number;
+    review_count: number;
     distance: number; // in kilometers
     image_url: string;
+    url: string;
+    categories: {
+        alias: string;
+        title: string;
+    }[];
+    coordinates: {
+        latitude: number;
+        longitude: number;
+    };
+    price?: string;
     location: {
         address1: string;
         city: string;
+        zip_code: string;
+        country: string;
+        state: string;
+        display_address: string;
     };
+    phone: string;
     business_hours?: BusinessHours[];
 }
 

@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../api/axios';
 import axios from 'axios';
 import { format } from 'date-fns';
+import { SocialEvent } from '@types';
 
 interface GroupUser {
     groupname: string;
@@ -51,6 +52,23 @@ const SelectedGroup = () => {
         time: string;
         daysUntil: number;
     } | null>(null);
+
+    const [groupEvents, setGroupEvents] = useState<SocialEvent[]>([]);
+    useEffect(() => {
+        getSocialEventsForThisGroup(groupid!);
+    }, [groupid]);
+
+    const getSocialEventsForThisGroup = async (groupid: string) => {
+        try {
+            const response = await api.get(
+                `/socialevents/bygroupid/${groupid}`
+            );
+            console.log('getting social events from the backend');
+            setGroupEvents(response.data);
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     const findNextAvailableTime = () => {
         const now = new Date();
@@ -561,6 +579,49 @@ const SelectedGroup = () => {
                             )
                     )}
                 </div>
+            </section>
+            <h2>Group Events</h2>
+            <section className="group-section">
+                {groupEvents.map((socialEvent, index) => (
+                    <div>
+                        <h3>
+                            <u>Event {index + 1}</u>
+                        </h3>
+                        <p>
+                            <b>When: </b>
+                            {socialEvent.startTime.day}{' '}
+                            {socialEvent.startTime.time}
+                        </p>
+                        <p>
+                            <b>Restaurant:</b> {socialEvent.restaurant.name}
+                        </p>
+                        <p>
+                            <b>Rating</b>: {socialEvent.restaurant.rating}
+                        </p>
+
+                        <img
+                            src={socialEvent.restaurant.image_url}
+                            alt={`${socialEvent.restaurant.name} thumbnail`}
+                            style={{
+                                width: '150px',
+                                height: '150px',
+                                objectFit: 'cover',
+                                borderRadius: '8px',
+                            }}
+                        />
+
+                        <p>
+                            <a href={socialEvent.restaurant.url}>Website</a>
+                        </p>
+                        <p>
+                            <b>Price</b>: {socialEvent.restaurant.price}
+                        </p>
+                        <p>
+                            <b>Address:</b>
+                            {socialEvent.restaurant.location.display_address}
+                        </p>
+                    </div>
+                ))}
             </section>
             <div className="group-actions">
                 <Link to={`/group-event/${groupid}`}>

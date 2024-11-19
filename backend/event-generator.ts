@@ -172,7 +172,7 @@ const fetchRestaurants = async (
     location: string // params go here
 ): Promise<YelpRestaurant[]> => {
     try {
-        const response = await yelp.get('', {
+        const response = await yelp.get('/search', {
             params: {
                 location: location,
                 radius: 15000,

@@ -3,12 +3,19 @@ import cors from 'cors';
 import pool from './db';
 import { QueryResult } from 'pg';
 import { Application, Request, Response } from 'express';
-import { User, GroupAndCreator, YelpRestaurant, SocialEvent } from '@types';
+import {
+    User,
+    GroupAndCreator,
+    YelpRestaurant,
+    SocialEvent,
+    DayOfWeekAndTime,
+} from '@types';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import yelp from './yelp-axios';
 import { generateEvent } from './event-generator';
 
 const app: Application = express();
@@ -1074,6 +1081,64 @@ app.get(
                 Number(groupid)
             );
             res.json(generatedSocialEvent);
+        } catch (e) {
+            console.error((e as Error).message);
+            res.status(500).json({ error: (e as Error).message });
+        }
+    }
+);
+
+/*    GET /socialevents/bygroupid/:groupid    */
+/* ************************************************************************** 
+Input: (URL Param) Group ID
+Operation: Search in the database all events for the supplied groupid
+Output: (JSON Object) Json object with the found events
+*/
+app.get(
+    '/socialevents/bygroupid/:groupid',
+    async (req: Request, res: Response) => {
+        try {
+            const { groupid } = req.params;
+            const allData: QueryResult = await pool.query(
+                'SELECT groupid, yelprestaurantid, timestart, dayofweek, time FROM Selection WHERE groupid = $1',
+                [groupid]
+            );
+            const fetchYelpRestaurantByID = async (
+                yelprestaurantid: number
+            ): Promise<YelpRestaurant> => {
+                try {
+                    const response = await yelp.get(`/${yelprestaurantid}`);
+                    return response.data;
+                } catch (error) {
+                    console.error(
+                        'There was an error fetching a restaurant from Yelp API (fetchYelpRestaurantByID)',
+                        error
+                    );
+                    throw error;
+                }
+            };
+            // Create an array of social events
+            const groupEvents: SocialEvent[] = [];
+            // Loop for each result in our query output
+            for (const row of allData.rows) {
+                //  Create a restaurant object
+                const restaurant: YelpRestaurant =
+                    await fetchYelpRestaurantByID(row.yelprestaurantid);
+                // Create a DayOfWeekAndTime object using data from the selection db row
+                const dayOfWeekAndTime: DayOfWeekAndTime = {
+                    day: row.dayofweek,
+                    time: row.time,
+                };
+                //  Create a SocialEvent object with data from Selection (Restaurant goes inside SocialEvent)
+                const socialEvent: SocialEvent = {
+                    restaurant: restaurant,
+                    startTime: dayOfWeekAndTime,
+                };
+                //  Push it into the array
+                groupEvents.push(socialEvent);
+            }
+            // Return the array
+            res.json(groupEvents);
         } catch (e) {
             console.error((e as Error).message);
             res.status(500).json({ error: (e as Error).message });

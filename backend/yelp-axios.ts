@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
-const YELP_URL = 'https://api.yelp.com/v3/businesses/search';
+const YELP_URL = 'https://api.yelp.com/v3/businesses/';
 const YELP_KEY = process.env.REACT_APP_YELP_API_KEY;
 
 // This creates a custom Axios instance with a base URL of http://localhost:3500/api.
