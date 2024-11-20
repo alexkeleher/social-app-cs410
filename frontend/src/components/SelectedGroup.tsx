@@ -33,6 +33,7 @@ const SelectedGroup = () => {
     const [groupName, setGroupName] = useState('');
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteError, setInviteError] = useState('');
+    const [saveMessage, setSaveMessage] = useState(''); // For displaying error or success when creating event with automatic option
     const [joinCode, setJoinCode] = useState('');
     const [groupAvailability, setGroupAvailability] =
         useState<AvailabilityMatrix>({});
@@ -68,6 +69,32 @@ const SelectedGroup = () => {
         } catch (err) {
             console.error(err);
         }
+    };
+
+    const onClickCreateEventAutomatic = async () => {
+        try {
+            await api.get(`socialevents/generate-new/${groupid}`);
+            console.log(
+                'success calling ' + `socialevents/generate-new/${groupid}`
+            );
+            setSaveMessage('Success creating social event');
+            setTimeout(() => setSaveMessage(''), 4000);
+        } catch (error: any) {
+            // Type as 'any' to access axios error properties
+            console.error(
+                'Error creating event automatically onClickCreateEventAutomatic',
+                error
+            );
+            // Get the error message from the response of it exists
+            console.log('xx');
+            console.log(error);
+            console.log('xx');
+            const errorMessage =
+                error.response?.data?.error || 'Unknown error occurred';
+            setSaveMessage('Error creating social event: ' + errorMessage);
+            setTimeout(() => setSaveMessage(''), 4000);
+        }
+        getSocialEventsForThisGroup(groupid!);
     };
 
     const findNextAvailableTime = () => {
@@ -583,7 +610,7 @@ const SelectedGroup = () => {
             <h2>Group Events</h2>
             <section className="group-section">
                 {groupEvents.map((socialEvent, index) => (
-                    <div>
+                    <div key={socialEvent.restaurant.id}>
                         <h3>
                             <u>Event {index + 1}</u>
                         </h3>
@@ -617,15 +644,32 @@ const SelectedGroup = () => {
                             <b>Price</b>: {socialEvent.restaurant.price}
                         </p>
                         <p>
-                            <b>Address:</b>
+                            <b>Address: </b>
                             {socialEvent.restaurant.location.display_address}
                         </p>
                     </div>
                 ))}
             </section>
+            {saveMessage && (
+                <p
+                    className={`save-message ${saveMessage.includes('Error') ? 'error' : 'success'}`}
+                >
+                    {saveMessage}
+                </p>
+            )}
             <div className="group-actions">
+                <div>
+                    <button
+                        className="cta-button"
+                        onClick={onClickCreateEventAutomatic}
+                    >
+                        Create Event - Automatic
+                    </button>
+                </div>
                 <Link to={`/group-event/${groupid}`}>
-                    <button className="cta-button">Create Event</button>
+                    <button className="cta-button">
+                        Create Event - Manual
+                    </button>
                 </Link>
 
                 <Link to="/my-groups">

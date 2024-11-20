@@ -1063,16 +1063,70 @@ app.delete('/data/:id', async (req: Request<Parameters>, res: Response) => {
     }
 });
 
-/* events service */
+/* socialevents service */
 
 /*    GET /events/generate-new/:groupid    */
 /* ************************************************************************** 
 Input: (URL Param) Group ID
-Operation: Apply algorithm to find optimal social event for group
+Operation: Apply algorithm to find optimal social event for group. 
+Insert the social event into the database (Selection table)
 Output: (JSON Object) Json object with generated social event information {Restaurant, StartTime} 
 */
 app.get(
-    '/events/generate-new/:groupid',
+    '/socialevents/generate-new/:groupid',
+    async (req: Request, res: Response) => {
+        try {
+            const { groupid } = req.params;
+            console.log('attempting to generate a social event'); // Debugging
+            // Generate an event using the special algorithm in the event-generator module
+            const generatedSocialEvent: SocialEvent = await generateEvent(
+                Number(groupid)
+            );
+            // Insert into database here
+
+            // first check if the Yelp restaurant exists in YelpRestaurant, if it doesn't, insert it into YelpRestaurant
+            await pool.query(
+                `
+                INSERT INTO YelpRestaurant (YelpID)
+                SELECT $1::text
+                WHERE NOT EXISTS (
+                    SELECT 1 
+                    FROM YelpRestaurant 
+                    WHERE yelpid = $1::text
+                );
+                `,
+                [generatedSocialEvent.restaurant.id]
+            );
+
+            await pool.query(
+                `
+                INSERT INTO Selection (GroupID, YelpRestaurantID, TimeStart, DayOfWeek, Time) VALUES
+                ($1, $2, NULL, $3, $4);
+                `,
+                [
+                    groupid,
+                    generatedSocialEvent.restaurant.id,
+                    generatedSocialEvent.startTime.day,
+                    generatedSocialEvent.startTime.time,
+                ]
+            );
+            res.json(generatedSocialEvent);
+        } catch (e) {
+            console.error((e as Error).message);
+            res.status(500).json({ error: (e as Error).message });
+        }
+    }
+);
+
+/*    GET /socialevents/debug/generate-new/:groupid    */
+/* ************************************************************************** 
+Input: (URL Param) Group ID
+Operation: Apply algorithm to find optimal social event for group. Insert the social event into the database (Selection table)
+Output: (JSON Object) Json object with generated social event information {Restaurant, StartTime} 
+THIS IS A DEBUGGING VERSION THAT DOESN'T INSERT INTO THE DB
+*/
+app.get(
+    '/socialevents/debug/generate-new/:groupid',
     async (req: Request, res: Response) => {
         try {
             const { groupid } = req.params;
