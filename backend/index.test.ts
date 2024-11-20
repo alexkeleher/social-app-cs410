@@ -13,8 +13,8 @@ describe('CRUD Operations Tests', () => {
         password: 'password123',
         phone: '1234567890',
         address: '123 Test St',
-        PreferredPriceRange: 2,
-        PreferredMaxDistance: 10,
+        preferredpricerange: 2,
+        preferredmaxdistance: 10,
     };
 
     const testGroup: GroupAndCreator = {
