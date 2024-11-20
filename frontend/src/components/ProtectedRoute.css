@@ -1,0 +1,47 @@
+.home-button {
+    color: #333333;
+    text-decoration: none;
+    font-size: 1.8rem;
+    font-weight: 700;
+    cursor: pointer;
+
+    /* Fixed dimensions */
+    width: 100px;
+    height: 36px;
+}
+
+.left-side-content {
+    flex: 1;
+}
+
+.app-container {
+    min-height: 100vh;
+}
+
+.app-header {
+    display: flex;
+    justify-content: center;
+    background: white;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--gray-200);
+    box-shadow: var(--shadow-sm);
+}
+
+.header-nav {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.user-info {
+    color: var(--gray-800);
+    font-weight: 500;
+}
+
+.main-content {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+

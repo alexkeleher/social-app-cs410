@@ -1008,28 +1008,12 @@ h1 {
     gap: 5px;
 }
 
-.app-container {
-    min-height: 100vh;
-}
-
-.app-header {
-    background: white;
-    padding: 1rem 2rem;
-    border-bottom: 1px solid var(--gray-200);
-    box-shadow: var(--shadow-sm);
-}
-
 .header-content {
     max-width: 1200px;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-
-.user-info {
-    color: var(--gray-800);
-    font-weight: 500;
 }
 
 .nav-link {
@@ -1061,18 +1045,6 @@ h1 {
     background: var(--primary-dark);
     transform: translateY(-1px);
     box-shadow: var(--shadow-sm);
-}
-
-.header-nav {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-}
-
-.main-content {
-    padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
 }
 
 .location-info {
