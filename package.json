@@ -6,7 +6,7 @@
     "scripts": {
         "start": "concurrently \"npm run frontend\" \"npm run backend\"",
         "frontend": "npm start --prefix frontend",
-        "backend": "nodemon --exec tsx backend/index.js",
+        "backend": "nodemon --exec tsx backend/index.ts",
         "test": "cross-env NODE_ENV=test jest --detectOpenHandles",
         "test:watch": "cross-env NODE_ENV=test jest --watch",
         "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,json,css,sccs,md}\"",

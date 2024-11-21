@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api/axios';
 import axios from 'axios';
-import { format } from 'date-fns';
+//import { format } from 'date-fns';
 import { SocialEvent } from '@types';
 
 interface GroupUser {
@@ -26,6 +26,39 @@ interface Coordinates {
     lat: number;
     lng: number;
 }
+
+interface AutoSuggestedEvent {
+    restaurant: {
+        id: string;
+        name: string;
+        rating: number;
+        price: string;
+        image_url: string;
+        url: string;
+        distance: number;
+        location: {
+            display_address: string[];
+        };
+        hours?: {
+            open: { start: string; end: string; day: number }[];
+            is_open_now: boolean;
+        }[];
+    } | null;
+    availability: {
+        day: string;
+        time: string;
+    } | null;
+    preferences: {
+        cuisines: string[];
+        distance: number;
+        location: {
+            lat: number;
+            lng: number;
+        } | null;
+    };
+}
+
+const DEBUGGING_MODE = process.env.NODE_ENV === 'development';
 
 const SelectedGroup = () => {
     const { groupid } = useParams();
@@ -58,6 +91,167 @@ const SelectedGroup = () => {
     useEffect(() => {
         getSocialEventsForThisGroup(groupid!);
     }, [groupid]);
+
+    const [autoSuggestedEvent, setAutoSuggestedEvent] =
+        useState<AutoSuggestedEvent>({
+            restaurant: null,
+            availability: null,
+            preferences: {
+                cuisines: [],
+                distance: 5000,
+                location: null,
+            },
+        });
+    const [selectedCuisine, setSelectedCuisine] = useState<string | null>(null);
+
+    const fetchAutoSuggestedEvent = useCallback(async () => {
+        if (!centerPoint || !nextAvailableTime) return;
+
+        const API_KEY = process.env.REACT_APP_YELP_API_KEY;
+        if (!API_KEY) {
+            console.error('Missing Yelp API key');
+            return;
+        }
+
+        try {
+            const topPreferences = [...aggregatedPreferences]
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 3)
+                .map((p) => p.preference.toLowerCase());
+
+            if (DEBUGGING_MODE) {
+                console.log('Fetching with params:', {
+                    latitude: centerPoint.lat,
+                    longitude: centerPoint.lng,
+                    categories: topPreferences,
+                });
+            }
+
+            // Use direct Yelp API call like in GroupEvent
+            const response = await axios.get(
+                'https://api.yelp.com/v3/businesses/search',
+                {
+                    headers: {
+                        Authorization: `Bearer ${API_KEY}`,
+                    },
+                    params: {
+                        latitude: centerPoint.lat,
+                        longitude: centerPoint.lng,
+                        radius: 5000,
+                        categories: topPreferences.join(','),
+                        open_at:
+                            getTimestampForNextAvailable(nextAvailableTime),
+                        limit: 50,
+                        sort_by: 'best_match',
+                    },
+                }
+            );
+
+            if (!response.data.businesses?.length) {
+                console.log('No restaurants found matching criteria');
+                return;
+            }
+
+            const nearbyRestaurants = response.data.businesses
+                .filter((r: any) => r.distance <= 5000)
+                .sort((a: any, b: any) => {
+                    // First sort by rating (highest first)
+                    if (b.rating !== a.rating) {
+                        return b.rating - a.rating;
+                    }
+                    // If ratings are equal, sort by review_count (highest first)
+                    return b.review_count - a.review_count;
+                });
+            if (nearbyRestaurants.length > 0) {
+                setSelectedCuisine(topPreferences[0]);
+
+                setAutoSuggestedEvent({
+                    restaurant: nearbyRestaurants[0],
+                    availability: nextAvailableTime,
+                    preferences: {
+                        cuisines: topPreferences,
+                        distance: 5000,
+                        location: centerPoint,
+                    },
+                });
+            }
+        } catch (error: any) {
+            console.error(
+                'Error fetching auto-suggested event:',
+                error.response?.data || error.message
+            );
+        }
+    }, [centerPoint, nextAvailableTime, aggregatedPreferences]);
+
+    const handleCuisineSelect = useCallback(
+        async (cuisine: string) => {
+            setSelectedCuisine(cuisine);
+
+            if (!centerPoint || !nextAvailableTime) return;
+            const API_KEY = process.env.REACT_APP_YELP_API_KEY;
+            if (!API_KEY) return;
+
+            try {
+                const response = await axios.get(
+                    'https://api.yelp.com/v3/businesses/search',
+                    {
+                        headers: {
+                            Authorization: `Bearer ${API_KEY}`,
+                        },
+                        params: {
+                            latitude: centerPoint.lat,
+                            longitude: centerPoint.lng,
+                            radius: 5000,
+                            categories: cuisine,
+                            open_at:
+                                getTimestampForNextAvailable(nextAvailableTime),
+                            limit: 50,
+                            sort_by: 'best_match',
+                        },
+                    }
+                );
+
+                const nearbyRestaurants = response.data.businesses.filter(
+                    (r: any) => r.distance <= 5000
+                );
+
+                if (nearbyRestaurants.length > 0) {
+                    // Keep original preferences array but highlight selected
+                    setAutoSuggestedEvent((prev) => ({
+                        restaurant: nearbyRestaurants[0],
+                        availability: nextAvailableTime,
+                        preferences: {
+                            // Keep original cuisines array
+                            cuisines: prev.preferences.cuisines,
+                            distance: 5000,
+                            location: centerPoint,
+                        },
+                    }));
+                }
+            } catch (error) {
+                console.error('Error fetching filtered restaurants:', error);
+            }
+        },
+        [centerPoint, nextAvailableTime]
+    );
+
+    // Add helper function
+    const getTimestampForNextAvailable = (nextTime: {
+        day: string;
+        time: string;
+        daysUntil: number;
+    }) => {
+        const now = new Date();
+        const date = new Date(now.setDate(now.getDate() + nextTime.daysUntil));
+        const [hour] = nextTime.time.split('-')[0].split(':').map(Number);
+        date.setHours(hour, 0, 0, 0);
+        return Math.floor(date.getTime() / 1000);
+    };
+
+    // Add useEffect to trigger fetch
+    useEffect(() => {
+        fetchAutoSuggestedEvent();
+    }, [fetchAutoSuggestedEvent]);
 
     const getSocialEventsForThisGroup = async (groupid: string) => {
         try {
@@ -649,6 +843,114 @@ const SelectedGroup = () => {
                         </p>
                     </div>
                 ))}
+            </section>
+
+            <h2>Auto-Suggested Event</h2>
+            <section className="group-section">
+                {autoSuggestedEvent.restaurant ? (
+                    <div className="auto-event-card">
+                        <div className="search-preferences">
+                            <h3>Search Criteria</h3>
+                            <div className="preferences-list">
+                                {autoSuggestedEvent.preferences.cuisines.map(
+                                    (cuisine) => (
+                                        <button
+                                            key={cuisine}
+                                            onClick={() =>
+                                                handleCuisineSelect(cuisine)
+                                            }
+                                            className={`preference-button ${
+                                                selectedCuisine === cuisine
+                                                    ? 'selected'
+                                                    : ''
+                                            }`}
+                                        >
+                                            {cuisine}
+                                        </button>
+                                    )
+                                )}
+                            </div>
+                            <p className="search-details">
+                                <span>
+                                    Search radius:{' '}
+                                    {(
+                                        autoSuggestedEvent.preferences
+                                            .distance / 1000
+                                    ).toFixed(1)}
+                                    km
+                                </span>
+                                {autoSuggestedEvent.preferences.location && (
+                                    <span>
+                                        {' '}
+                                        | Center: (
+                                        {autoSuggestedEvent.preferences.location.lat.toFixed(
+                                            2
+                                        )}
+                                        ,
+                                        {autoSuggestedEvent.preferences.location.lng.toFixed(
+                                            2
+                                        )}
+                                        )
+                                    </span>
+                                )}
+                            </p>
+                        </div>
+                        <div className="event-timing">
+                            <h3>Suggested Time</h3>
+                            <p>
+                                {autoSuggestedEvent.availability?.day} at{' '}
+                                {autoSuggestedEvent.availability?.time}
+                            </p>
+                        </div>
+                        <div className="restaurant-details">
+                            <h3>{autoSuggestedEvent.restaurant.name}</h3>
+                            <img
+                                src={autoSuggestedEvent.restaurant.image_url}
+                                alt={autoSuggestedEvent.restaurant.name}
+                                style={{
+                                    width: '150px',
+                                    height: '150px',
+                                    objectFit: 'cover',
+                                    borderRadius: '8px',
+                                }}
+                            />
+                            <p>
+                                <b>Rating:</b>{' '}
+                                {autoSuggestedEvent.restaurant.rating}
+                            </p>
+                            <p>
+                                <b>Price:</b>{' '}
+                                {autoSuggestedEvent.restaurant.price}
+                            </p>
+                            <p>
+                                <b>Distance:</b>{' '}
+                                {(
+                                    autoSuggestedEvent.restaurant.distance /
+                                    1000
+                                ).toFixed(2)}
+                                km
+                            </p>
+                            <p>
+                                <b>Address:</b>{' '}
+                                {autoSuggestedEvent.restaurant.location.display_address.join(
+                                    ', '
+                                )}
+                            </p>
+                            <a
+                                href={autoSuggestedEvent.restaurant.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                View on Yelp
+                            </a>
+                        </div>
+                    </div>
+                ) : (
+                    <p>
+                        No suggestions available for the next available time
+                        slot
+                    </p>
+                )}
             </section>
             {saveMessage && (
                 <p
