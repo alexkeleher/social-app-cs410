@@ -1,7 +1,11 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthProvider';
+import { Button } from '@mui/material';
 import api from '../api/axios';
+import './MyGroups.css';
+
+// TODO: When the groups are loading in, don't show the buttons and header.
 
 interface Group {
     id: number;
@@ -134,92 +138,120 @@ const MyGroups: React.FC = () => {
     return (
         <>
             <h1>My Groups</h1>
-            <div className="my-groups-container">
-                {/* Existing Groups Section */}
-                <div className="group-list">
-                    {myGroups.map((group: Group) => (
-                        <Link key={group.id} to={`/selected-group/${group.id}`}>
-                            <div className="group-card">
-                                <h2>{group.name}</h2>
-                                <p>Group ID: {group.id}</p>
-                                <p>
-                                    Date Created:{' '}
-                                    {group.datecreated
-                                        ? new Date(
-                                              group.datecreated
-                                          ).toLocaleString('en-US', {
-                                              year: 'numeric',
-                                              month: 'short',
-                                              day: 'numeric',
-                                              hour: '2-digit',
-                                              minute: '2-digit',
-                                          })
-                                        : 'N/A'}
-                                </p>
-                                <p className="join-code">
-                                    Join Code: {group.joincode}
-                                </p>
-                            </div>
-                        </Link>
-                    ))}
-                </div>
+            {myGroups.length > 0 || pendingInvites.length > 0 ? (
+                <div className="my-groups-container">
+                    {/* Existing Groups Section */}
+                    <div className="group-list">
+                        {myGroups.map((group: Group) => (
+                            <Link
+                                key={group.id}
+                                to={`/selected-group/${group.id}`}
+                                className="group-link"
+                            >
+                                <div className="group-card">
+                                    <h2>{group.name}</h2>
+                                    {/*<p className="group-info">Group ID: {group.id}</p>*/}
+                                    <p className="group-info">
+                                        Date Created:{' '}
+                                        {group.datecreated
+                                            ? new Date(
+                                                  group.datecreated
+                                              ).toLocaleString('en-US', {
+                                                  year: 'numeric',
+                                                  month: 'short',
+                                                  day: 'numeric',
+                                                  hour: '2-digit',
+                                                  minute: '2-digit',
+                                              })
+                                            : 'N/A'}
+                                    </p>
+                                    <p className="group-info">
+                                        Join Code: {group.joincode}
+                                    </p>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
 
-                {/* Pending Invites Section */}
-                {pendingInvites.map((invite: Group) => (
-                    <div key={invite.id} className="group-card">
-                        <h2>Group: {invite.name}</h2>
-                        <p>Join Code: {invite.joincode}</p>
-                        <p>
-                            Invited:{' '}
-                            {new Date(invite.invitedat || '').toLocaleString(
-                                'en-US',
-                                {
+                    {/* Pending Invites Section */}
+                    {pendingInvites.map((invite: Group) => (
+                        <div key={invite.id} className="group-card">
+                            <h2>Group: {invite.name}</h2>
+                            <p>Join Code: {invite.joincode}</p>
+                            <p>
+                                Invited:{' '}
+                                {new Date(
+                                    invite.invitedat || ''
+                                ).toLocaleString('en-US', {
                                     year: 'numeric',
                                     month: 'short',
                                     day: 'numeric',
                                     hour: '2-digit',
                                     minute: '2-digit',
+                                })}
+                            </p>
+                            <button
+                                onClick={() => handleAcceptInvite(invite)}
+                                className="cta-button"
+                                disabled={
+                                    acceptingInvite === invite.id.toString()
                                 }
-                            )}
-                        </p>
-                        <button
-                            onClick={() => handleAcceptInvite(invite)}
-                            className="cta-button"
-                            disabled={acceptingInvite === invite.id.toString()}
-                        >
-                            {acceptingInvite === invite.id.toString()
-                                ? 'Accepting...'
-                                : 'Accept Invite'}
-                        </button>
-                    </div>
-                ))}
-
-                {/* Action Buttons */}
-                <div className="button-container">
-                    <button
-                        onClick={() => navigate('/create-group')}
-                        className="cta-button"
-                        type="button"
-                    >
-                        Create a New Group
-                    </button>
-
-                    <button
-                        onClick={() => navigate('/all-preferences')}
-                        className="cta-button"
-                        type="button"
-                    >
-                        Go to My Preferences
-                    </button>
-
-                    <button
-                        onClick={() => navigate('/join-group')}
-                        className="cta-button"
-                        type="button"
-                    >
-                        Join a Group
-                    </button>
+                            >
+                                {acceptingInvite === invite.id.toString()
+                                    ? 'Accepting...'
+                                    : 'Accept Invite'}
+                            </button>
+                        </div>
+                    ))}
                 </div>
+            ) : null}
+
+            {/* Action Buttons */}
+            <div className="button-container">
+                <Button
+                    onClick={() => navigate('/create-group')}
+                    variant="contained"
+                    className="cta-button"
+                    type="submit"
+                    sx={{
+                        backgroundColor: '#FF0000',
+                        '&:hover': {
+                            backgroundColor: '#CC0000',
+                        },
+                    }}
+                >
+                    New Group
+                </Button>
+
+                <Button
+                    onClick={() => navigate('/all-preferences')}
+                    variant="contained"
+                    className="cta-button"
+                    type="submit"
+                    sx={{
+                        backgroundColor: '#FF0000',
+                        '&:hover': {
+                            backgroundColor: '#CC0000',
+                        },
+                    }}
+                >
+                    My Preferences
+                </Button>
+
+                <Button
+                    onClick={() => navigate('/join-group')}
+                    variant="contained"
+                    className="cta-button"
+                    type="submit"
+                    sx={{
+                        backgroundColor: '#FF0000',
+                        '&:hover': {
+                            backgroundColor: '#CC0000',
+                        },
+                    }}
+                >
+                    Join Group
+                </Button>
             </div>
         </>
     );

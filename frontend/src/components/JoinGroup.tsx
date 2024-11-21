@@ -64,15 +64,12 @@ const JoinGroup: React.FC = () => {
                 p: 3,
             }}
         >
-            <Typography variant="h4" component="h2">
-                Join a Group
-            </Typography>
+            <h1>Join a Group</h1>
             <form
                 onSubmit={handleSubmit}
                 style={{ width: '100%', maxWidth: '400px' }}
             >
                 <Box sx={{ mb: 2 }}>
-                    <label htmlFor="joinCode">Enter Join Code</label>
                     <input
                         type="text"
                         id="joinCode"

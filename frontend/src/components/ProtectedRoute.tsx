@@ -19,9 +19,7 @@ const ProtectedRoute = () => {
                     <Link to="/landingpage" className="home-button">
                         GroupEats
                     </Link>
-                    <div className="user-info">
-                        User: {auth.email}
-                    </div>
+                    <div className="user-info">User: {auth.email}</div>
                 </div>
                 <div>
                     <nav className="header-nav">

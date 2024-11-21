@@ -1,0 +1,64 @@
+.preferences-page-container {
+    max-width: 1200px;
+    margin-top: 30px;
+}
+
+.preference-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.dropdown-toggle {
+    background-color: linear-gradient(
+        135deg,
+        #ff1010 0%,
+        #cc0000 100%
+    ); /* More vibrant red */
+    color: rgb(179, 39, 39);
+    border: inset 2px rgba(172, 0, 0, 0.2); /* Inset border for depth */
+    padding: 12px 20px; /* Increased padding for a more inviting look */
+    font-size: 16px; /* Slightly larger font */
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 10px; /* Smooth, rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    transition:
+        background-color 0.3s,
+        transform 0.7s,
+        box-shadow 0.3s; /* Smooth transition */
+    width: 300px; /* Make the button full-width */
+    max-width: 300px; /* Optional: limit the max width */
+    margin: 10px auto; /* Center the button with auto margins */
+}
+
+.dropdown-toggle:hover {
+    background-color: #ff3333; /* Darker red on hover */
+    transform: translateY(-2px); /* Lift the button slightly */
+    color: white; /* Change text color on hover */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Add depth on hover */
+}
+
+.dropdown-toggle:active {
+    background-color: #cc0000; /* Even darker red on active */
+    transform: scale(0.98); /* Slightly shrink the button on click */
+}
+
+.preference-content {
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 10px; /* Make the content area match the button */
+    background-color: #f0f8ff; /* Light background for contrast */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Match the shadow */
+    transition: max-height 1s ease-in-out; /* Smoothly expand/collapse content */
+    overflow: hidden; /* Hide content when collapsed */
+}
+
+.preference-content.open {
+    max-height: 500px; /* Set a maximum height for the content */
+    opacity: 1; /* Make the content fully visible */
+}
+
