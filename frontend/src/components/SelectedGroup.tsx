@@ -4,6 +4,7 @@ import api from '../api/axios';
 import axios from 'axios';
 //import { format } from 'date-fns';
 import { SocialEvent } from '@types';
+import { YelpCache } from '../utils/cache';
 
 interface GroupUser {
     groupname: string;
@@ -59,6 +60,9 @@ interface AutoSuggestedEvent {
 }
 
 const DEBUGGING_MODE = process.env.NODE_ENV === 'development';
+const API_KEY = process.env.REACT_APP_YELP_API_KEY;
+const RETRY_DELAY = 1000;
+const MAX_RETRIES = 3;
 
 const SelectedGroup = () => {
     const { groupid } = useParams();
@@ -103,85 +107,90 @@ const SelectedGroup = () => {
             },
         });
     const [selectedCuisine, setSelectedCuisine] = useState<string | null>(null);
+    const topPreferences = [...aggregatedPreferences]
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 3)
+        .map((p) => p.preference.toLowerCase());
 
+    // Update fetchAutoSuggestedEvent
     const fetchAutoSuggestedEvent = useCallback(async () => {
         if (!centerPoint || !nextAvailableTime) return;
 
-        const API_KEY = process.env.REACT_APP_YELP_API_KEY;
-        if (!API_KEY) {
-            console.error('Missing Yelp API key');
-            return;
-        }
-
         try {
-            const topPreferences = [...aggregatedPreferences]
-                .sort((a, b) => b.count - a.count)
-                .slice(0, 3)
-                .map((p) => p.preference.toLowerCase());
+            const searchParams = {
+                latitude: centerPoint.lat,
+                longitude: centerPoint.lng,
+                radius: 5000,
+                categories: topPreferences.join(','),
+                open_at: getTimestampForNextAvailable(nextAvailableTime),
+                limit: 50,
+                sort_by: 'best_match',
+            };
 
-            if (DEBUGGING_MODE) {
-                console.log('Fetching with params:', {
-                    latitude: centerPoint.lat,
-                    longitude: centerPoint.lng,
-                    categories: topPreferences,
-                });
+            const cacheKey = YelpCache.generateKey(searchParams);
+            const cachedData = YelpCache.get(cacheKey);
+
+            if (cachedData) {
+                console.log('Using cached Yelp data');
+                return processYelpResponse(cachedData);
             }
 
-            // Use direct Yelp API call like in GroupEvent
-            const response = await axios.get(
-                'https://api.yelp.com/v3/businesses/search',
-                {
+            const retryRequest = async <T,>(
+                requestFn: () => Promise<T>,
+                retries = MAX_RETRIES
+            ): Promise<T> => {
+                try {
+                    return await requestFn();
+                } catch (error: any) {
+                    if (error.response?.status === 429 && retries > 0) {
+                        await new Promise((resolve) =>
+                            setTimeout(resolve, RETRY_DELAY)
+                        );
+                        return retryRequest(requestFn, retries - 1);
+                    }
+                    throw error;
+                }
+            };
+
+            const response = await retryRequest(() =>
+                axios.get('https://api.yelp.com/v3/businesses/search', {
                     headers: {
                         Authorization: `Bearer ${API_KEY}`,
                     },
-                    params: {
-                        latitude: centerPoint.lat,
-                        longitude: centerPoint.lng,
-                        radius: 5000,
-                        categories: topPreferences.join(','),
-                        open_at:
-                            getTimestampForNextAvailable(nextAvailableTime),
-                        limit: 50,
-                        sort_by: 'best_match',
-                    },
-                }
+                    params: searchParams,
+                })
             );
 
-            if (!response.data.businesses?.length) {
-                console.log('No restaurants found matching criteria');
-                return;
-            }
-
-            const nearbyRestaurants = response.data.businesses
-                .filter((r: any) => r.distance <= 5000)
-                .sort((a: any, b: any) => {
-                    // First sort by rating (highest first)
-                    if (b.rating !== a.rating) {
-                        return b.rating - a.rating;
-                    }
-                    // If ratings are equal, sort by review_count (highest first)
-                    return b.review_count - a.review_count;
-                });
-            if (nearbyRestaurants.length > 0) {
-                setSelectedCuisine(topPreferences[0]);
-
-                setAutoSuggestedEvent({
-                    restaurant: nearbyRestaurants[0],
-                    availability: nextAvailableTime,
-                    preferences: {
-                        cuisines: topPreferences,
-                        distance: 5000,
-                        location: centerPoint,
-                    },
-                });
-            }
-        } catch (error: any) {
-            console.error(
-                'Error fetching auto-suggested event:',
-                error.response?.data || error.message
-            );
+            YelpCache.set(cacheKey, response.data);
+            return processYelpResponse(response.data);
+        } catch (error) {
+            console.error('Error fetching/caching Yelp data:', error);
         }
     }, [centerPoint, nextAvailableTime, aggregatedPreferences]);
+
+    // Helper to process response data
+    const processYelpResponse = (data: any) => {
+        if (!data.businesses?.length) return;
+
+        const nearbyRestaurants = data.businesses
+            .filter((r: any) => r.distance <= 5000)
+            .sort((a: any, b: any) => {
+                if (b.rating !== a.rating) return b.rating - a.rating;
+                return b.review_count - a.review_count;
+            });
+
+        if (nearbyRestaurants.length > 0) {
+            setAutoSuggestedEvent((prev) => ({
+                restaurant: nearbyRestaurants[0],
+                availability: nextAvailableTime,
+                preferences: {
+                    cuisines: prev.preferences.cuisines,
+                    distance: 5000,
+                    location: centerPoint,
+                },
+            }));
+        }
+    };
 
     const handleCuisineSelect = useCallback(
         async (cuisine: string) => {
