@@ -107,6 +107,7 @@ const SelectedGroup = () => {
             },
         });
     const [selectedCuisine, setSelectedCuisine] = useState<string | null>(null);
+
     const topPreferences = [...aggregatedPreferences]
         .sort((a, b) => b.count - a.count)
         .slice(0, 3)
@@ -169,6 +170,7 @@ const SelectedGroup = () => {
     }, [centerPoint, nextAvailableTime, aggregatedPreferences]);
 
     // Helper to process response data
+    // Update processYelpResponse to handle initial cuisine selection
     const processYelpResponse = (data: any) => {
         if (!data.businesses?.length) return;
 
@@ -180,11 +182,22 @@ const SelectedGroup = () => {
             });
 
         if (nearbyRestaurants.length > 0) {
+            // Get top preferences for initial setup
+            const topPreferences = [...aggregatedPreferences]
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 3)
+                .map((p) => p.preference.toLowerCase());
+
+            // Set initial selected cuisine if none is selected
+            if (!selectedCuisine) {
+                setSelectedCuisine(topPreferences[0]);
+            }
+
             setAutoSuggestedEvent((prev) => ({
                 restaurant: nearbyRestaurants[0],
                 availability: nextAvailableTime,
                 preferences: {
-                    cuisines: prev.preferences.cuisines,
+                    cuisines: topPreferences, // Update with top preferences
                     distance: 5000,
                     location: centerPoint,
                 },
