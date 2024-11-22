@@ -925,10 +925,25 @@ h1 {
 }
 
 .group-actions {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    display: flex;
     gap: 1rem;
     margin-top: 2rem;
+    justify-content: flex-start; /* Aligns buttons to the start */
+}
+
+.group-actions button {
+    min-width: 150px; /* Or whatever width matches your other buttons */
+    padding: 0.5rem 1rem;
+}
+
+/* Style specifically for the delete button */
+.cta-button.delete {
+    background-color: red;
+    color: white;
+}
+
+.cta-button.delete:hover {
+    background-color: red;
 }
 
 .error-message {

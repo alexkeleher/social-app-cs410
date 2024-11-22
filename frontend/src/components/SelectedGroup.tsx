@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import axios from 'axios';
 import { format } from 'date-fns';
@@ -29,6 +29,7 @@ interface Coordinates {
 
 const SelectedGroup = () => {
     const { groupid } = useParams();
+    const navigate = useNavigate();
     const [groupUsers, setGroupUsers] = useState<GroupUser[]>([]);
     const [groupName, setGroupName] = useState('');
     const [inviteEmail, setInviteEmail] = useState('');
@@ -394,6 +395,29 @@ const SelectedGroup = () => {
         }
     };
 
+    const handleDeleteClick = async () => {
+        // Show confirmation dialog
+        const confirmDelete = window.confirm('Are you sure you want to delete this group?');
+        
+        if (confirmDelete) {
+            try {
+                
+                const response = await api.delete(`/groups/${groupid}`);
+
+                if (!response) {
+                    throw new Error('Failed to delete group');
+                }
+
+                // Redirect to my-groups page after successful deletion
+                navigate('/my-groups');
+            } catch (error) {
+                console.error('Error deleting group:', error);
+                alert('Failed to delete group. Please try again.');
+            }
+        }
+        
+    };
+
     return (
         <div className="selected-group-container">
             <header className="group-header">
@@ -672,9 +696,19 @@ const SelectedGroup = () => {
                     </button>
                 </Link>
 
+
                 <Link to="/my-groups">
                     <button className="back-button">Back to My Groups</button>
                 </Link>
+
+                <Link to="#" onClick={(e) => {
+        e.preventDefault(); // Prevents navigation
+        handleDeleteClick(); // Too lazy to figure out the styling... So I just put it in a link wrapper.
+    }}> 
+        <button className="cta-button delete">
+            Delete Group
+        </button>
+    </Link>
             </div>
         </div>
     );
