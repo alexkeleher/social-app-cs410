@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import CuisinePreferences from './CuisinePreferences';
 import LocationPreferences from './LocationPreferences';
 import PriceAndDistanceSelection from './DistancePreferences';
 import SchedulingPage from './SchedulingPage';
+import { Box, Button } from '@mui/material';
+import './AllPreferencesPage.css';
 
 const AllPreferencesPage: React.FC = () => {
     // Single state to track which section is open (if any)
     const [openSection, setOpenSection] = useState<string | null>(null);
+
+    const navigate = useNavigate();
 
     // Single toggle function that closes others
     const toggleSection = (section: string) => {
@@ -15,7 +19,14 @@ const AllPreferencesPage: React.FC = () => {
     };
 
     return (
-        <div className="preferences-page-container">
+        <Box
+            className="preferences-page-container"
+            sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+            }}
+        >
             <h1>Select Your Preferences</h1>
 
             <div className="preference-section">
@@ -77,19 +88,24 @@ const AllPreferencesPage: React.FC = () => {
                     </div>
                 )}
 
-                <div className="button-group">
-                    <Link to="/my-groups" className="cta-button">
-                        <button className="cta-button">Go to My Groups</button>
-                    </Link>
-
-                    <Link to="/create-group" className="cta-button">
-                        <button className="cta-button">
-                            Create a New Group
-                        </button>
-                    </Link>
-                </div>
+                <Button
+                    onClick={() => navigate('/my-groups')}
+                    variant="outlined"
+                    fullWidth
+                    sx={{
+                        mt: 2,
+                        color: '#FF0000',
+                        borderColor: '#FF0000',
+                        '&:hover': {
+                            borderColor: '#CC0000',
+                            color: '#CC0000',
+                        },
+                    }}
+                >
+                    Back to My Groups
+                </Button>
             </div>
-        </div>
+        </Box>
     );
 };
 
