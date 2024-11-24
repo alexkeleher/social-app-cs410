@@ -96,6 +96,18 @@ const SelectedGroup = () => {
         getSocialEventsForThisGroup(groupid!);
     }, [groupid]);
 
+    const getTopPreferences = useCallback(() => {
+        if (aggregatedPreferences.length === 0) return [];
+
+        // Find the highest count
+        const maxCount = Math.max(...aggregatedPreferences.map((p) => p.count));
+
+        // Filter to only include preferences with the highest count
+        return aggregatedPreferences
+            .filter((p) => p.count === maxCount)
+            .map((p) => p.preference.toLowerCase());
+    }, [aggregatedPreferences]);
+
     const [autoSuggestedEvent, setAutoSuggestedEvent] =
         useState<AutoSuggestedEvent>({
             restaurant: null,
@@ -107,22 +119,22 @@ const SelectedGroup = () => {
             },
         });
     const [selectedCuisine, setSelectedCuisine] = useState<string | null>(null);
-
-    const topPreferences = [...aggregatedPreferences]
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 3)
-        .map((p) => p.preference.toLowerCase());
+    const [allFetchedRestaurants, setAllFetchedRestaurants] = useState<any[]>(
+        []
+    );
 
     // Update fetchAutoSuggestedEvent
     const fetchAutoSuggestedEvent = useCallback(async () => {
         if (!centerPoint || !nextAvailableTime) return;
 
         try {
+            const topPrefs = getTopPreferences();
+
             const searchParams = {
                 latitude: centerPoint.lat,
                 longitude: centerPoint.lng,
                 radius: 5000,
-                categories: topPreferences.join(','),
+                categories: topPrefs.join(','),
                 open_at: getTimestampForNextAvailable(nextAvailableTime),
                 limit: 50,
                 sort_by: 'best_match',
@@ -170,34 +182,31 @@ const SelectedGroup = () => {
     }, [centerPoint, nextAvailableTime, aggregatedPreferences]);
 
     // Helper to process response data
-    // Update processYelpResponse to handle initial cuisine selection
     const processYelpResponse = (data: any) => {
         if (!data.businesses?.length) return;
 
-        const nearbyRestaurants = data.businesses
-            .filter((r: any) => r.distance <= 5000)
-            .sort((a: any, b: any) => {
-                if (b.rating !== a.rating) return b.rating - a.rating;
-                return b.review_count - a.review_count;
-            });
+        const allRestaurants = data.businesses.filter(
+            (r: any) => r.distance <= 5000
+        );
+        setAllFetchedRestaurants(allRestaurants);
 
-        if (nearbyRestaurants.length > 0) {
-            // Get top preferences for initial setup
-            const topPreferences = [...aggregatedPreferences]
-                .sort((a, b) => b.count - a.count)
-                .slice(0, 3)
-                .map((p) => p.preference.toLowerCase());
+        const sortedRestaurants = [...allRestaurants].sort((a, b) => {
+            if (b.rating !== a.rating) return b.rating - a.rating;
+            return b.review_count - a.review_count;
+        });
 
-            // Set initial selected cuisine if none is selected
+        if (sortedRestaurants.length > 0) {
+            const topPrefs = getTopPreferences();
+
             if (!selectedCuisine) {
-                setSelectedCuisine(topPreferences[0]);
+                setSelectedCuisine(topPrefs[0]);
             }
 
             setAutoSuggestedEvent((prev) => ({
-                restaurant: nearbyRestaurants[0],
+                restaurant: sortedRestaurants[0],
                 availability: nextAvailableTime,
                 preferences: {
-                    cuisines: topPreferences, // Update with top preferences
+                    cuisines: topPrefs,
                     distance: 5000,
                     location: centerPoint,
                 },
@@ -206,55 +215,35 @@ const SelectedGroup = () => {
     };
 
     const handleCuisineSelect = useCallback(
-        async (cuisine: string) => {
+        (cuisine: string) => {
             setSelectedCuisine(cuisine);
 
-            if (!centerPoint || !nextAvailableTime) return;
-            const API_KEY = process.env.REACT_APP_YELP_API_KEY;
-            if (!API_KEY) return;
+            // Filter cached restaurants by selected cuisine
+            const filteredRestaurants = allFetchedRestaurants
+                .filter((r) =>
+                    r.categories.some(
+                        (cat: any) =>
+                            cat.alias.toLowerCase() === cuisine.toLowerCase()
+                    )
+                )
+                .sort((a, b) => {
+                    if (b.rating !== a.rating) return b.rating - a.rating;
+                    return b.review_count - a.review_count;
+                });
 
-            try {
-                const response = await axios.get(
-                    'https://api.yelp.com/v3/businesses/search',
-                    {
-                        headers: {
-                            Authorization: `Bearer ${API_KEY}`,
-                        },
-                        params: {
-                            latitude: centerPoint.lat,
-                            longitude: centerPoint.lng,
-                            radius: 5000,
-                            categories: cuisine,
-                            open_at:
-                                getTimestampForNextAvailable(nextAvailableTime),
-                            limit: 50,
-                            sort_by: 'best_match',
-                        },
-                    }
-                );
-
-                const nearbyRestaurants = response.data.businesses.filter(
-                    (r: any) => r.distance <= 5000
-                );
-
-                if (nearbyRestaurants.length > 0) {
-                    // Keep original preferences array but highlight selected
-                    setAutoSuggestedEvent((prev) => ({
-                        restaurant: nearbyRestaurants[0],
-                        availability: nextAvailableTime,
-                        preferences: {
-                            // Keep original cuisines array
-                            cuisines: prev.preferences.cuisines,
-                            distance: 5000,
-                            location: centerPoint,
-                        },
-                    }));
-                }
-            } catch (error) {
-                console.error('Error fetching filtered restaurants:', error);
+            if (filteredRestaurants.length > 0) {
+                setAutoSuggestedEvent((prev) => ({
+                    restaurant: filteredRestaurants[0],
+                    availability: nextAvailableTime,
+                    preferences: {
+                        cuisines: prev.preferences.cuisines,
+                        distance: 5000,
+                        location: centerPoint,
+                    },
+                }));
             }
         },
-        [centerPoint, nextAvailableTime]
+        [centerPoint, nextAvailableTime, allFetchedRestaurants]
     );
 
     // Add helper function
