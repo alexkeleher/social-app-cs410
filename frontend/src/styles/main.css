@@ -1379,3 +1379,31 @@ h1 {
     background: var(--primary);
     color: white;
 }
+
+.preference-button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #ccc;
+}
+
+.time-slot.clickable {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.time-slot.clickable:hover {
+    background-color: var(--primary-light);
+    color: white;
+}
+
+.time-slot.selected {
+    background-color: var(--primary);
+    color: white;
+}
+
+.no-restaurants-message {
+    color: var(--primary);
+    font-style: italic;
+    padding: 1rem;
+    text-align: center;
+}

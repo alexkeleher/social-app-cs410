@@ -28,6 +28,12 @@ interface Coordinates {
     lng: number;
 }
 
+interface TimeRange {
+    start: string;
+    end: string;
+    day: number;
+}
+
 interface AutoSuggestedEvent {
     restaurant: {
         id: string;
@@ -91,11 +97,73 @@ const SelectedGroup = () => {
         time: string;
         daysUntil: number;
     } | null>(null);
+    const isSelectedTimeSlot = (day: string, slotIndex: number) => {
+        return (
+            nextAvailableTime?.day === day &&
+            nextAvailableTime?.time === timeSlots[slotIndex]
+        );
+    };
 
     const [groupEvents, setGroupEvents] = useState<SocialEvent[]>([]);
     useEffect(() => {
         getSocialEventsForThisGroup(groupid!);
     }, [groupid]);
+    const [unavailableCuisines, setUnavailableCuisines] = useState<string[]>(
+        []
+    );
+
+    // Update handleTimeSlotClick function
+    const handleTimeSlotClick = (day: string, slotIndex: number) => {
+        const daysOfWeek = [
+            'Monday',
+            'Tuesday',
+            'Wednesday',
+            'Thursday',
+            'Friday',
+            'Saturday',
+            'Sunday',
+        ];
+        const today = new Date().getDay();
+        const adjustedToday = today === 0 ? 6 : today - 1;
+        const selectedDayIndex = daysOfWeek.indexOf(day);
+        let daysUntil = selectedDayIndex - adjustedToday;
+        if (daysUntil < 0) daysUntil += 7;
+
+        const newTime = {
+            day: day,
+            time: timeSlots[slotIndex],
+            daysUntil: daysUntil,
+        };
+        setNextAvailableTime(newTime);
+
+        const timestamp = getTimestampForNextAvailable(newTime);
+        const availableRestaurants = allFetchedRestaurants.filter((r) =>
+            r.hours?.[0]?.open?.some((timeRange: TimeRange) => {
+                const start = Number(timeRange.start);
+                const end = Number(timeRange.end);
+                const selectedHour = Number(timeSlots[slotIndex].split(':')[0]);
+                return (
+                    timeRange.day === selectedDayIndex &&
+                    selectedHour >= start / 100 &&
+                    selectedHour < end / 100
+                );
+            })
+        );
+
+        if (availableRestaurants.length > 0) {
+            setAutoSuggestedEvent((prev) => ({
+                restaurant: availableRestaurants[0],
+                availability: newTime,
+                preferences: prev.preferences,
+            }));
+        } else {
+            setAutoSuggestedEvent((prev) => ({
+                restaurant: null,
+                availability: newTime,
+                preferences: prev.preferences,
+            }));
+        }
+    };
 
     const getTopPreferences = useCallback(() => {
         if (aggregatedPreferences.length === 0) return [];
@@ -141,12 +209,22 @@ const SelectedGroup = () => {
                 sort_by: 'best_match',
             };
 
+            const updateWithTime = (data: any) => {
+                processYelpResponse(data);
+                // Force time update in auto-suggested event
+                setAutoSuggestedEvent((prev) => ({
+                    ...prev,
+                    availability: nextAvailableTime,
+                }));
+            };
+
             const cacheKey = YelpCache.generateKey(searchParams);
             const cachedData = YelpCache.get(cacheKey);
 
             if (cachedData) {
                 console.log('Using cached Yelp data');
-                return processYelpResponse(cachedData);
+                updateWithTime(cachedData);
+                return;
             }
 
             const retryRequest = async <T,>(
@@ -176,11 +254,11 @@ const SelectedGroup = () => {
             );
 
             YelpCache.set(cacheKey, response.data);
-            return processYelpResponse(response.data);
+            updateWithTime(response.data);
         } catch (error) {
             console.error('Error fetching/caching Yelp data:', error);
         }
-    }, [centerPoint, nextAvailableTime, aggregatedPreferences]);
+    }, [centerPoint, nextAvailableTime, getTopPreferences]);
 
     // Helper to process response data
     const processYelpResponse = (data: any) => {
@@ -191,20 +269,42 @@ const SelectedGroup = () => {
         );
         setAllFetchedRestaurants(allRestaurants);
 
+        // Check which cuisines have no restaurants
+        const topPrefs = getTopPreferences();
+        const unavailable: string[] = topPrefs.filter(
+            (cuisine: string) =>
+                !allRestaurants.some((r: any) =>
+                    r.categories.some(
+                        (cat: any) =>
+                            cat.alias.toLowerCase() === cuisine.toLowerCase()
+                    )
+                )
+        );
+        setUnavailableCuisines(unavailable);
+
         const sortedRestaurants = [...allRestaurants].sort((a, b) => {
             if (b.rating !== a.rating) return b.rating - a.rating;
             return b.review_count - a.review_count;
         });
 
         if (sortedRestaurants.length > 0) {
-            const topPrefs = getTopPreferences();
+            const bestRestaurant = sortedRestaurants[0];
 
-            if (!selectedCuisine) {
-                setSelectedCuisine(topPrefs[0]);
+            // Find matching cuisine from top preferences
+            const matchingCuisine = topPrefs.find((cuisine) =>
+                bestRestaurant.categories.some(
+                    (cat: any) =>
+                        cat.alias.toLowerCase() === cuisine.toLowerCase()
+                )
+            );
+
+            // Set the matching cuisine as selected if found
+            if (matchingCuisine && !unavailable.includes(matchingCuisine)) {
+                setSelectedCuisine(matchingCuisine);
             }
 
             setAutoSuggestedEvent((prev) => ({
-                restaurant: sortedRestaurants[0],
+                restaurant: bestRestaurant,
                 availability: nextAvailableTime,
                 preferences: {
                     cuisines: topPrefs,
@@ -602,11 +702,12 @@ const SelectedGroup = () => {
 
     const handleDeleteClick = async () => {
         // Show confirmation dialog
-        const confirmDelete = window.confirm('Are you sure you want to delete this group?');
-        
+        const confirmDelete = window.confirm(
+            'Are you sure you want to delete this group?'
+        );
+
         if (confirmDelete) {
             try {
-                
                 const response = await api.delete(`/groups/${groupid}`);
 
                 if (!response) {
@@ -620,7 +721,6 @@ const SelectedGroup = () => {
                 alert('Failed to delete group. Please try again.');
             }
         }
-        
     };
 
     return (
@@ -816,7 +916,20 @@ const SelectedGroup = () => {
                                                                         key={
                                                                             slotIndex
                                                                         }
-                                                                        className="time-slot"
+                                                                        className={`time-slot clickable ${
+                                                                            isSelectedTimeSlot(
+                                                                                day,
+                                                                                slotIndex
+                                                                            )
+                                                                                ? 'selected'
+                                                                                : ''
+                                                                        }`}
+                                                                        onClick={() =>
+                                                                            handleTimeSlotClick(
+                                                                                day,
+                                                                                slotIndex
+                                                                            )
+                                                                        }
                                                                     >
                                                                         {
                                                                             timeSlots[
@@ -892,15 +1005,24 @@ const SelectedGroup = () => {
                                         <button
                                             key={cuisine}
                                             onClick={() =>
+                                                !unavailableCuisines.includes(
+                                                    cuisine
+                                                ) &&
                                                 handleCuisineSelect(cuisine)
                                             }
                                             className={`preference-button ${
                                                 selectedCuisine === cuisine
                                                     ? 'selected'
                                                     : ''
-                                            }`}
+                                            } ${unavailableCuisines.includes(cuisine) ? 'disabled' : ''}`}
+                                            disabled={unavailableCuisines.includes(
+                                                cuisine
+                                            )}
                                         >
                                             {cuisine}
+                                            {unavailableCuisines.includes(
+                                                cuisine
+                                            ) && ' (no options)'}
                                         </button>
                                     )
                                 )}
@@ -978,6 +1100,14 @@ const SelectedGroup = () => {
                             >
                                 View on Yelp
                             </a>
+                            {autoSuggestedEvent.availability &&
+                                !autoSuggestedEvent.restaurant && (
+                                    <p className="no-restaurants-message">
+                                        No restaurants available for{' '}
+                                        {autoSuggestedEvent.availability.day} at{' '}
+                                        {autoSuggestedEvent.availability.time}
+                                    </p>
+                                )}
                         </div>
                     </div>
                 ) : (
@@ -1009,19 +1139,19 @@ const SelectedGroup = () => {
                     </button>
                 </Link>
 
-
                 <Link to="/my-groups">
                     <button className="back-button">Back to My Groups</button>
                 </Link>
 
-                <Link to="#" onClick={(e) => {
-        e.preventDefault(); // Prevents navigation
-        handleDeleteClick(); // Too lazy to figure out the styling... So I just put it in a link wrapper.
-    }}> 
-        <button className="cta-button delete">
-            Delete Group
-        </button>
-    </Link>
+                <Link
+                    to="#"
+                    onClick={(e) => {
+                        e.preventDefault(); // Prevents navigation
+                        handleDeleteClick(); // Too lazy to figure out the styling... So I just put it in a link wrapper.
+                    }}
+                >
+                    <button className="cta-button delete">Delete Group</button>
+                </Link>
             </div>
         </div>
     );
