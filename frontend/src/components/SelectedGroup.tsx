@@ -34,23 +34,29 @@ interface TimeRange {
     day: number;
 }
 
+interface BusinessHours {
+    open: TimeRange[];
+    is_open_now: boolean;
+}
+
+interface YelpRestaurant {
+    id: string;
+    name: string;
+    rating: number;
+    review_count: number;
+    price: string;
+    image_url: string;
+    url: string;
+    distance: number;
+    categories: { alias: string; title: string }[];
+    location: {
+        display_address: string[];
+    };
+    business_hours?: BusinessHours[];
+}
+
 interface AutoSuggestedEvent {
-    restaurant: {
-        id: string;
-        name: string;
-        rating: number;
-        price: string;
-        image_url: string;
-        url: string;
-        distance: number;
-        location: {
-            display_address: string[];
-        };
-        hours?: {
-            open: { start: string; end: string; day: number }[];
-            is_open_now: boolean;
-        }[];
-    } | null;
+    restaurant: YelpRestaurant | null;
     availability: {
         day: string;
         time: string;
@@ -58,112 +64,310 @@ interface AutoSuggestedEvent {
     preferences: {
         cuisines: string[];
         distance: number;
-        location: {
-            lat: number;
-            lng: number;
-        } | null;
+        location: Coordinates | null;
     };
+}
+
+interface DebugPanelProps {
+    cache: YelpRestaurant[];
 }
 
 const DEBUGGING_MODE = process.env.NODE_ENV === 'development';
 const API_KEY = process.env.REACT_APP_YELP_API_KEY;
 const RETRY_DELAY = 1000;
 const MAX_RETRIES = 3;
+const SEARCH_RADIUS = 5000;
+
+const DebugPanel: React.FC<DebugPanelProps> = ({ cache }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    return (
+        <div className="debug-panel">
+            <button className="debug-toggle" onClick={() => setIsOpen(!isOpen)}>
+                {isOpen ? 'Hide' : 'Show'} Cache ({cache.length} restaurants)
+            </button>
+            {isOpen && (
+                <div className="debug-content">
+                    {cache.map((restaurant) => (
+                        <div key={restaurant.id} className="debug-item">
+                            <p>
+                                <b>{restaurant.name}</b>
+                            </p>
+                            <p>
+                                Categories:{' '}
+                                {restaurant.categories
+                                    .map((c) => c.alias)
+                                    .join(', ')}
+                            </p>
+                            <p>
+                                Hours:{' '}
+                                {restaurant.business_hours?.[0]?.open
+                                    ? 'Available'
+                                    : 'Not available'}
+                            </p>
+                            {restaurant.business_hours && (
+                                <pre>
+                                    {JSON.stringify(
+                                        restaurant.business_hours[0].open,
+                                        null,
+                                        2
+                                    )}
+                                </pre>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+// Helper Functions
+const convertTo24Hour = (time: string): number => {
+    const [hour, period] = time.split(/[:\s]/);
+    let hour24 = parseInt(hour);
+    if (period === 'PM' && hour24 !== 12) hour24 += 12;
+    if (period === 'AM' && hour24 === 12) hour24 = 0;
+    return hour24;
+};
+
+const isRestaurantOpenAtTime = (
+    restaurant: YelpRestaurant,
+    dayIndex: number,
+    selectedHour: number
+): boolean => {
+    if (!restaurant.business_hours?.[0]?.open) return false;
+
+    return restaurant.business_hours[0].open.some((timeRange: TimeRange) => {
+        const startHour = parseInt(timeRange.start.substring(0, 2));
+        const endHour = parseInt(timeRange.end.substring(0, 2));
+
+        if (endHour < startHour) {
+            return (
+                (timeRange.day === dayIndex && selectedHour >= startHour) ||
+                ((timeRange.day + 1) % 7 === dayIndex && selectedHour < endHour)
+            );
+        }
+
+        return (
+            timeRange.day === dayIndex &&
+            selectedHour >= startHour &&
+            selectedHour < endHour
+        );
+    });
+};
+
+const isSelectedTimeSlot = (
+    day: string,
+    slotIndex: number,
+    nextAvailableTime: { day: string; time: string } | null
+): boolean => {
+    if (!nextAvailableTime) return false;
+    return (
+        nextAvailableTime.day === day &&
+        nextAvailableTime.time === timeSlots[slotIndex]
+    );
+};
 
 const SelectedGroup = () => {
     const { groupid } = useParams();
     const navigate = useNavigate();
-    const [groupUsers, setGroupUsers] = useState<GroupUser[]>([]);
-    const [groupName, setGroupName] = useState('');
-    const [inviteEmail, setInviteEmail] = useState('');
-    const [inviteError, setInviteError] = useState('');
-    const [saveMessage, setSaveMessage] = useState(''); // For displaying error or success when creating event with automatic option
-    const [joinCode, setJoinCode] = useState('');
-    const [groupAvailability, setGroupAvailability] =
-        useState<AvailabilityMatrix>({});
-    const [commonTimeSlots, setCommonTimeSlots] = useState<
-        { day: string; slots: number[] }[]
-    >([]);
-    const [memberCoordinates, setMemberCoordinates] = useState<Coordinates[]>(
-        []
-    );
-    const [centerPoint, setCenterPoint] = useState<Coordinates | null>(null);
 
-    const [aggregatedPreferences, setAggregatedPreferences] = useState<
-        { preference: string; count: number }[]
-    >([]);
-    const [nextAvailableTime, setNextAvailableTime] = useState<{
-        day: string;
-        time: string;
-        daysUntil: number;
-    } | null>(null);
-    const isSelectedTimeSlot = (day: string, slotIndex: number) => {
-        return (
-            nextAvailableTime?.day === day &&
-            nextAvailableTime?.time === timeSlots[slotIndex]
-        );
+    // Consolidated State
+    const [state, setState] = useState({
+        groupUsers: [] as GroupUser[],
+        groupName: '',
+        inviteEmail: '',
+        inviteError: '',
+        saveMessage: '',
+        joinCode: '',
+        isLoading: false,
+        memberCoordinates: [] as Coordinates[],
+        centerPoint: null as Coordinates | null,
+        groupAvailability: {} as AvailabilityMatrix,
+        commonTimeSlots: [] as { day: string; slots: number[] }[],
+        nextAvailableTime: null as {
+            day: string;
+            time: string;
+            daysUntil: number;
+        } | null,
+        restaurantCache: [] as YelpRestaurant[],
+        selectedCuisine: null as string | null,
+        unavailableCuisines: [] as string[],
+        autoSuggestedEvent: {
+            restaurant: null,
+            availability: null,
+            preferences: {
+                cuisines: [],
+                distance: SEARCH_RADIUS,
+                location: null,
+            },
+        } as AutoSuggestedEvent,
+    });
+
+    const updateState = (updates: Partial<typeof state>) => {
+        setState((prev) => ({ ...prev, ...updates }));
     };
 
-    const [groupEvents, setGroupEvents] = useState<SocialEvent[]>([]);
-    useEffect(() => {
-        getSocialEventsForThisGroup(groupid!);
-    }, [groupid]);
-    const [unavailableCuisines, setUnavailableCuisines] = useState<string[]>(
-        []
+    const handleError = (error: any, context: string) => {
+        console.error(`Error in ${context}:`, error);
+        const message =
+            error.response?.data?.error ||
+            error.message ||
+            'Unknown error occurred';
+        updateState({
+            saveMessage: `Error: ${message}`,
+            isLoading: false,
+        });
+        setTimeout(() => updateState({ saveMessage: '' }), 4000);
+    };
+
+    const getTopPreferences = useCallback(() => {
+        if (!state.groupUsers.length) return [];
+        const preferencesCount: { [key: string]: number } = {};
+        state.groupUsers.forEach((user) => {
+            user.cuisine_preferences?.forEach((pref) => {
+                preferencesCount[pref] = (preferencesCount[pref] || 0) + 1;
+            });
+        });
+        const maxCount = Math.max(...Object.values(preferencesCount));
+        return Object.entries(preferencesCount)
+            .filter(([_, count]) => count === maxCount)
+            .map(([pref]) => pref.toLowerCase());
+    }, [state.groupUsers]);
+
+    const processYelpResponse = useCallback(
+        (data: any) => {
+            if (!data.businesses?.length) return;
+
+            const allRestaurants = data.businesses;
+            const nearbyRestaurants = allRestaurants.filter(
+                (r) => r.distance <= SEARCH_RADIUS
+            );
+
+            updateState((prev) => ({
+                restaurantCache: [
+                    ...prev.restaurantCache,
+                    ...allRestaurants.filter(
+                        (newRest) =>
+                            !prev.restaurantCache.some(
+                                (cached) => cached.id === newRest.id
+                            )
+                    ),
+                ],
+            }));
+
+            if (nearbyRestaurants.length > 0) {
+                const topPrefs = getTopPreferences();
+                const bestRestaurant = nearbyRestaurants[0];
+
+                if (!state.selectedCuisine) {
+                    const matchingCuisine = topPrefs.find((cuisine) =>
+                        bestRestaurant.categories.some(
+                            (cat) =>
+                                cat.alias.toLowerCase() ===
+                                cuisine.toLowerCase()
+                        )
+                    );
+                    if (matchingCuisine) {
+                        updateState({ selectedCuisine: matchingCuisine });
+                    }
+                }
+
+                updateState({
+                    autoSuggestedEvent: {
+                        restaurant: bestRestaurant,
+                        availability: state.nextAvailableTime,
+                        preferences: {
+                            cuisines: topPrefs,
+                            distance: SEARCH_RADIUS,
+                            location: state.centerPoint,
+                        },
+                    },
+                });
+            }
+        },
+        [
+            state.centerPoint,
+            state.nextAvailableTime,
+            state.selectedCuisine,
+            getTopPreferences,
+        ]
     );
 
-    // Update handleTimeSlotClick function
-    const handleTimeSlotClick = (day: string, slotIndex: number) => {
-        const daysOfWeek = [
-            'Monday',
-            'Tuesday',
-            'Wednesday',
-            'Thursday',
-            'Friday',
-            'Saturday',
-            'Sunday',
-        ];
-        const today = new Date().getDay();
-        const adjustedToday = today === 0 ? 6 : today - 1;
-        const selectedDayIndex = daysOfWeek.indexOf(day);
-        let daysUntil = selectedDayIndex - adjustedToday;
-        if (daysUntil < 0) daysUntil += 7;
+    const fetchAutoSuggestedEvent = useCallback(async () => {
+        if (!state.centerPoint || !state.nextAvailableTime) return;
 
-        const newTime = {
-            day: day,
-            time: timeSlots[slotIndex],
-            daysUntil: daysUntil,
-        };
-        setNextAvailableTime(newTime);
+        try {
+            updateState({ isLoading: true });
+            const topPrefs = getTopPreferences();
 
-        const timestamp = getTimestampForNextAvailable(newTime);
-        const availableRestaurants = allFetchedRestaurants.filter((r) =>
-            r.hours?.[0]?.open?.some((timeRange: TimeRange) => {
-                const start = Number(timeRange.start);
-                const end = Number(timeRange.end);
-                const selectedHour = Number(timeSlots[slotIndex].split(':')[0]);
-                return (
-                    timeRange.day === selectedDayIndex &&
-                    selectedHour >= start / 100 &&
-                    selectedHour < end / 100
-                );
-            })
-        );
+            const response = await api.get('/yelp/search', {
+                params: {
+                    latitude: state.centerPoint.lat,
+                    longitude: state.centerPoint.lng,
+                    categories: topPrefs.join(','),
+                    open_at: getTimestampForNextAvailable(
+                        state.nextAvailableTime
+                    ),
+                    limit: 50,
+                },
+            });
 
-        if (availableRestaurants.length > 0) {
-            setAutoSuggestedEvent((prev) => ({
-                restaurant: availableRestaurants[0],
-                availability: newTime,
-                preferences: prev.preferences,
-            }));
-        } else {
-            setAutoSuggestedEvent((prev) => ({
-                restaurant: null,
-                availability: newTime,
-                preferences: prev.preferences,
-            }));
+            processYelpResponse(response.data);
+        } catch (error) {
+            handleError(error, 'fetchAutoSuggestedEvent');
+        } finally {
+            updateState({ isLoading: false });
         }
-    };
+    }, [
+        state.centerPoint,
+        state.nextAvailableTime,
+        getTopPreferences,
+        processYelpResponse,
+    ]);
+
+    const handleTimeSlotClick = useCallback(
+        (day: string, slotIndex: number) => {
+            const daysOfWeek = [
+                'Monday',
+                'Tuesday',
+                'Wednesday',
+                'Thursday',
+                'Friday',
+                'Saturday',
+                'Sunday',
+            ];
+            const today = new Date().getDay();
+            const adjustedToday = today === 0 ? 6 : today - 1;
+            const selectedDayIndex = daysOfWeek.indexOf(day);
+            let daysUntil = selectedDayIndex - adjustedToday;
+            if (daysUntil < 0) daysUntil += 7;
+
+            const newTime = {
+                day,
+                time: timeSlots[slotIndex],
+                daysUntil,
+            };
+
+            const selectedHour = convertTo24Hour(timeSlots[slotIndex]);
+            const availableRestaurants = state.restaurantCache.filter((r) =>
+                isRestaurantOpenAtTime(r, selectedDayIndex, selectedHour)
+            );
+
+            updateState({
+                nextAvailableTime: newTime,
+                autoSuggestedEvent: {
+                    ...state.autoSuggestedEvent,
+                    restaurant:
+                        availableRestaurants.length > 0
+                            ? availableRestaurants[0]
+                            : null,
+                    availability: newTime,
+                },
+            });
+        },
+        [state.restaurantCache, state.autoSuggestedEvent]
+    );
 
     const getTopPreferences = useCallback(() => {
         if (aggregatedPreferences.length === 0) return [];
@@ -188,132 +392,14 @@ const SelectedGroup = () => {
             },
         });
     const [selectedCuisine, setSelectedCuisine] = useState<string | null>(null);
-    const [allFetchedRestaurants, setAllFetchedRestaurants] = useState<any[]>(
+    const [restaurantCache, setRestaurantCache] = useState<YelpRestaurant[]>(
         []
     );
+    const [isLoading, setIsLoading] = useState(false);
 
     // Update fetchAutoSuggestedEvent
-    const fetchAutoSuggestedEvent = useCallback(async () => {
-        if (!centerPoint || !nextAvailableTime) return;
-
-        try {
-            const topPrefs = getTopPreferences();
-
-            const searchParams = {
-                latitude: centerPoint.lat,
-                longitude: centerPoint.lng,
-                radius: 5000,
-                categories: topPrefs.join(','),
-                open_at: getTimestampForNextAvailable(nextAvailableTime),
-                limit: 50,
-                sort_by: 'best_match',
-            };
-
-            const updateWithTime = (data: any) => {
-                processYelpResponse(data);
-                // Force time update in auto-suggested event
-                setAutoSuggestedEvent((prev) => ({
-                    ...prev,
-                    availability: nextAvailableTime,
-                }));
-            };
-
-            const cacheKey = YelpCache.generateKey(searchParams);
-            const cachedData = YelpCache.get(cacheKey);
-
-            if (cachedData) {
-                console.log('Using cached Yelp data');
-                updateWithTime(cachedData);
-                return;
-            }
-
-            const retryRequest = async <T,>(
-                requestFn: () => Promise<T>,
-                retries = MAX_RETRIES
-            ): Promise<T> => {
-                try {
-                    return await requestFn();
-                } catch (error: any) {
-                    if (error.response?.status === 429 && retries > 0) {
-                        await new Promise((resolve) =>
-                            setTimeout(resolve, RETRY_DELAY)
-                        );
-                        return retryRequest(requestFn, retries - 1);
-                    }
-                    throw error;
-                }
-            };
-
-            const response = await retryRequest(() =>
-                axios.get('https://api.yelp.com/v3/businesses/search', {
-                    headers: {
-                        Authorization: `Bearer ${API_KEY}`,
-                    },
-                    params: searchParams,
-                })
-            );
-
-            YelpCache.set(cacheKey, response.data);
-            updateWithTime(response.data);
-        } catch (error) {
-            console.error('Error fetching/caching Yelp data:', error);
-        }
-    }, [centerPoint, nextAvailableTime, getTopPreferences]);
 
     // Helper to process response data
-    const processYelpResponse = (data: any) => {
-        if (!data.businesses?.length) return;
-
-        const allRestaurants = data.businesses.filter(
-            (r: any) => r.distance <= 5000
-        );
-        setAllFetchedRestaurants(allRestaurants);
-
-        // Check which cuisines have no restaurants
-        const topPrefs = getTopPreferences();
-        const unavailable: string[] = topPrefs.filter(
-            (cuisine: string) =>
-                !allRestaurants.some((r: any) =>
-                    r.categories.some(
-                        (cat: any) =>
-                            cat.alias.toLowerCase() === cuisine.toLowerCase()
-                    )
-                )
-        );
-        setUnavailableCuisines(unavailable);
-
-        const sortedRestaurants = [...allRestaurants].sort((a, b) => {
-            if (b.rating !== a.rating) return b.rating - a.rating;
-            return b.review_count - a.review_count;
-        });
-
-        if (sortedRestaurants.length > 0) {
-            const bestRestaurant = sortedRestaurants[0];
-
-            // Find matching cuisine from top preferences
-            const matchingCuisine = topPrefs.find((cuisine) =>
-                bestRestaurant.categories.some(
-                    (cat: any) =>
-                        cat.alias.toLowerCase() === cuisine.toLowerCase()
-                )
-            );
-
-            // Set the matching cuisine as selected if found
-            if (matchingCuisine && !unavailable.includes(matchingCuisine)) {
-                setSelectedCuisine(matchingCuisine);
-            }
-
-            setAutoSuggestedEvent((prev) => ({
-                restaurant: bestRestaurant,
-                availability: nextAvailableTime,
-                preferences: {
-                    cuisines: topPrefs,
-                    distance: 5000,
-                    location: centerPoint,
-                },
-            }));
-        }
-    };
 
     const handleCuisineSelect = useCallback(
         (cuisine: string) => {
@@ -1153,6 +1239,7 @@ const SelectedGroup = () => {
                     <button className="cta-button delete">Delete Group</button>
                 </Link>
             </div>
+            <DebugPanel cache={cachedRestaurants} />
         </div>
     );
 };
