@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import axios from 'axios';
-import { format } from 'date-fns';
-import { SocialEvent } from '@types';
+import { SocialEvent, Coordinates } from '@types';
+//import { format } from 'date-fns';
+import { YelpCache } from '../utils/cache';
 
 interface GroupUser {
     groupname: string;
@@ -22,10 +23,57 @@ interface AvailabilityMatrix {
     [key: string]: boolean[];
 }
 
-interface Coordinates {
-    lat: number;
-    lng: number;
+const daysOfWeek = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+];
+
+interface TimeRange {
+    start: string;
+    end: string;
+    day: number;
 }
+
+interface AutoSuggestedEvent {
+    restaurant: {
+        id: string;
+        name: string;
+        rating: number;
+        price: string;
+        image_url: string;
+        url: string;
+        distance: number;
+        location: {
+            display_address: string[];
+        };
+        hours?: {
+            open: { start: string; end: string; day: number }[];
+            is_open_now: boolean;
+        }[];
+    } | null;
+    availability: {
+        day: string;
+        time: string;
+    } | null;
+    preferences: {
+        cuisines: string[];
+        distance: number;
+        location: {
+            lat: number;
+            lng: number;
+        } | null;
+    };
+}
+
+const DEBUGGING_MODE = process.env.NODE_ENV === 'development';
+const API_KEY = process.env.REACT_APP_YELP_API_KEY;
+const RETRY_DELAY = 1000;
+const MAX_RETRIES = 3;
 
 const SelectedGroup = () => {
     const { groupid } = useParams();
@@ -54,11 +102,274 @@ const SelectedGroup = () => {
         time: string;
         daysUntil: number;
     } | null>(null);
+    const isSelectedTimeSlot = (day: string, slotIndex: number) => {
+        return (
+            nextAvailableTime?.day === day &&
+            nextAvailableTime?.time === timeSlots[slotIndex]
+        );
+    };
 
-    const [groupEvents, setGroupEvents] = useState<SocialEvent[]>([]);
+    const [groupEvent, setGroupEvent] = useState<SocialEvent | null>(null);
     useEffect(() => {
         getSocialEventsForThisGroup(groupid!);
     }, [groupid]);
+    const [showHours, setShowHours] = useState<boolean>(false);
+    const [unavailableCuisines, setUnavailableCuisines] = useState<string[]>(
+        []
+    );
+
+    // Update handleTimeSlotClick function
+    const handleTimeSlotClick = (day: string, slotIndex: number) => {
+        const daysOfWeek = [
+            'Monday',
+            'Tuesday',
+            'Wednesday',
+            'Thursday',
+            'Friday',
+            'Saturday',
+            'Sunday',
+        ];
+        const today = new Date().getDay();
+        const adjustedToday = today === 0 ? 6 : today - 1;
+        const selectedDayIndex = daysOfWeek.indexOf(day);
+        let daysUntil = selectedDayIndex - adjustedToday;
+        if (daysUntil < 0) daysUntil += 7;
+
+        const newTime = {
+            day: day,
+            time: timeSlots[slotIndex],
+            daysUntil: daysUntil,
+        };
+        setNextAvailableTime(newTime);
+
+        const timestamp = getTimestampForNextAvailable(newTime);
+        const availableRestaurants = allFetchedRestaurants.filter((r) =>
+            r.hours?.[0]?.open?.some((timeRange: TimeRange) => {
+                const start = Number(timeRange.start);
+                const end = Number(timeRange.end);
+                const selectedHour = Number(timeSlots[slotIndex].split(':')[0]);
+                return (
+                    timeRange.day === selectedDayIndex &&
+                    selectedHour >= start / 100 &&
+                    selectedHour < end / 100
+                );
+            })
+        );
+
+        if (availableRestaurants.length > 0) {
+            setAutoSuggestedEvent((prev) => ({
+                restaurant: availableRestaurants[0],
+                availability: newTime,
+                preferences: prev.preferences,
+            }));
+        } else {
+            setAutoSuggestedEvent((prev) => ({
+                restaurant: null,
+                availability: newTime,
+                preferences: prev.preferences,
+            }));
+        }
+    };
+
+    const getTopPreferences = useCallback(() => {
+        if (aggregatedPreferences.length === 0) return [];
+
+        // Find the highest count
+        const maxCount = Math.max(...aggregatedPreferences.map((p) => p.count));
+
+        // Filter to only include preferences with the highest count
+        return aggregatedPreferences
+            .filter((p) => p.count === maxCount)
+            .map((p) => p.preference.toLowerCase());
+    }, [aggregatedPreferences]);
+
+    const [autoSuggestedEvent, setAutoSuggestedEvent] =
+        useState<AutoSuggestedEvent>({
+            restaurant: null,
+            availability: null,
+            preferences: {
+                cuisines: [],
+                distance: 5000,
+                location: null,
+            },
+        });
+    const [selectedCuisine, setSelectedCuisine] = useState<string | null>(null);
+    const [allFetchedRestaurants, setAllFetchedRestaurants] = useState<any[]>(
+        []
+    );
+
+    // Update fetchAutoSuggestedEvent
+    const fetchAutoSuggestedEvent = useCallback(async () => {
+        if (!centerPoint || !nextAvailableTime) return;
+
+        try {
+            const topPrefs = getTopPreferences();
+
+            const searchParams = {
+                latitude: centerPoint.lat,
+                longitude: centerPoint.lng,
+                radius: 5000,
+                categories: topPrefs.join(','),
+                open_at: getTimestampForNextAvailable(nextAvailableTime),
+                limit: 50,
+                sort_by: 'best_match',
+            };
+
+            const updateWithTime = (data: any) => {
+                processYelpResponse(data);
+                // Force time update in auto-suggested event
+                setAutoSuggestedEvent((prev) => ({
+                    ...prev,
+                    availability: nextAvailableTime,
+                }));
+            };
+
+            const cacheKey = YelpCache.generateKey(searchParams);
+            const cachedData = YelpCache.get(cacheKey);
+
+            if (cachedData) {
+                console.log('Using cached Yelp data');
+                updateWithTime(cachedData);
+                return;
+            }
+
+            const retryRequest = async <T,>(
+                requestFn: () => Promise<T>,
+                retries = MAX_RETRIES
+            ): Promise<T> => {
+                try {
+                    return await requestFn();
+                } catch (error: any) {
+                    if (error.response?.status === 429 && retries > 0) {
+                        await new Promise((resolve) =>
+                            setTimeout(resolve, RETRY_DELAY)
+                        );
+                        return retryRequest(requestFn, retries - 1);
+                    }
+                    throw error;
+                }
+            };
+
+            const response = await retryRequest(() =>
+                axios.get('https://api.yelp.com/v3/businesses/search', {
+                    headers: {
+                        Authorization: `Bearer ${API_KEY}`,
+                    },
+                    params: searchParams,
+                })
+            );
+
+            YelpCache.set(cacheKey, response.data);
+            updateWithTime(response.data);
+        } catch (error) {
+            console.error('Error fetching/caching Yelp data:', error);
+        }
+    }, [centerPoint, nextAvailableTime, getTopPreferences]);
+
+    // Helper to process response data
+    const processYelpResponse = (data: any) => {
+        if (!data.businesses?.length) return;
+
+        const allRestaurants = data.businesses.filter(
+            (r: any) => r.distance <= 5000
+        );
+        setAllFetchedRestaurants(allRestaurants);
+
+        // Check which cuisines have no restaurants
+        const topPrefs = getTopPreferences();
+        const unavailable: string[] = topPrefs.filter(
+            (cuisine: string) =>
+                !allRestaurants.some((r: any) =>
+                    r.categories.some(
+                        (cat: any) =>
+                            cat.alias.toLowerCase() === cuisine.toLowerCase()
+                    )
+                )
+        );
+        setUnavailableCuisines(unavailable);
+
+        const sortedRestaurants = [...allRestaurants].sort((a, b) => {
+            if (b.rating !== a.rating) return b.rating - a.rating;
+            return b.review_count - a.review_count;
+        });
+
+        if (sortedRestaurants.length > 0) {
+            const bestRestaurant = sortedRestaurants[0];
+
+            // Find matching cuisine from top preferences
+            const matchingCuisine = topPrefs.find((cuisine) =>
+                bestRestaurant.categories.some(
+                    (cat: any) =>
+                        cat.alias.toLowerCase() === cuisine.toLowerCase()
+                )
+            );
+
+            // Set the matching cuisine as selected if found
+            if (matchingCuisine && !unavailable.includes(matchingCuisine)) {
+                setSelectedCuisine(matchingCuisine);
+            }
+
+            setAutoSuggestedEvent((prev) => ({
+                restaurant: bestRestaurant,
+                availability: nextAvailableTime,
+                preferences: {
+                    cuisines: topPrefs,
+                    distance: 5000,
+                    location: centerPoint,
+                },
+            }));
+        }
+    };
+
+    const handleCuisineSelect = useCallback(
+        (cuisine: string) => {
+            setSelectedCuisine(cuisine);
+
+            // Filter cached restaurants by selected cuisine
+            const filteredRestaurants = allFetchedRestaurants
+                .filter((r) =>
+                    r.categories.some(
+                        (cat: any) =>
+                            cat.alias.toLowerCase() === cuisine.toLowerCase()
+                    )
+                )
+                .sort((a, b) => {
+                    if (b.rating !== a.rating) return b.rating - a.rating;
+                    return b.review_count - a.review_count;
+                });
+
+            if (filteredRestaurants.length > 0) {
+                setAutoSuggestedEvent((prev) => ({
+                    restaurant: filteredRestaurants[0],
+                    availability: nextAvailableTime,
+                    preferences: {
+                        cuisines: prev.preferences.cuisines,
+                        distance: 5000,
+                        location: centerPoint,
+                    },
+                }));
+            }
+        },
+        [centerPoint, nextAvailableTime, allFetchedRestaurants]
+    );
+
+    // Add helper function
+    const getTimestampForNextAvailable = (nextTime: {
+        day: string;
+        time: string;
+        daysUntil: number;
+    }) => {
+        const now = new Date();
+        const date = new Date(now.setDate(now.getDate() + nextTime.daysUntil));
+        const [hour] = nextTime.time.split('-')[0].split(':').map(Number);
+        date.setHours(hour, 0, 0, 0);
+        return Math.floor(date.getTime() / 1000);
+    };
+
+    // Add useEffect to trigger fetch
+    useEffect(() => {
+        fetchAutoSuggestedEvent();
+    }, [fetchAutoSuggestedEvent]);
 
     const getSocialEventsForThisGroup = async (groupid: string) => {
         try {
@@ -66,13 +377,24 @@ const SelectedGroup = () => {
                 `/socialevents/bygroupid/${groupid}`
             );
             console.log('getting social events from the backend');
-            setGroupEvents(response.data);
+            if (Object.keys(response.data).length === 0) {
+                // If response had no data, ensure the events section shows empty
+                setGroupEvent(null);
+                console.log('retrieved 0 social events for this group');
+                return;
+            }
+            setGroupEvent(response.data);
         } catch (err) {
             console.error(err);
         }
     };
 
     const onClickCreateEventAutomatic = async () => {
+        if (groupEvent) {
+            setSaveMessage('Error: This group already has an event.');
+            setTimeout(() => setSaveMessage(''), 4000);
+            return;
+        }
         try {
             await api.get(`socialevents/generate-new/${groupid}`);
             console.log(
@@ -87,15 +409,29 @@ const SelectedGroup = () => {
                 error
             );
             // Get the error message from the response of it exists
-            console.log('xx');
             console.log(error);
-            console.log('xx');
             const errorMessage =
                 error.response?.data?.error || 'Unknown error occurred';
             setSaveMessage('Error creating social event: ' + errorMessage);
             setTimeout(() => setSaveMessage(''), 4000);
         }
         getSocialEventsForThisGroup(groupid!);
+    };
+
+    const onClickDeleteSocialEvent = async () => {
+        try {
+            await api.delete(`socialevents/delete-by-groupid/${groupid}`);
+            await getSocialEventsForThisGroup(groupid!);
+            console.log('success calling delete event');
+            setSaveMessage('Success deleting social event');
+            setTimeout(() => setSaveMessage(''), 4000);
+        } catch (error: any) {
+            console.error('Error deleting social event', error);
+            const errorMessage =
+                error.response?.data?.error || 'Unknown error occurred';
+            setSaveMessage('Error deleting social event: ' + errorMessage);
+            setTimeout(() => setSaveMessage(''), 4000);
+        }
     };
 
     const findNextAvailableTime = () => {
@@ -397,11 +733,12 @@ const SelectedGroup = () => {
 
     const handleDeleteClick = async () => {
         // Show confirmation dialog
-        const confirmDelete = window.confirm('Are you sure you want to delete this group?');
-        
+        const confirmDelete = window.confirm(
+            'Are you sure you want to delete this group?'
+        );
+
         if (confirmDelete) {
             try {
-                
                 const response = await api.delete(`/groups/${groupid}`);
 
                 if (!response) {
@@ -415,7 +752,21 @@ const SelectedGroup = () => {
                 alert('Failed to delete group. Please try again.');
             }
         }
-        
+    };
+
+    // Input: 1330
+    // Output: 1:30 PM
+    const convertHoursNumberToString = (yelpTime: string): string => {
+        let hourInt: number = parseInt(yelpTime.slice(0, 2));
+        const minuteStr: string = yelpTime.slice(2);
+        const amPm: string = hourInt >= 12 ? 'PM' : 'AM';
+        if (hourInt > 12) hourInt -= 12;
+
+        return '' + hourInt + ':' + minuteStr + ' ' + amPm;
+    };
+
+    const toggleShowHours = () => {
+        setShowHours(showHours == false ? true : false);
     };
 
     return (
@@ -611,7 +962,20 @@ const SelectedGroup = () => {
                                                                         key={
                                                                             slotIndex
                                                                         }
-                                                                        className="time-slot"
+                                                                        className={`time-slot clickable ${
+                                                                            isSelectedTimeSlot(
+                                                                                day,
+                                                                                slotIndex
+                                                                            )
+                                                                                ? 'selected'
+                                                                                : ''
+                                                                        }`}
+                                                                        onClick={() =>
+                                                                            handleTimeSlotClick(
+                                                                                day,
+                                                                                slotIndex
+                                                                            )
+                                                                        }
                                                                     >
                                                                         {
                                                                             timeSlots[
@@ -631,48 +995,238 @@ const SelectedGroup = () => {
                     )}
                 </div>
             </section>
-            <h2>Group Events</h2>
+            {/* Group Event Section
+             * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+             */}
+            <h2 style={{ paddingTop: '30px' }}>Group Event</h2>
             <section className="group-section">
-                {groupEvents.map((socialEvent, index) => (
-                    <div key={socialEvent.restaurant.id}>
-                        <h3>
-                            <u>Event {index + 1}</u>
-                        </h3>
-                        <p>
-                            <b>When: </b>
-                            {socialEvent.startTime.day}{' '}
-                            {socialEvent.startTime.time}
-                        </p>
-                        <p>
-                            <b>Restaurant:</b> {socialEvent.restaurant.name}
-                        </p>
-                        <p>
-                            <b>Rating</b>: {socialEvent.restaurant.rating}
-                        </p>
+                {groupEvent && (
+                    <>
+                        <div key={groupEvent.restaurant.id}>
+                            <p>
+                                <b>When: </b>
+                                {groupEvent.startTime.day}{' '}
+                                {groupEvent.startTime.time}
+                            </p>
+                            <p>
+                                <b>Restaurant:</b> {groupEvent.restaurant.name}
+                            </p>
+                            <p>
+                                <b>Rating</b>: {groupEvent.restaurant.rating}
+                            </p>
+
+                            <p>
+                                <a href={groupEvent.restaurant.url}>Website</a>
+                            </p>
+                            <p>
+                                <b>Price</b>: {groupEvent.restaurant.price}
+                            </p>
+                            <p>
+                                <b>Address: </b>
+                                {groupEvent.restaurant.location.display_address}
+                            </p>
+                            <p>
+                                Categories:{' '}
+                                {groupEvent.restaurant.categories
+                                    .map((category) => category.title)
+                                    .join(', ')}
+                            </p>
+                            <p>
+                                <button
+                                    className="cta-button"
+                                    onClick={onClickDeleteSocialEvent}
+                                >
+                                    Delete
+                                </button>
+                            </p>
+                        </div>
 
                         <img
-                            src={socialEvent.restaurant.image_url}
-                            alt={`${socialEvent.restaurant.name} thumbnail`}
+                            src={groupEvent.restaurant.image_url}
+                            alt={`${groupEvent.restaurant.name} thumbnail`}
                             style={{
-                                width: '150px',
-                                height: '150px',
+                                width: '250px',
+                                height: '250px',
                                 objectFit: 'cover',
                                 borderRadius: '8px',
                             }}
                         />
 
-                        <p>
-                            <a href={socialEvent.restaurant.url}>Website</a>
-                        </p>
-                        <p>
-                            <b>Price</b>: {socialEvent.restaurant.price}
-                        </p>
-                        <p>
-                            <b>Address: </b>
-                            {socialEvent.restaurant.location.display_address}
-                        </p>
+                        <div key="hours-key">
+                            <p>
+                                <button
+                                    className="cta-button"
+                                    onClick={toggleShowHours}
+                                >
+                                    Hours
+                                </button>
+                            </p>
+                            {showHours &&
+                                groupEvent.restaurant.hours &&
+                                groupEvent.restaurant.hours[0].open.map(
+                                    ({ day, start, end }) => (
+                                        <p
+                                            style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                            }}
+                                        >
+                                            <span
+                                                style={{
+                                                    flex: '1 1 auto',
+                                                    textAlign: 'left',
+                                                }}
+                                            >
+                                                {daysOfWeek[day]}
+                                            </span>
+                                            <span
+                                                style={{
+                                                    flex: '0 0 auto',
+                                                    textAlign: 'right',
+                                                }}
+                                            >
+                                                {convertHoursNumberToString(
+                                                    start
+                                                )}
+                                                {'-'}
+                                                {convertHoursNumberToString(
+                                                    end
+                                                )}
+                                            </span>
+                                        </p>
+                                    )
+                                )}
+                        </div>
+                    </>
+                )}
+            </section>
+
+            {/* Error/Success Message box (hides itself after 4 seconds)
+             * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+             */}
+            <h2>Auto-Suggested Event</h2>
+            <section className="group-section">
+                {autoSuggestedEvent.restaurant ? (
+                    <div className="auto-event-card">
+                        <div className="search-preferences">
+                            <h3>Search Criteria</h3>
+                            <div className="preferences-list">
+                                {autoSuggestedEvent.preferences.cuisines.map(
+                                    (cuisine) => (
+                                        <button
+                                            key={cuisine}
+                                            onClick={() =>
+                                                !unavailableCuisines.includes(
+                                                    cuisine
+                                                ) &&
+                                                handleCuisineSelect(cuisine)
+                                            }
+                                            className={`preference-button ${
+                                                selectedCuisine === cuisine
+                                                    ? 'selected'
+                                                    : ''
+                                            } ${unavailableCuisines.includes(cuisine) ? 'disabled' : ''}`}
+                                            disabled={unavailableCuisines.includes(
+                                                cuisine
+                                            )}
+                                        >
+                                            {cuisine}
+                                            {unavailableCuisines.includes(
+                                                cuisine
+                                            ) && ' (no options)'}
+                                        </button>
+                                    )
+                                )}
+                            </div>
+                            <p className="search-details">
+                                <span>
+                                    Search radius:{' '}
+                                    {(
+                                        autoSuggestedEvent.preferences
+                                            .distance / 1000
+                                    ).toFixed(1)}
+                                    km
+                                </span>
+                                {autoSuggestedEvent.preferences.location && (
+                                    <span>
+                                        {' '}
+                                        | Center: (
+                                        {autoSuggestedEvent.preferences.location.lat.toFixed(
+                                            2
+                                        )}
+                                        ,
+                                        {autoSuggestedEvent.preferences.location.lng.toFixed(
+                                            2
+                                        )}
+                                        )
+                                    </span>
+                                )}
+                            </p>
+                        </div>
+                        <div className="event-timing">
+                            <h3>Suggested Time</h3>
+                            <p>
+                                {autoSuggestedEvent.availability?.day} at{' '}
+                                {autoSuggestedEvent.availability?.time}
+                            </p>
+                        </div>
+                        <div className="restaurant-details">
+                            <h3>{autoSuggestedEvent.restaurant.name}</h3>
+                            <img
+                                src={autoSuggestedEvent.restaurant.image_url}
+                                alt={autoSuggestedEvent.restaurant.name}
+                                style={{
+                                    width: '150px',
+                                    height: '150px',
+                                    objectFit: 'cover',
+                                    borderRadius: '8px',
+                                }}
+                            />
+                            <p>
+                                <b>Rating:</b>{' '}
+                                {autoSuggestedEvent.restaurant.rating}
+                            </p>
+                            <p>
+                                <b>Price:</b>{' '}
+                                {autoSuggestedEvent.restaurant.price}
+                            </p>
+                            <p>
+                                <b>Distance:</b>{' '}
+                                {(
+                                    autoSuggestedEvent.restaurant.distance /
+                                    1000
+                                ).toFixed(2)}
+                                km
+                            </p>
+                            <p>
+                                <b>Address:</b>{' '}
+                                {autoSuggestedEvent.restaurant.location.display_address.join(
+                                    ', '
+                                )}
+                            </p>
+                            <a
+                                href={autoSuggestedEvent.restaurant.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                View on Yelp
+                            </a>
+                            {autoSuggestedEvent.availability &&
+                                !autoSuggestedEvent.restaurant && (
+                                    <p className="no-restaurants-message">
+                                        No restaurants available for{' '}
+                                        {autoSuggestedEvent.availability.day} at{' '}
+                                        {autoSuggestedEvent.availability.time}
+                                    </p>
+                                )}
+                        </div>
                     </div>
-                ))}
+                ) : (
+                    <p>
+                        No suggestions available for the next available time
+                        slot
+                    </p>
+                )}
             </section>
             {saveMessage && (
                 <p
@@ -681,6 +1235,10 @@ const SelectedGroup = () => {
                     {saveMessage}
                 </p>
             )}
+
+            {/* Buttons Section
+             * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+             */}
             <div className="group-actions">
                 <div>
                     <button
@@ -690,25 +1248,27 @@ const SelectedGroup = () => {
                         Create Event - Automatic
                     </button>
                 </div>
-                <Link to={`/group-event/${groupid}`}>
+
+                {/* Hide this button until we have manual event creation working */}
+                {/* <Link to={`/group-event/${groupid}`}>
                     <button className="cta-button">
                         Create Event - Manual
                     </button>
-                </Link>
-
+                </Link> */}
 
                 <Link to="/my-groups">
                     <button className="back-button">Back to My Groups</button>
                 </Link>
 
-                <Link to="#" onClick={(e) => {
-        e.preventDefault(); // Prevents navigation
-        handleDeleteClick(); // Too lazy to figure out the styling... So I just put it in a link wrapper.
-    }}> 
-        <button className="cta-button delete">
-            Delete Group
-        </button>
-    </Link>
+                <Link
+                    to="#"
+                    onClick={(e) => {
+                        e.preventDefault(); // Prevents navigation
+                        handleDeleteClick(); // Too lazy to figure out the styling... So I just put it in a link wrapper.
+                    }}
+                >
+                    <button className="cta-button delete">Delete Group</button>
+                </Link>
             </div>
         </div>
     );
