@@ -1407,3 +1407,35 @@ h1 {
     padding: 1rem;
     text-align: center;
 }
+
+.debug-panel {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1000;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-md);
+    max-width: 300px;
+    max-height: 400px;
+    overflow: auto;
+}
+
+.debug-toggle {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.debug-content {
+    margin-top: 10px;
+}
+
+.debug-item {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+}

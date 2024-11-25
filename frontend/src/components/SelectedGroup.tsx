@@ -65,6 +65,29 @@ interface AutoSuggestedEvent {
     };
 }
 
+interface YelpRestaurant {
+    id: string;
+    name: string;
+    rating: number;
+    review_count: number;
+    price: string;
+    image_url: string;
+    url: string;
+    distance: number;
+    categories: { alias: string; title: string }[];
+    location: {
+        display_address: string[];
+    };
+    business_hours?: {
+        open: { start: string; end: string; day: number }[];
+        is_open_now: boolean;
+    }[];
+}
+
+interface DebugPanelProps {
+    cache: YelpRestaurant[];
+}
+
 const DEBUGGING_MODE = process.env.NODE_ENV === 'development';
 const API_KEY = process.env.REACT_APP_YELP_API_KEY;
 const RETRY_DELAY = 1000;
@@ -92,6 +115,9 @@ const SelectedGroup = () => {
     const [aggregatedPreferences, setAggregatedPreferences] = useState<
         { preference: string; count: number }[]
     >([]);
+    const [cachedRestaurants, setCachedRestaurants] = useState<
+        YelpRestaurant[]
+    >([]);
     const [nextAvailableTime, setNextAvailableTime] = useState<{
         day: string;
         time: string;
@@ -112,7 +138,53 @@ const SelectedGroup = () => {
         []
     );
 
-    // Update handleTimeSlotClick function
+    const DebugPanel: React.FC<DebugPanelProps> = ({ cache }) => {
+        const [isOpen, setIsOpen] = useState(false);
+        return (
+            <div className="debug-panel">
+                <button
+                    className="debug-toggle"
+                    onClick={() => setIsOpen(!isOpen)}
+                >
+                    {isOpen ? 'Hide' : 'Show'} Cache ({cache.length}{' '}
+                    restaurants)
+                </button>
+                {isOpen && (
+                    <div className="debug-content">
+                        {cache.map((restaurant) => (
+                            <div key={restaurant.id} className="debug-item">
+                                <p>
+                                    <b>{restaurant.name}</b>
+                                </p>
+                                <p>
+                                    Categories:{' '}
+                                    {restaurant.categories
+                                        .map((c) => c.alias)
+                                        .join(', ')}
+                                </p>
+                                <p>
+                                    Hours:{' '}
+                                    {restaurant.business_hours?.[0]?.open
+                                        ? 'Available'
+                                        : 'Not available'}
+                                </p>
+                                {restaurant.business_hours && (
+                                    <pre>
+                                        {JSON.stringify(
+                                            restaurant.business_hours[0].open,
+                                            null,
+                                            2
+                                        )}
+                                    </pre>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     const handleTimeSlotClick = (day: string, slotIndex: number) => {
         const daysOfWeek = [
             'Monday',
@@ -138,7 +210,7 @@ const SelectedGroup = () => {
 
         const timestamp = getTimestampForNextAvailable(newTime);
         const availableRestaurants = allFetchedRestaurants.filter((r) =>
-            r.hours?.[0]?.open?.some((timeRange: TimeRange) => {
+            r.business_hours?.[0]?.open?.some((timeRange: TimeRange) => {
                 const start = Number(timeRange.start);
                 const end = Number(timeRange.end);
                 const selectedHour = Number(timeSlots[slotIndex].split(':')[0]);
@@ -264,6 +336,23 @@ const SelectedGroup = () => {
     const processYelpResponse = (data: any) => {
         if (!data.businesses?.length) return;
 
+        // Update cache with new restaurants
+        setCachedRestaurants((prev: YelpRestaurant[]) => {
+            const merged = [...prev];
+            data.businesses.forEach((newRest: YelpRestaurant) => {
+                const existingIndex = merged.findIndex(
+                    (r) => r.id === newRest.id
+                );
+                if (existingIndex === -1) {
+                    merged.push(newRest);
+                } else {
+                    merged[existingIndex] = newRest;
+                }
+            });
+            return merged;
+        });
+
+        // Store all nearby restaurants in state
         const allRestaurants = data.businesses.filter(
             (r: any) => r.distance <= 5000
         );
@@ -282,6 +371,7 @@ const SelectedGroup = () => {
         );
         setUnavailableCuisines(unavailable);
 
+        // Get best restaurant by rating and reviews
         const sortedRestaurants = [...allRestaurants].sort((a, b) => {
             if (b.rating !== a.rating) return b.rating - a.rating;
             return b.review_count - a.review_count;
@@ -303,6 +393,31 @@ const SelectedGroup = () => {
                 setSelectedCuisine(matchingCuisine);
             }
 
+            // Store all data in cache by cuisine type
+            allRestaurants.forEach((restaurant: any) => {
+                restaurant.categories.forEach((cat: any) => {
+                    const cacheKey = YelpCache.generateKey({
+                        latitude: centerPoint!.lat,
+                        longitude: centerPoint!.lng,
+                        radius: 5000,
+                        categories: cat.alias,
+                        open_at: nextAvailableTime
+                            ? getTimestampForNextAvailable(nextAvailableTime)
+                            : undefined,
+                        limit: 50,
+                        sort_by: 'best_match',
+                    });
+                    const existingCache: any[] =
+                        YelpCache.get(cacheKey)?.businesses || [];
+                    YelpCache.set(cacheKey, {
+                        businesses: [...existingCache, restaurant].filter(
+                            (r, i, arr) =>
+                                arr.findIndex((item) => item.id === r.id) === i
+                        ),
+                    });
+                });
+            });
+
             setAutoSuggestedEvent((prev) => ({
                 restaurant: bestRestaurant,
                 availability: nextAvailableTime,
@@ -319,29 +434,39 @@ const SelectedGroup = () => {
         (cuisine: string) => {
             setSelectedCuisine(cuisine);
 
-            // Filter cached restaurants by selected cuisine
-            const filteredRestaurants = allFetchedRestaurants
-                .filter((r) =>
-                    r.categories.some(
-                        (cat: any) =>
-                            cat.alias.toLowerCase() === cuisine.toLowerCase()
-                    )
-                )
-                .sort((a, b) => {
-                    if (b.rating !== a.rating) return b.rating - a.rating;
-                    return b.review_count - a.review_count;
-                });
+            const cacheKey = YelpCache.generateKey({
+                latitude: centerPoint!.lat,
+                longitude: centerPoint!.lng,
+                radius: 5000,
+                categories: cuisine,
+                open_at: nextAvailableTime
+                    ? getTimestampForNextAvailable(nextAvailableTime)
+                    : undefined,
+                limit: 50,
+                sort_by: 'best_match',
+            });
 
-            if (filteredRestaurants.length > 0) {
-                setAutoSuggestedEvent((prev) => ({
-                    restaurant: filteredRestaurants[0],
-                    availability: nextAvailableTime,
-                    preferences: {
-                        cuisines: prev.preferences.cuisines,
-                        distance: 5000,
-                        location: centerPoint,
-                    },
-                }));
+            const cachedData = YelpCache.get(cacheKey);
+            if (cachedData) {
+                const filteredRestaurants: any[] = cachedData.businesses.sort(
+                    (a: any, b: any) => {
+                        if (b.rating !== a.rating) return b.rating - a.rating;
+                        return b.review_count - a.review_count;
+                    }
+                );
+
+                if (filteredRestaurants.length > 0) {
+                    setAutoSuggestedEvent((prev) => ({
+                        restaurant: filteredRestaurants[0],
+                        availability: nextAvailableTime,
+                        preferences: {
+                            cuisines: prev.preferences.cuisines,
+                            distance: 5000,
+                            location: centerPoint,
+                        },
+                    }));
+                    return;
+                }
             }
         },
         [centerPoint, nextAvailableTime, allFetchedRestaurants]
@@ -1153,6 +1278,7 @@ const SelectedGroup = () => {
                     <button className="cta-button delete">Delete Group</button>
                 </Link>
             </div>
+            {DEBUGGING_MODE && <DebugPanel cache={cachedRestaurants} />}
         </div>
     );
 };
