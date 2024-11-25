@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import axios from 'axios';
-import { format } from 'date-fns';
-import { SocialEvent } from '@types';
+import { SocialEvent, Coordinates } from '@types';
 
 interface GroupUser {
     groupname: string;
@@ -22,10 +21,15 @@ interface AvailabilityMatrix {
     [key: string]: boolean[];
 }
 
-interface Coordinates {
-    lat: number;
-    lng: number;
-}
+const daysOfWeek = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+];
 
 const SelectedGroup = () => {
     const { groupid } = useParams();
@@ -55,10 +59,11 @@ const SelectedGroup = () => {
         daysUntil: number;
     } | null>(null);
 
-    const [groupEvents, setGroupEvents] = useState<SocialEvent[]>([]);
+    const [groupEvent, setGroupEvent] = useState<SocialEvent | null>(null);
     useEffect(() => {
         getSocialEventsForThisGroup(groupid!);
     }, [groupid]);
+    const [showHours, setShowHours] = useState<boolean>(false);
 
     const getSocialEventsForThisGroup = async (groupid: string) => {
         try {
@@ -66,13 +71,24 @@ const SelectedGroup = () => {
                 `/socialevents/bygroupid/${groupid}`
             );
             console.log('getting social events from the backend');
-            setGroupEvents(response.data);
+            if (Object.keys(response.data).length === 0) {
+                // If response had no data, ensure the events section shows empty
+                setGroupEvent(null);
+                console.log('retrieved 0 social events for this group');
+                return;
+            }
+            setGroupEvent(response.data);
         } catch (err) {
             console.error(err);
         }
     };
 
     const onClickCreateEventAutomatic = async () => {
+        if (groupEvent) {
+            setSaveMessage('Error: This group already has an event.');
+            setTimeout(() => setSaveMessage(''), 4000);
+            return;
+        }
         try {
             await api.get(`socialevents/generate-new/${groupid}`);
             console.log(
@@ -87,15 +103,29 @@ const SelectedGroup = () => {
                 error
             );
             // Get the error message from the response of it exists
-            console.log('xx');
             console.log(error);
-            console.log('xx');
             const errorMessage =
                 error.response?.data?.error || 'Unknown error occurred';
             setSaveMessage('Error creating social event: ' + errorMessage);
             setTimeout(() => setSaveMessage(''), 4000);
         }
         getSocialEventsForThisGroup(groupid!);
+    };
+
+    const onClickDeleteSocialEvent = async () => {
+        try {
+            await api.delete(`socialevents/delete-by-groupid/${groupid}`);
+            await getSocialEventsForThisGroup(groupid!);
+            console.log('success calling delete event');
+            setSaveMessage('Success deleting social event');
+            setTimeout(() => setSaveMessage(''), 4000);
+        } catch (error: any) {
+            console.error('Error deleting social event', error);
+            const errorMessage =
+                error.response?.data?.error || 'Unknown error occurred';
+            setSaveMessage('Error deleting social event: ' + errorMessage);
+            setTimeout(() => setSaveMessage(''), 4000);
+        }
     };
 
     const findNextAvailableTime = () => {
@@ -397,11 +427,12 @@ const SelectedGroup = () => {
 
     const handleDeleteClick = async () => {
         // Show confirmation dialog
-        const confirmDelete = window.confirm('Are you sure you want to delete this group?');
-        
+        const confirmDelete = window.confirm(
+            'Are you sure you want to delete this group?'
+        );
+
         if (confirmDelete) {
             try {
-                
                 const response = await api.delete(`/groups/${groupid}`);
 
                 if (!response) {
@@ -415,7 +446,21 @@ const SelectedGroup = () => {
                 alert('Failed to delete group. Please try again.');
             }
         }
-        
+    };
+
+    // Input: 1330
+    // Output: 1:30 PM
+    const convertHoursNumberToString = (yelpTime: string): string => {
+        let hourInt: number = parseInt(yelpTime.slice(0, 2));
+        const minuteStr: string = yelpTime.slice(2);
+        const amPm: string = hourInt >= 12 ? 'PM' : 'AM';
+        if (hourInt > 12) hourInt -= 12;
+
+        return '' + hourInt + ':' + minuteStr + ' ' + amPm;
+    };
+
+    const toggleShowHours = () => {
+        setShowHours(showHours == false ? true : false);
     };
 
     return (
@@ -631,49 +676,115 @@ const SelectedGroup = () => {
                     )}
                 </div>
             </section>
-            <h2>Group Events</h2>
+            {/* Group Event Section
+             * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+             */}
+            <h2 style={{ paddingTop: '30px' }}>Group Event</h2>
             <section className="group-section">
-                {groupEvents.map((socialEvent, index) => (
-                    <div key={socialEvent.restaurant.id}>
-                        <h3>
-                            <u>Event {index + 1}</u>
-                        </h3>
-                        <p>
-                            <b>When: </b>
-                            {socialEvent.startTime.day}{' '}
-                            {socialEvent.startTime.time}
-                        </p>
-                        <p>
-                            <b>Restaurant:</b> {socialEvent.restaurant.name}
-                        </p>
-                        <p>
-                            <b>Rating</b>: {socialEvent.restaurant.rating}
-                        </p>
+                {groupEvent && (
+                    <>
+                        <div key={groupEvent.restaurant.id}>
+                            <p>
+                                <b>When: </b>
+                                {groupEvent.startTime.day}{' '}
+                                {groupEvent.startTime.time}
+                            </p>
+                            <p>
+                                <b>Restaurant:</b> {groupEvent.restaurant.name}
+                            </p>
+                            <p>
+                                <b>Rating</b>: {groupEvent.restaurant.rating}
+                            </p>
+
+                            <p>
+                                <a href={groupEvent.restaurant.url}>Website</a>
+                            </p>
+                            <p>
+                                <b>Price</b>: {groupEvent.restaurant.price}
+                            </p>
+                            <p>
+                                <b>Address: </b>
+                                {groupEvent.restaurant.location.display_address}
+                            </p>
+                            <p>
+                                Categories:{' '}
+                                {groupEvent.restaurant.categories
+                                    .map((category) => category.title)
+                                    .join(', ')}
+                            </p>
+                            <p>
+                                <button
+                                    className="cta-button"
+                                    onClick={onClickDeleteSocialEvent}
+                                >
+                                    Delete
+                                </button>
+                            </p>
+                        </div>
 
                         <img
-                            src={socialEvent.restaurant.image_url}
-                            alt={`${socialEvent.restaurant.name} thumbnail`}
+                            src={groupEvent.restaurant.image_url}
+                            alt={`${groupEvent.restaurant.name} thumbnail`}
                             style={{
-                                width: '150px',
-                                height: '150px',
+                                width: '250px',
+                                height: '250px',
                                 objectFit: 'cover',
                                 borderRadius: '8px',
                             }}
                         />
 
-                        <p>
-                            <a href={socialEvent.restaurant.url}>Website</a>
-                        </p>
-                        <p>
-                            <b>Price</b>: {socialEvent.restaurant.price}
-                        </p>
-                        <p>
-                            <b>Address: </b>
-                            {socialEvent.restaurant.location.display_address}
-                        </p>
-                    </div>
-                ))}
+                        <div key="hours-key">
+                            <p>
+                                <button
+                                    className="cta-button"
+                                    onClick={toggleShowHours}
+                                >
+                                    Hours
+                                </button>
+                            </p>
+                            {showHours &&
+                                groupEvent.restaurant.hours &&
+                                groupEvent.restaurant.hours[0].open.map(
+                                    ({ day, start, end }) => (
+                                        <p
+                                            style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                            }}
+                                        >
+                                            <span
+                                                style={{
+                                                    flex: '1 1 auto',
+                                                    textAlign: 'left',
+                                                }}
+                                            >
+                                                {daysOfWeek[day]}
+                                            </span>
+                                            <span
+                                                style={{
+                                                    flex: '0 0 auto',
+                                                    textAlign: 'right',
+                                                }}
+                                            >
+                                                {convertHoursNumberToString(
+                                                    start
+                                                )}
+                                                {'-'}
+                                                {convertHoursNumberToString(
+                                                    end
+                                                )}
+                                            </span>
+                                        </p>
+                                    )
+                                )}
+                        </div>
+                    </>
+                )}
             </section>
+
+            {/* Error/Success Message box (hides itself after 4 seconds)
+             * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+             */}
             {saveMessage && (
                 <p
                     className={`save-message ${saveMessage.includes('Error') ? 'error' : 'success'}`}
@@ -681,6 +792,10 @@ const SelectedGroup = () => {
                     {saveMessage}
                 </p>
             )}
+
+            {/* Buttons Section
+             * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+             */}
             <div className="group-actions">
                 <div>
                     <button
@@ -690,25 +805,27 @@ const SelectedGroup = () => {
                         Create Event - Automatic
                     </button>
                 </div>
-                <Link to={`/group-event/${groupid}`}>
+
+                {/* Hide this button until we have manual event creation working */}
+                {/* <Link to={`/group-event/${groupid}`}>
                     <button className="cta-button">
                         Create Event - Manual
                     </button>
-                </Link>
-
+                </Link> */}
 
                 <Link to="/my-groups">
                     <button className="back-button">Back to My Groups</button>
                 </Link>
 
-                <Link to="#" onClick={(e) => {
-        e.preventDefault(); // Prevents navigation
-        handleDeleteClick(); // Too lazy to figure out the styling... So I just put it in a link wrapper.
-    }}> 
-        <button className="cta-button delete">
-            Delete Group
-        </button>
-    </Link>
+                <Link
+                    to="#"
+                    onClick={(e) => {
+                        e.preventDefault(); // Prevents navigation
+                        handleDeleteClick(); // Too lazy to figure out the styling... So I just put it in a link wrapper.
+                    }}
+                >
+                    <button className="cta-button delete">Delete Group</button>
+                </Link>
             </div>
         </div>
     );

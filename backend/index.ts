@@ -9,6 +9,7 @@ import {
     YelpRestaurant,
     SocialEvent,
     DayOfWeekAndTime,
+    Coordinates,
 } from '@types';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
@@ -17,6 +18,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import yelp from './yelp-axios';
 import { generateEvent } from './event-generator';
+import { getLatLonFromAddress } from './google-api-helper';
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
@@ -382,6 +384,9 @@ app.put(
                 SerializedScheduleMatrix,
             } = req.body;
 
+            let Latitude: number | null = null;
+            let Longitude: number | null = null;
+
             // Dynamically build the SET clause based on provided fields (since we don't have to provide every field)
             // An array to store the individual SET clauses (e.g., firstname = $1, lastname = $2)
 
@@ -431,6 +436,17 @@ app.put(
             if (Address) {
                 updates.push(`address = $${count}`);
                 values.push(Address);
+                count++;
+
+                // If updating the address, get lat lon from google api and store those as well
+                const { lat: Latitude, lng: Longitude } =
+                    (await getLatLonFromAddress(Address)) || {};
+
+                updates.push(`latitude = $${count}`);
+                values.push('' + Latitude);
+                count++;
+                updates.push(`longitude = $${count}`);
+                values.push('' + Longitude);
                 count++;
             }
             if (PreferredPriceRange) {
@@ -1145,8 +1161,8 @@ app.get(
 /*    GET /socialevents/bygroupid/:groupid    */
 /* ************************************************************************** 
 Input: (URL Param) Group ID
-Operation: Search in the database all events for the supplied groupid
-Output: (JSON Object) Json object with the found events
+Operation: Search in the database for the event with the supplied groupid
+Output: (JSON Object) Json object with the found event
 */
 app.get(
     '/socialevents/bygroupid/:groupid',
@@ -1171,28 +1187,51 @@ app.get(
                     throw error;
                 }
             };
-            // Create an array of social events
-            const groupEvents: SocialEvent[] = [];
-            // Loop for each result in our query output
-            for (const row of allData.rows) {
-                //  Create a restaurant object
-                const restaurant: YelpRestaurant =
-                    await fetchYelpRestaurantByID(row.yelprestaurantid);
-                // Create a DayOfWeekAndTime object using data from the selection db row
-                const dayOfWeekAndTime: DayOfWeekAndTime = {
-                    day: row.dayofweek,
-                    time: row.time,
-                };
-                //  Create a SocialEvent object with data from Selection (Restaurant goes inside SocialEvent)
-                const socialEvent: SocialEvent = {
-                    restaurant: restaurant,
-                    startTime: dayOfWeekAndTime,
-                };
-                //  Push it into the array
-                groupEvents.push(socialEvent);
+            // Return empty object response if there are no social events for this group in the database
+            if (allData.rows.length == 0) {
+                res.json({});
+                return;
             }
-            // Return the array
-            res.json(groupEvents);
+            const row = allData.rows[0];
+            //  Create a restaurant object
+            const restaurant: YelpRestaurant = await fetchYelpRestaurantByID(
+                row.yelprestaurantid
+            );
+            // Create a DayOfWeekAndTime object using data from the selection db row
+            const dayOfWeekAndTime: DayOfWeekAndTime = {
+                day: row.dayofweek,
+                time: row.time,
+            };
+            //  Create a SocialEvent object with data from Selection (Restaurant goes inside SocialEvent)
+            const socialEvent: SocialEvent = {
+                restaurant: restaurant,
+                startTime: dayOfWeekAndTime,
+            };
+            // Return the socialEvent
+            res.json(socialEvent);
+        } catch (e) {
+            console.error((e as Error).message);
+            res.status(500).json({ error: (e as Error).message });
+        }
+    }
+);
+
+/*    DELETE /socialevents/delete-by-groupid/:groupid    */
+/* ************************************************************************** 
+Input: (URL Param) Group ID
+Operation: Delete all selection entries for the specified groupid
+Output: (JSON Object) Json that indicates success or failure
+*/
+app.delete(
+    '/socialevents/delete-by-groupid/:groupid',
+    async (req: Request, res: Response) => {
+        try {
+            const { groupid } = req.params;
+            const allData: QueryResult = await pool.query(
+                'DELETE FROM Selection WHERE groupid = $1',
+                [groupid]
+            );
+            res.json({ result: 'success' });
         } catch (e) {
             console.error((e as Error).message);
             res.status(500).json({ error: (e as Error).message });

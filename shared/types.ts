@@ -7,6 +7,8 @@ export interface User {
     password: string;
     phone?: string | null;
     address?: string | null;
+    latitude?: string | null;
+    longitude?: string | null;
     preferredpricerange?: number | null;
     preferredmaxdistance?: number | null;
     cuisine_preferences?: string | null;
@@ -58,10 +60,11 @@ export interface YelpRestaurant {
         display_address: string;
     };
     phone: string;
-    business_hours?: BusinessHours[];
+    business_hours?: BusinessHours[]; // The search endpoint returns business_hours
+    hours?: BusinessHours[]; // The details endpoint returns hours
 }
 
-interface BusinessHours {
+export interface BusinessHours {
     open: {
         is_overnight: boolean;
         start: string; // format: "1200"
@@ -75,4 +78,9 @@ interface BusinessHours {
 export interface SocialEvent {
     restaurant: YelpRestaurant;
     startTime: DayOfWeekAndTime;
+}
+
+export interface Coordinates {
+    lat: number;
+    lng: number;
 }

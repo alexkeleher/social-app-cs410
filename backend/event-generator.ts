@@ -2,7 +2,15 @@ import { start } from 'repl';
 import { QueryResult } from 'pg';
 import pool from './db';
 import yelp from './yelp-axios';
-import { User, SocialEvent, YelpRestaurant, DayOfWeekAndTime } from '@types';
+import { calculateCenterPointFromMultipleLatLon } from './google-api-helper';
+import {
+    User,
+    SocialEvent,
+    YelpRestaurant,
+    DayOfWeekAndTime,
+    BusinessHours,
+    Coordinates,
+} from '@types';
 const DEBUGGING_MODE = process.env.DEBUGGING_MODE === 'YES';
 const daysOfWeek = [
     'Monday',
@@ -81,7 +89,9 @@ export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
                 u.address,  /* Add this line */
                 u.preferredpricerange,
                 u.preferredmaxdistance,
-                u.serializedschedulematrix  
+                u.serializedschedulematrix,
+                u.latitude,
+                u.longitude
             FROM Users u
                 JOIN UserGroupXRef x ON u.ID = x.UserID                
             WHERE x.GroupID = $1`,
@@ -98,14 +108,15 @@ export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
         // - - - - - - - - - - - - - - - - - - - - - - - - -
         const allPreferences: QueryResult = await pool.query(
             `SELECT
-                CuisineType
+                ct.alias
             FROM
-                UserCuisinePreferences
+                UserCuisinePreferences AS ucp JOIN
+                CuisineTypes AS ct ON ucp.CuisineType = ct.Name
             WHERE
                 UserID IN (SELECT UserID FROM UserGroupXRef WHERE GroupID = $1)`,
             [groupid]
         );
-        preferenceArr = allPreferences.rows.map((itme) => itme.cuisinetype);
+        preferenceArr = allPreferences.rows.map((item) => item.alias);
         if (DEBUGGING_MODE) console.log('PREFERENCE ARR XXXXXXXXXXX');
         if (DEBUGGING_MODE) console.log(preferenceArr);
         mostCommonCategory = getMostFrequentString(preferenceArr) || '';
@@ -123,11 +134,31 @@ export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
         console.error('Error in generateEvent', e);
     }
 
+    // 3.5 Get Central Lat Lon location
+    //
+    // Make an array of Coordinates
+    let coordinateAr: Coordinates[] = [];
+    // Loop through members array and
+    for (const member of members) {
+        // build and push into the array a Coordinates object
+        if (member.latitude == null || member.longitude == null) continue;
+        coordinateAr.push({
+            lat: Number(member.latitude),
+            lng: Number(member.longitude),
+        });
+    }
+    // Call the google helper function to get the central lat lon
+    const { lat: centerLatitude, lng: centerLongitude } =
+        calculateCenterPointFromMultipleLatLon(coordinateAr);
+
     // 4 Get top 3 restaurants
     // - - - - - - - - - - - - - - - - - - - - - - - - -
     const restaurants: YelpRestaurant[] = await fetchRestaurants(
-        members[0].address ?? '', // Use an empty string if address is null or undefined
-        mostCommonCategory
+        //members[0].address ?? '', // Use an empty string if address is null or undefined
+        String(centerLatitude),
+        String(centerLongitude),
+        mostCommonCategory,
+        averagePrice
     );
     if (DEBUGGING_MODE)
         console.log('Most common category: ' + mostCommonCategory + '\n');
@@ -170,15 +201,21 @@ export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
 /* Helpers */
 /* ****************************************************************************** */
 const fetchRestaurants = async (
-    location: string, // params go here
-    mostCommonCategory: string
+    //location: String, // params go here
+    centerLatitude: string,
+    centerLongitude: string,
+    mostCommonCategory: string,
+    averagePrice: Number // minimum 1, maximum 4 ($, $$, $$$, $$$$)
 ): Promise<YelpRestaurant[]> => {
     try {
         const response = await yelp.get('/search', {
             params: {
-                location: location,
+                // location: location,
+                latitude: centerLatitude,
+                longitude: centerLongitude,
                 radius: 15000,
                 categories: mostCommonCategory,
+                price: averagePrice,
                 sort_by: 'best_match',
                 limit: 3,
             },
@@ -276,74 +313,84 @@ function getOptimalStartTimeForGroupAndRestaurant(
     // Find a block of free 2 hours where the frequency = max
     let starti = -1;
     let startj = -1;
+    let i = 0; // Need to declare i and j here because we might need to re-start the nested loop from the position it was last left (when a restaurant schedule doesn't match a 2hr block)
+    let j = 0;
     let spanBlocks = 0; // Goal is for this to reach 2 blocks (2 hours)
-    outerLoop: for (let i = 0; i < 7; i++) {
-        for (let j = 0; j < 19; j++) {
-            if (sharedUserSchedules[i][j] == maxPossible) {
-                if (starti == -1) {
-                    starti = i;
-                    startj = j;
+
+    // Retry in a loop until we find a 2 hour block that is also whithin the restaurant's business hours
+    while (spanBlocks == 0 && i < 7 && j < 19) {
+        console.log('i: ' + i + ' - j: ' + j);
+        outerLoop: while (i < 7) {
+            //  for (let i = globali; i < 7; i++) {
+            if (j == 19) j = 0;
+            //for (let j = globalj; j < 19; j++) {
+            while (j < 19) {
+                if (sharedUserSchedules[i][j] == maxPossible) {
+                    if (starti == -1) {
+                        starti = i;
+                        startj = j;
+                    }
+                    spanBlocks++;
+                    if (spanBlocks == 2) break outerLoop; // This break both loops. We found our 2 blocks, we end here.
+                } else {
+                    starti = -1;
+                    startj = -1;
+                    spanBlocks = 0;
                 }
-                spanBlocks++;
-                if (spanBlocks == 2) break outerLoop; // This break both loops. We found our 2 blocks, we end here.
-            } else {
-                starti = -1;
-                startj = -1;
-                spanBlocks = 0;
+                j++;
             }
+            i++;
         }
-    }
 
-    // If not found throw error about no shared availability
-    if (spanBlocks == 0) throw new Error('Could not find a 2 hour block');
+        // If not found throw error about no shared availability
+        if (spanBlocks == 0) throw new Error('Could not find a 2 hour block');
 
-    // Convert restaurant times to matrix form
-    const restaurantHoursMatrix = Array.from({ length: 7 }, () =>
-        Array(19).fill(0)
-    );
+        // Convert restaurant times to matrix form
+        const restaurantHoursMatrix = Array.from({ length: 7 }, () =>
+            Array(19).fill(0)
+        );
 
-    // Check if restaurant.hours is defined before accessing it
-    // Handle case where restaurant.hours is undefined (e.g., not available from Yelp)
-    if (!restaurant.business_hours)
-        throw new Error('Restaurant hours are not available.');
+        // Check if restaurant.hours is defined before accessing it
+        // Handle case where restaurant.hours is undefined (e.g., not available from Yelp)
+        if (!restaurant.business_hours)
+            throw new Error('Restaurant hours are not available.');
 
-    console.log('Restaurant open hours:');
-    //console.log(restaurant.business_hours);
-    console.log(JSON.stringify(restaurant.business_hours, null, 2));
+        //console.log('Restaurant open hours:');
+        //console.log(restaurant.business_hours);
+        //console.log(JSON.stringify(restaurant.business_hours, null, 2));
 
-    for (const dayHours of restaurant.business_hours) {
-        var dayIndex = dayHours.open[0].day; // Get day index directly
-        console.log('dayIndex:', dayIndex); // Log dayIndex
-
-        for (const timeRange of dayHours.open) {
+        for (const timeRange of restaurant.business_hours[0].open) {
+            var dayIndex = timeRange.day; // Get day index directly
             const startTime = convertYelpTimeToMatrixIndex(timeRange.start);
             const endTime = convertYelpTimeToMatrixIndex(timeRange.end);
-            console.log('startTime:', startTime, 'endTime:', endTime); // Log startTime and endTime
 
             for (let j = startTime; j < endTime; j++) {
                 restaurantHoursMatrix[dayIndex][j] = 1; // Mark as open
             }
-            dayIndex++;
         }
-    }
 
-    // DEBUGGING
-    // {
-    //     console.log('after resturant hours converted to matrix added');
-    //     for (let i = 0; i < 7; i++) {
-    //         if (DEBUGGING_MODE) console.log('i: ' + i);
-    //         for (let j = 0; j < 19; j++) {
-    //             if (DEBUGGING_MODE) console.log(restaurantHoursMatrix[i][j]);
-    //         }
-    //         if (DEBUGGING_MODE) console.log('next day\n');
-    //     }
-    // }
+        // DEBUGGING
+        // {
+        //     console.log('after resturant hours converted to matrix added');
+        //     for (let i = 0; i < 7; i++) {
+        //         if (DEBUGGING_MODE) console.log('i: ' + i);
+        //         for (let j = 0; j < 19; j++) {
+        //             if (DEBUGGING_MODE) console.log(restaurantHoursMatrix[i][j]);
+        //         }
+        //         if (DEBUGGING_MODE) console.log('next day\n');
+        //     }
+        // }
 
-    // Verify chosen 2 hour block is within range of restaurant hours
-    //      If not throw error about restaurant hours not matching found block
-    for (let j = startj; j < startj + 2; j++) {
-        if (restaurantHoursMatrix[starti][j] !== 1) {
-            throw new Error('Restaurant is closed during this time.');
+        // Verify chosen 2 hour block is within range of restaurant hours
+        //      If not throw error about restaurant hours not matching found block
+        for (let newj = startj; newj < startj + 2; newj++) {
+            if (restaurantHoursMatrix[starti][newj] !== 1) {
+                //throw new Error('Restaurant is closed during this time.');
+                spanBlocks = 0;
+                console.log(
+                    'Restaurant is closed during this time. Resetting spanBlocks to 0. Try again to find a different block of 2 hours.'
+                );
+            }
         }
     }
 
