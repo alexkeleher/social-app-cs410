@@ -19,6 +19,7 @@ import jwt from 'jsonwebtoken';
 import yelp from './yelp-axios';
 import { generateEvent } from './event-generator';
 import { getLatLonFromAddress } from './google-api-helper';
+//import { YelpResponse } from '@types';
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
@@ -862,6 +863,69 @@ app.get(
     }
 );
 
+app.get('/search', async (req: Request, res: Response) => {
+    // 1. Input validation
+    const { latitude, longitude, radius, categories, open_at, limit } =
+        req.query;
+
+    if (DEBUGGING_MODE) {
+        console.log('Received search request:', {
+            latitude,
+            longitude,
+            radius,
+            categories,
+            open_at,
+            limit,
+        });
+    }
+
+    if (!process.env.YELP_API_KEY) {
+        console.error('Missing YELP_API_KEY environment variable');
+        return res.status(500).json({ error: 'Yelp API configuration error' });
+    }
+
+    try {
+        // 2. Make request to Yelp
+        const response = await yelp.get('/businesses/search', {
+            headers: {
+                Authorization: `Bearer ${process.env.YELP_API_KEY}`,
+            },
+            params: {
+                latitude: Number(latitude),
+                longitude: Number(longitude),
+                radius: Number(radius),
+                categories: String(categories),
+                open_at: Number(open_at),
+                limit: Number(limit),
+                sort_by: 'best_match',
+            },
+        });
+
+        // 3. Log success
+        if (DEBUGGING_MODE) {
+            console.log('Yelp API Response:', {
+                status: response.status,
+                businessCount: response.data.businesses?.length || 0,
+            });
+        }
+
+        // 4. Send response
+        return res.json(response.data);
+    } catch (error: any) {
+        // 5. Error handling
+        console.error('Yelp API Error:', {
+            status: error.response?.status,
+            data: error.response?.data,
+            message: error.message,
+        });
+
+        return res.status(500).json({
+            error: 'Failed to fetch restaurants',
+            details: error.response?.data || error.message,
+        });
+    }
+});
+
 // ADD a cuisine preference to a user
 // Expects "cuisineType": "some cuisine"
 app.post(
@@ -1091,8 +1155,18 @@ Output: (JSON Object) Json object with generated social event information {Resta
 app.get(
     '/socialevents/generate-new/:groupid',
     async (req: Request, res: Response) => {
+        const client = await pool.connect();
         try {
             const { groupid } = req.params;
+
+            await client.query('BEGIN');
+
+            // Delete existing events before creating a new one
+
+            await pool.query(`DELETE FROM Selection WHERE groupid = $1`, [
+                groupid,
+            ]);
+
             console.log('attempting to generate a social event'); // Debugging
             // Generate an event using the special algorithm in the event-generator module
             const generatedSocialEvent: SocialEvent = await generateEvent(
@@ -1101,7 +1175,7 @@ app.get(
             // Insert into database here
 
             // first check if the Yelp restaurant exists in YelpRestaurant, if it doesn't, insert it into YelpRestaurant
-            await pool.query(
+            await client.query(
                 `
                 INSERT INTO YelpRestaurant (YelpID)
                 SELECT $1::text
@@ -1114,7 +1188,7 @@ app.get(
                 [generatedSocialEvent.restaurant.id]
             );
 
-            await pool.query(
+            await client.query(
                 `
                 INSERT INTO Selection (GroupID, YelpRestaurantID, TimeStart, DayOfWeek, Time) VALUES
                 ($1, $2, NULL, $3, $4);
@@ -1128,8 +1202,14 @@ app.get(
             );
             res.json(generatedSocialEvent);
         } catch (e) {
-            console.error((e as Error).message);
-            res.status(500).json({ error: (e as Error).message });
+            await client.query('ROLLBACK');
+            console.error('Error in generate event:', e);
+            res.status(500).json({
+                error: (e as Error).message,
+                detail: 'Failed to generate/save event',
+            });
+        } finally {
+            client.release();
         }
     }
 );
