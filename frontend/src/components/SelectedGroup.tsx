@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, MouseEvent } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import axios from 'axios';
 import { format } from 'date-fns';
 import { SocialEvent } from '@types';
+
 
 interface GroupUser {
     groupname: string;
@@ -36,6 +37,8 @@ const SelectedGroup = () => {
     const [inviteError, setInviteError] = useState('');
     const [saveMessage, setSaveMessage] = useState(''); // For displaying error or success when creating event with automatic option
     const [joinCode, setJoinCode] = useState('');
+    const [selectedUser, setSelectedUser] = useState<GroupUser | null>(null);
+    const [overlayPosition, setOverlayPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
     const [groupAvailability, setGroupAvailability] =
         useState<AvailabilityMatrix>({});
     const [commonTimeSlots, setCommonTimeSlots] = useState<
@@ -69,8 +72,20 @@ const SelectedGroup = () => {
             setGroupEvents(response.data);
         } catch (err) {
             console.error(err);
-        }
-    };
+        }  
+    
+};
+
+const handleCardClick = (user: GroupUser, event: MouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    
+    const top = rect.top + scrollTop;
+    const left = rect.right + 20;
+    
+    setOverlayPosition({ top, left });
+    setSelectedUser(user);
+};  
 
     const onClickCreateEventAutomatic = async () => {
         try {
