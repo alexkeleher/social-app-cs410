@@ -1328,7 +1328,7 @@ h1 {
 }
 
 .time-list {
-    display: flex;
+    display: flex; 
     flex-wrap: wrap;
     gap: 0.5rem;
 }
