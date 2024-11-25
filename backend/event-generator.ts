@@ -126,7 +126,8 @@ export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
     // 4 Get top 3 restaurants
     // - - - - - - - - - - - - - - - - - - - - - - - - -
     const restaurants: YelpRestaurant[] = await fetchRestaurants(
-        members[0].address ?? '' // Use an empty string if address is null or undefined
+        members[0].address ?? '', // Use an empty string if address is null or undefined
+        mostCommonCategory
     );
     if (DEBUGGING_MODE)
         console.log('Most common category: ' + mostCommonCategory + '\n');
@@ -169,14 +170,15 @@ export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
 /* Helpers */
 /* ****************************************************************************** */
 const fetchRestaurants = async (
-    location: string // params go here
+    location: string, // params go here
+    mostCommonCategory: string
 ): Promise<YelpRestaurant[]> => {
     try {
         const response = await yelp.get('/search', {
             params: {
                 location: location,
                 radius: 15000,
-                categories: 'indpak',
+                categories: mostCommonCategory,
                 sort_by: 'best_match',
                 limit: 3,
             },
@@ -311,9 +313,13 @@ function getOptimalStartTimeForGroupAndRestaurant(
 
     for (const dayHours of restaurant.business_hours) {
         var dayIndex = dayHours.open[0].day; // Get day index directly
+        console.log('dayIndex:', dayIndex); // Log dayIndex
+
         for (const timeRange of dayHours.open) {
             const startTime = convertYelpTimeToMatrixIndex(timeRange.start);
             const endTime = convertYelpTimeToMatrixIndex(timeRange.end);
+            console.log('startTime:', startTime, 'endTime:', endTime); // Log startTime and endTime
+
             for (let j = startTime; j < endTime; j++) {
                 restaurantHoursMatrix[dayIndex][j] = 1; // Mark as open
             }
