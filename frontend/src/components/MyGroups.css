@@ -1,4 +1,4 @@
-.my-groups-container {
+.my-groups-container1 {
     display: flex;
     flex-direction: column;
     align-items: center; /* Centers items horizontally */
@@ -7,7 +7,7 @@
     padding: 20px;
 }
 
-.group-list {
+.group-list1 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
@@ -16,8 +16,8 @@
     margin-bottom: 20px;
 }
 
-.group-card,
-.member-card {
+.group-card1,
+.member-card1 {
     background-color: #f9f9f9;
     border: 1px solid #ccc;
     border-radius: 10px;
@@ -29,17 +29,17 @@
     transition: all 0.3s ease;
 }
 
-.group-card:hover,
-.member-card:hover {
+.group-card1:hover,
+.member-card1:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 16px rgba(227, 24, 55, 0.1);
 }
 
-.group-link {
+.group-link1 {
     text-decoration: none;
     color: #333333;
 }
 
-.group-info {
+.group-info1 {
     color: #ff4d4d;
 }

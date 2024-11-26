@@ -139,19 +139,19 @@ const MyGroups: React.FC = () => {
         <>
             <h1>My Groups</h1>
             {myGroups.length > 0 || pendingInvites.length > 0 ? (
-                <div className="my-groups-container">
+                <div className="my-groups-container1">
                     {/* Existing Groups Section */}
-                    <div className="group-list">
+                    <div className="group-list1">
                         {myGroups.map((group: Group) => (
                             <Link
                                 key={group.id}
                                 to={`/selected-group/${group.id}`}
-                                className="group-link"
+                                className="group-link1"
                             >
-                                <div className="group-card">
+                                <div className="group-card1">
                                     <h2>{group.name}</h2>
                                     {/*<p className="group-info">Group ID: {group.id}</p>*/}
-                                    <p className="group-info">
+                                    <p className="group-info1">
                                         Date Created:{' '}
                                         {group.datecreated
                                             ? new Date(
@@ -165,7 +165,7 @@ const MyGroups: React.FC = () => {
                                               })
                                             : 'N/A'}
                                     </p>
-                                    <p className="group-info">
+                                    <p className="group-info1">
                                         Join Code: {group.joincode}
                                     </p>
                                 </div>
@@ -175,7 +175,7 @@ const MyGroups: React.FC = () => {
 
                     {/* Pending Invites Section */}
                     {pendingInvites.map((invite: Group) => (
-                        <div key={invite.id} className="group-card">
+                        <div key={invite.id} className="group-card1">
                             <h2>Group: {invite.name}</h2>
                             <p>Join Code: {invite.joincode}</p>
                             <p>
