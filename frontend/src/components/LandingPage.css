@@ -1,0 +1,20 @@
+.landing-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 70vh;
+    text-align: center;
+}
+
+.landing-header, .landing-main, .landing-footer {
+    width: 100%;
+}
+
+.cta-button {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 10px 20px;
+    margin-right: 10px;
+    margin-left: 5px;
+}

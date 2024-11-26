@@ -1,8 +1,9 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Group, GroupAndCreator } from '@types';
+import { GroupAndCreator } from '@types';
 import { createGroup } from '../api/apiService';
 import AuthContext from '../context/AuthProvider';
+import { Box, Button } from '@mui/material';
 
 const CreateGroupPage: React.FC = () => {
     const [groupName, setGroupName] = useState<string>('');
@@ -17,7 +18,7 @@ const CreateGroupPage: React.FC = () => {
         setAlert(null);
     };
 
-    const navigate = useNavigate(); // useNavigate hook for navigation
+    const navigate = useNavigate();
 
     const registerGroup = async (e: React.FormEvent<HTMLFormElement>) => {
         try {
@@ -62,7 +63,17 @@ const CreateGroupPage: React.FC = () => {
     };
 
     return (
-        <div className="form-container">
+        <Box
+            className="form-container"
+            sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 2,
+                p: 3,
+            }}
+        >
+            <h1>Create Your Group</h1>
             {alert && (
                 <div style={alertStyle} className={`alert ${alert.type}`}>
                     <span>{alert.message}</span>
@@ -76,19 +87,26 @@ const CreateGroupPage: React.FC = () => {
                 </div>
             )}
 
-            <h2>Create Your Group</h2>
-
-            <form onSubmit={registerGroup}>
-                <label htmlFor="groupName">Group Name</label>
-                <input
-                    type="text"
-                    id="groupName"
-                    value={groupName}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setGroupName(e.target.value)
-                    }
-                    placeholder="Enter your group name"
-                />
+            <form
+                onSubmit={registerGroup}
+                style={{ width: '100%', maxWidth: '400px' }}
+            >
+                <Box sx={{ mb: 2 }}>
+                    <input
+                        type="text"
+                        id="groupName"
+                        value={groupName}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setGroupName(e.target.value)
+                        }
+                        placeholder="Enter your group name"
+                        style={{
+                            width: '100%',
+                            padding: '8px',
+                            fontSize: '16px',
+                        }}
+                    />
+                </Box>
 
                 {/* <label htmlFor="groupType">Group Type</label>
                 <select
@@ -105,19 +123,40 @@ const CreateGroupPage: React.FC = () => {
                     <option value="school">School</option>
                 </select> */}
 
-                <button className="create-button" type="submit">
-                    Create Group
-                </button>
 
-                <button
-                    onClick={() => navigate('/my-groups')} // Navigate to My Groups
+                <Button
+                    type="submit"
+                    variant="contained"
                     className="create-button"
-                    type="button"
+                    fullWidth
+                    sx={{
+                        backgroundColor: '#FF0000',
+                        '&:hover': {
+                            backgroundColor: '#CC0000',
+                        },
+                    }}
                 >
-                    My Groups
-                </button>
+                    Create Group
+                </Button>
+
+                <Button
+                    onClick={() => navigate('/my-groups')}
+                    variant="outlined"
+                    fullWidth
+                    sx={{
+                        mt: 2,
+                        color: '#FF0000',
+                        borderColor: '#FF0000',
+                        '&:hover': {
+                            borderColor: '#CC0000',
+                            color: '#CC0000',
+                        },
+                    }}
+                >
+                    Back to My Groups
+                </Button>
             </form>
-        </div>
+        </Box>
     );
 };
 

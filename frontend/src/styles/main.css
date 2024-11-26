@@ -196,56 +196,6 @@ body {
     box-shadow: var(--shadow-md);
 }
 
-/* Center the entire container */
-.my-groups-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Centers items horizontally */
-    justify-content: center; /* Centers items vertically */
-    min-height: 100vh; /* Full viewport height for vertical centering */
-    text-align: center; /* Center text */
-    padding: 20px;
-}
-
-/* Style for the group list */
-.group-list {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-/* Style each group card */
-.group-card,
-.member-card {
-    background-color: #f9f9f9;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    padding: 15px;
-    width: 300px;
-    margin-bottom: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transform: translateY(0);
-    transition: all 0.3s ease;
-}
-
-.group-card:hover,
-.member-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(227, 24, 55, 0.1);
-}
-
-/* Style the preferences card */
-.my-preferences-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    list-style-type: none;
-}
-
 .preference-list {
     margin-bottom: 20px;
 }
@@ -308,6 +258,7 @@ body {
     background-color: red;
     color: white;
     padding: 10px 20px;
+    text-decoration: none;
     border: none;
     border-radius: 10px;
     cursor: pointer;
@@ -325,7 +276,7 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin-top: 20px;
+    margin-top: 70px;
 }
 
 form {
@@ -342,6 +293,7 @@ select {
     width: 100%;
     max-width: 300px;
 }
+
 .create-button {
     background-color: red;
     color: white;
@@ -350,7 +302,6 @@ select {
     border-radius: 10px;
     cursor: pointer;
     text-align: center;
-    margin: 10px 0;
     min-width: 200px; /* Optional: ensure the button has a minimum width */
     transition: background-color 0.3s ease;
 }
@@ -656,74 +607,6 @@ select {
     background-color: #005f7b;
 }
 
-.preferences-page-container {
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.preference-section {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    margin-bottom: 20px;
-}
-
-/* Dropdown Toggle Styling */
-.dropdown-toggle {
-    background-color: linear-gradient(
-        135deg,
-        #ff1010 0%,
-        #cc0000 100%
-    ); /* More vibrant red */
-    color: rgb(179, 39, 39);
-    border: inset 2px rgba(172, 0, 0, 0.2); /* Inset border for depth */
-    padding: 12px 20px; /* Increased padding for a more inviting look */
-    font-size: 16px; /* Slightly larger font */
-    font-weight: bold;
-    text-align: center;
-    cursor: pointer;
-    border-radius: 10px; /* Smooth, rounded corners */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
-    transition:
-        background-color 0.3s,
-        transform 0.7s,
-        box-shadow 0.3s; /* Smooth transition */
-    width: 300px; /* Make the button full-width */
-    max-width: 300px; /* Optional: limit the max width */
-    margin: 10px auto; /* Center the button with auto margins */
-}
-
-/* Hover and Focus Effects */
-.dropdown-toggle:hover {
-    background-color: #ff3333; /* Darker red on hover */
-    transform: translateY(-2px); /* Lift the button slightly */
-    color: white; /* Change text color on hover */
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Add depth on hover */
-}
-
-.dropdown-toggle:active {
-    background-color: #cc0000; /* Even darker red on active */
-    transform: scale(0.98); /* Slightly shrink the button on click */
-}
-
-/* Content Area for Preferences */
-.preference-content {
-    margin-top: 10px;
-    border: 1px solid #ddd;
-    padding: 15px;
-    border-radius: 10px; /* Make the content area match the button */
-    background-color: #f0f8ff; /* Light background for contrast */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Match the shadow */
-    transition: max-height 1s ease-in-out; /* Smoothly expand/collapse content */
-    overflow: hidden; /* Hide content when collapsed */
-}
-
-.preference-content.open {
-    max-height: 500px; /* Set a maximum height for the content */
-    opacity: 1; /* Make the content fully visible */
-}
-
 /* Center the heading */
 h1 {
     text-align: center; /* Center the text */
@@ -1023,28 +906,12 @@ h1 {
     gap: 5px;
 }
 
-.app-container {
-    min-height: 100vh;
-}
-
-.app-header {
-    background: white;
-    padding: 1rem 2rem;
-    border-bottom: 1px solid var(--gray-200);
-    box-shadow: var(--shadow-sm);
-}
-
 .header-content {
     max-width: 1200px;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-
-.user-info {
-    color: var(--gray-800);
-    font-weight: 500;
 }
 
 .nav-link {
@@ -1076,18 +943,6 @@ h1 {
     background: var(--primary-dark);
     transform: translateY(-1px);
     box-shadow: var(--shadow-sm);
-}
-
-.header-nav {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-}
-
-.main-content {
-    padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
 }
 
 .location-info {
