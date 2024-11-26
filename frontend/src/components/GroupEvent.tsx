@@ -41,6 +41,10 @@ const GroupEvent: React.FC = () => {
     const [cuisineOption, setCuisineOption] = useState<string | null>(null);
     const [restaurantLimit, setRestaurantLimit] = useState<number>(5);
     const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
+    const [eventDate, setEventDate] = useState<string>('');
+    const [eventTime, setEventTime] = useState<string>('');
+    const [selectedRestaurant, setSelectedRestaurant] =
+        useState<Restaurant | null>(null);
     const [aggregatedPreferences, setAggregatedPreferences] = useState<
         AggregatedPreference[]
     >([]);
@@ -58,6 +62,42 @@ const GroupEvent: React.FC = () => {
         'bbq',
         'european',
         'middle eastern',
+    ];
+
+    const timeOptions = [
+        '06:00',
+        '06:30',
+        '07:00',
+        '07:30',
+        '08:00',
+        '08:30',
+        '09:00',
+        '09:30',
+        '10:00',
+        '10:30',
+        '11:00',
+        '11:30',
+        '12:00',
+        '12:30',
+        '13:00',
+        '13:30',
+        '14:00',
+        '14:30',
+        '15:00',
+        '15:30',
+        '16:00',
+        '16:30',
+        '17:00',
+        '17:30',
+        '18:00',
+        '18:30',
+        '19:00',
+        '19:30',
+        '20:00',
+        '20:30',
+        '21:00',
+        '21:30',
+        '22:00',
     ];
 
     const API_KEY = process.env.REACT_APP_YELP_API_KEY;
@@ -169,6 +209,31 @@ const GroupEvent: React.FC = () => {
         selectedCuisines,
         restaurantLimit,
     ]);
+
+    const handleCreateEvent = async () => {
+        if (!selectedRestaurant || !eventDate || !eventTime) {
+            alert('Please select a restaurant, date, and time');
+            return;
+        }
+
+        try {
+            const dayOfWeek = new Date(eventDate).toLocaleString('en-US', {
+                weekday: 'long',
+            });
+
+            await api.post('/selections', {
+                groupId: groupid,
+                yelpRestaurantId: selectedRestaurant.id,
+                dayOfWeek: dayOfWeek,
+                time: eventTime,
+            });
+
+            alert('Event created successfully!');
+        } catch (error) {
+            console.error('Error creating event:', error);
+            alert('Failed to create event');
+        }
+    };
 
     const fetchRestaurants = async (lat: number, lon: number) => {
         try {
@@ -322,6 +387,39 @@ const GroupEvent: React.FC = () => {
                 </div> */}
             </div>
 
+            <div className="event-creation-form">
+                <h3>Create Group Event</h3>
+                <input
+                    type="date"
+                    value={eventDate}
+                    onChange={(e) => setEventDate(e.target.value)}
+                />
+                <select
+                    value={eventTime}
+                    onChange={(e) => setEventTime(e.target.value)}
+                    className="time-select"
+                >
+                    <option value="">Select Time</option>
+                    {timeOptions.map((time) => (
+                        <option key={time} value={time}>
+                            {new Date(`2024-01-01T${time}`).toLocaleTimeString(
+                                'en-US',
+                                {
+                                    hour: 'numeric',
+                                    minute: '2-digit',
+                                    hour12: true,
+                                }
+                            )}
+                        </option>
+                    ))}
+                </select>
+                {selectedRestaurant && (
+                    <div>
+                        <h4>Selected Restaurant: {selectedRestaurant.name}</h4>
+                    </div>
+                )}
+            </div>
+
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
                 {restaurants.map((restaurant) => (
                     <div key={restaurant.id} style={{ width: '250px' }}>
@@ -364,9 +462,28 @@ const GroupEvent: React.FC = () => {
                         ) : (
                             <p>Status: Unknown</p>
                         )}
+                        <button
+                            onClick={() => setSelectedRestaurant(restaurant)}
+                            className={
+                                selectedRestaurant?.id === restaurant.id
+                                    ? 'selected'
+                                    : ''
+                            }
+                        >
+                            {selectedRestaurant?.id === restaurant.id
+                                ? 'Selected'
+                                : 'Select Restaurant'}
+                        </button>
                     </div>
                 ))}
             </div>
+            <button
+                className="cta-button"
+                onClick={handleCreateEvent}
+                disabled={!selectedRestaurant || !eventDate || !eventTime}
+            >
+                Create Event
+            </button>
         </div>
     );
 };

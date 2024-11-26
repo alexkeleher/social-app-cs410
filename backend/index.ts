@@ -863,6 +863,41 @@ app.get(
     }
 );
 
+app.post('/selections', async (req: Request, res: Response) => {
+    const client = await pool.connect();
+    try {
+        const { groupId, yelpRestaurantId, dayOfWeek, time } = req.body;
+
+        await client.query('BEGIN');
+
+        // Insert into YelpRestaurant if not exists
+        await client.query(
+            `INSERT INTO YelpRestaurant (YelpID)
+             SELECT $1::text
+             WHERE NOT EXISTS (
+                 SELECT 1 FROM YelpRestaurant WHERE yelpid = $1::text
+             );`,
+            [yelpRestaurantId]
+        );
+
+        // Insert into Selection table
+        await client.query(
+            `INSERT INTO Selection (GroupID, YelpRestaurantID, DayOfWeek, Time)
+             VALUES ($1, $2, $3, $4)`,
+            [groupId, yelpRestaurantId, dayOfWeek, time]
+        );
+
+        await client.query('COMMIT');
+        res.json({ message: 'Event created successfully' });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error creating event:', error);
+        res.status(500).json({ error: 'Failed to create event' });
+    } finally {
+        client.release();
+    }
+});
+
 app.get('/search', async (req: Request, res: Response) => {
     // 1. Input validation
     const { latitude, longitude, radius, categories, open_at, limit } =
