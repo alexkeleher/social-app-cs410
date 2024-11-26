@@ -1104,7 +1104,7 @@ const SelectedGroup = () => {
             {/* Error/Success Message box (hides itself after 4 seconds)
              * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
              */}
-            <h2>Auto-Suggested Event</h2>
+            {/*}  <h2>Auto-Suggested Event</h2>
             <section className="group-section">
                 {autoSuggestedEvent.restaurant ? (
                     <div className="auto-event-card">
@@ -1227,7 +1227,7 @@ const SelectedGroup = () => {
                         slot
                     </p>
                 )}
-            </section>
+            </section>*/}
             {saveMessage && (
                 <p
                     className={`save-message ${saveMessage.includes('Error') ? 'error' : 'success'}`}
@@ -1257,7 +1257,7 @@ const SelectedGroup = () => {
                 </Link> */}
 
                 <Link to="/my-groups">
-                    <button className="back-button">Back to My Groups</button>
+                    <button className="cta-button">Back to My Groups</button>
                 </Link>
 
                 <Link
