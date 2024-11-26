@@ -1104,7 +1104,29 @@ const SelectedGroup = () => {
             {/* Error/Success Message box (hides itself after 4 seconds)
              * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
              */}
-            {/*}  <h2>Auto-Suggested Event</h2>
+
+            {saveMessage && (
+                <p
+                    className={`save-message ${saveMessage.includes('Error') ? 'error' : 'success'}`}
+                >
+                    {saveMessage}
+                </p>
+            )}
+
+            {/* Buttons Section
+             * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+             */}
+            <div className="group-actions">
+                <div>
+                    <button
+                        className="cta-button"
+                        onClick={onClickCreateEventAutomatic}
+                    >
+                        Create Event - Automatic
+                    </button>
+                </div>
+
+                {/*}  <h2>Auto-Suggested Event</h2>
             <section className="group-section">
                 {autoSuggestedEvent.restaurant ? (
                     <div className="auto-event-card">
@@ -1228,26 +1250,6 @@ const SelectedGroup = () => {
                     </p>
                 )}
             </section>*/}
-            {saveMessage && (
-                <p
-                    className={`save-message ${saveMessage.includes('Error') ? 'error' : 'success'}`}
-                >
-                    {saveMessage}
-                </p>
-            )}
-
-            {/* Buttons Section
-             * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-             */}
-            <div className="group-actions">
-                <div>
-                    <button
-                        className="cta-button"
-                        onClick={onClickCreateEventAutomatic}
-                    >
-                        Create Event - Automatic
-                    </button>
-                </div>
 
                 {/* Hide this button until we have manual event creation working */}
                 {/* <Link to={`/group-event/${groupid}`}>
