@@ -2,20 +2,20 @@
 
 Fall 2024 CS411W
 
--   Kirby Douglas
--   Matt Janak
--   Alex Keleher
--   Juan Mireles
--   Jajuan Myers
--   Armando Toledo
+- Kirby Douglas
+- Matt Janak
+- Alex Keleher
+- Juan Mireles
+- Jajuan Myers
+- Armando Toledo
 
 ## Install Prerequisites
 
 Ensure the following software is installed on your machine:
 
--   Node.js and npm: nodejs.org
--   PostgreSQL: postgresql.org
--   Git
+- Node.js and npm: nodejs.org
+- PostgreSQL: postgresql.org
+- Git
 
 ## Running the app
 
