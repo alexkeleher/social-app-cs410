@@ -43,6 +43,8 @@ const GroupEvent: React.FC = () => {
     const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
     const [eventDate, setEventDate] = useState<string>('');
     const [eventTime, setEventTime] = useState<string>('');
+    const [isCreating, setIsCreating] = useState<boolean>(false);
+
     const [selectedRestaurant, setSelectedRestaurant] =
         useState<Restaurant | null>(null);
     const [aggregatedPreferences, setAggregatedPreferences] = useState<
@@ -192,7 +194,8 @@ const GroupEvent: React.FC = () => {
     }, [groupid]);
 
     useEffect(() => {
-        if (latitude && longitude && API_KEY) {
+        if (latitude && longitude) {
+            // Remove API_KEY check
             console.log('Fetching restaurants with options:', {
                 sortOption,
                 dietOption,
@@ -203,7 +206,6 @@ const GroupEvent: React.FC = () => {
     }, [
         latitude,
         longitude,
-        API_KEY,
         sortOption,
         dietOption,
         selectedCuisines,
@@ -217,6 +219,12 @@ const GroupEvent: React.FC = () => {
         }
 
         try {
+            setIsCreating(true);
+
+            // Delete any existing event first
+            await api.delete(`/socialevents/${groupid}`);
+
+            // Create new event
             const dayOfWeek = new Date(eventDate).toLocaleString('en-US', {
                 weekday: 'long',
             });
@@ -232,30 +240,26 @@ const GroupEvent: React.FC = () => {
         } catch (error) {
             console.error('Error creating event:', error);
             alert('Failed to create event');
+        } finally {
+            setIsCreating(false);
         }
     };
 
     const fetchRestaurants = async (lat: number, lon: number) => {
         try {
-            const response = await axios.get(
-                'https://api.yelp.com/v3/businesses/search',
-                {
-                    headers: {
-                        Authorization: `Bearer ${API_KEY}`,
-                    },
-                    params: {
-                        latitude: lat,
-                        longitude: lon,
-                        categories: selectedCuisines.join(',') || 'restaurants',
-                        sort_by: sortOption,
-                        attributes: dietOption || 'restrictions',
-                        limit: restaurantLimit,
-                    },
-                }
-            );
+            const response = await api.get('/search', {
+                params: {
+                    latitude: lat,
+                    longitude: lon,
+                    categories: selectedCuisines.join(',') || 'restaurants',
+                    sort_by: sortOption,
+                    attributes: dietOption || 'restrictions',
+                    limit: restaurantLimit,
+                },
+            });
             setRestaurants(response.data.businesses);
         } catch (error) {
-            console.error('Error fetching from Yelp API:', error);
+            console.error('Error fetching restaurants:', error);
         }
     };
 
@@ -480,9 +484,14 @@ const GroupEvent: React.FC = () => {
             <button
                 className="cta-button"
                 onClick={handleCreateEvent}
-                disabled={!selectedRestaurant || !eventDate || !eventTime}
+                disabled={
+                    !selectedRestaurant ||
+                    !eventDate ||
+                    !eventTime ||
+                    isCreating
+                }
             >
-                Create Event
+                {isCreating ? 'Creating Event...' : 'Create Event'}
             </button>
         </div>
     );

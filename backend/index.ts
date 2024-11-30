@@ -870,7 +870,10 @@ app.post('/selections', async (req: Request, res: Response) => {
 
         await client.query('BEGIN');
 
-        // Insert into YelpRestaurant if not exists
+        // Delete any existing event first
+        await client.query('DELETE FROM Selection WHERE groupid = $1', [groupId]);
+
+        // Insert restaurant if needed
         await client.query(
             `INSERT INTO YelpRestaurant (YelpID)
              SELECT $1::text
@@ -880,10 +883,10 @@ app.post('/selections', async (req: Request, res: Response) => {
             [yelpRestaurantId]
         );
 
-        // Insert into Selection table
+        // Create new event
         await client.query(
-            `INSERT INTO Selection (GroupID, YelpRestaurantID, DayOfWeek, Time)
-             VALUES ($1, $2, $3, $4)`,
+            `INSERT INTO Selection (GroupID, YelpRestaurantID, TimeStart, DayOfWeek, Time)
+             VALUES ($1, $2, NULL, $3, $4)`,
             [groupId, yelpRestaurantId, dayOfWeek, time]
         );
 
@@ -1248,6 +1251,21 @@ app.get(
         }
     }
 );
+
+app.delete(
+    '/socialevents/:groupid',
+    async (req: Request, res: Response) => {
+        try {
+            const { groupid } = req.params;
+            await pool.query('DELETE FROM Selection WHERE groupid = $1', [groupid]);
+            res.json({ result: 'success' });
+        } catch (e) {
+            console.error((e as Error).message);
+            res.status(500).json({ error: (e as Error).message });
+        }
+    }
+);
+
 
 /*    GET /socialevents/debug/generate-new/:groupid    */
 /* ************************************************************************** 
