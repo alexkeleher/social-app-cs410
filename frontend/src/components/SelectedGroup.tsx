@@ -834,11 +834,19 @@ const SelectedGroup = () => {
                     >
                         Create Event - Automatic
                     </button>
-                </div>
 
-                <Link to="/my-groups">
-                    <button className="cta-button">Back to My Groups</button>
-                </Link>
+                    <Link to={`/group-event/${groupid}`}>
+                        <button className="cta-button">
+                            Create Event - Manual
+                        </button>
+                    </Link>
+
+                    <Link to="/my-groups">
+                        <button className="cta-button">
+                            Back to My Groups
+                        </button>
+                    </Link>
+                </div>
 
                 <Link
                     to="#"
@@ -848,12 +856,6 @@ const SelectedGroup = () => {
                     }}
                 >
                     <button className="cta-button delete">Delete Group</button>
-                </Link>
-
-                <Link to={`/group-event/${groupid}`}>
-                    <button className="cta-button">
-                        Create Event - Manual
-                    </button>
                 </Link>
             </div>
         </div>

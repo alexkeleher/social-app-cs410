@@ -10,13 +10,18 @@ interface Restaurant {
     rating: number;
     distance: number; // in kilometers
     image_url: string;
+    url: string;
     location: {
         address1: string;
         city: string;
     };
     hours?: {
-        open: { start: string; end: string; day: number }[];
-        is_open: boolean;
+        is_open_now: boolean;
+        open: {
+            start: string;
+            end: string;
+            day: number;
+        }[];
     }[];
 }
 
@@ -39,7 +44,7 @@ const GroupEvent: React.FC = () => {
     const [sortOption, setSortOption] = useState<string>('best_match');
     const [dietOption, setDietOption] = useState<string | null>(null);
     const [cuisineOption, setCuisineOption] = useState<string | null>(null);
-    const [restaurantLimit, setRestaurantLimit] = useState<number>(5);
+    const [restaurantLimit, setRestaurantLimit] = useState<number>(4);
     const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
     const [eventDate, setEventDate] = useState<string>('');
     const [eventTime, setEventTime] = useState<string>('');
@@ -255,6 +260,9 @@ const GroupEvent: React.FC = () => {
                     sort_by: sortOption,
                     attributes: dietOption || 'restrictions',
                     limit: restaurantLimit,
+                    fields: 'hours,rating,price,distance,location,phone',
+                    open_now: true,
+                    hours: true,
                 },
             });
             setRestaurants(response.data.businesses);
@@ -372,7 +380,7 @@ const GroupEvent: React.FC = () => {
                 <option value={50}>50</option>
             </select>
 
-            <div
+            {/*        <div
                 className="debug-section"
                 style={{
                     margin: '20px',
@@ -380,7 +388,7 @@ const GroupEvent: React.FC = () => {
                     border: '1px solid #ccc',
                 }}
             >
-                {/*               <h3>Debug Info:</h3>
+                              <h3>Debug Info:</h3>
                 <div>
                     <h4>Group Users Preferences:</h4>
                     <pre>{JSON.stringify(aggregatedPreferences, null, 2)}</pre>
@@ -388,55 +396,62 @@ const GroupEvent: React.FC = () => {
                 <div>
                     <h4>Selected Cuisines:</h4>
                     <pre>{JSON.stringify(selectedCuisines, null, 2)}</pre>
-                </div> */}
-            </div>
+                </div> 
+            </div>*/}
 
             <div className="event-creation-form">
                 <h3>Create Group Event</h3>
-                <input
-                    type="date"
-                    value={eventDate}
-                    onChange={(e) => setEventDate(e.target.value)}
-                />
-                <select
-                    value={eventTime}
-                    onChange={(e) => setEventTime(e.target.value)}
-                    className="time-select"
-                >
-                    <option value="">Select Time</option>
-                    {timeOptions.map((time) => (
-                        <option key={time} value={time}>
-                            {new Date(`2024-01-01T${time}`).toLocaleTimeString(
-                                'en-US',
-                                {
-                                    hour: 'numeric',
-                                    minute: '2-digit',
-                                    hour12: true,
-                                }
-                            )}
-                        </option>
-                    ))}
-                </select>
-                {selectedRestaurant && (
-                    <div>
-                        <h4>Selected Restaurant: {selectedRestaurant.name}</h4>
+                <div className="datetime-container">
+                    <div className="input-group">
+                        <label htmlFor="event-date">Date</label>
+                        <input
+                            id="event-date"
+                            type="date"
+                            value={eventDate}
+                            onChange={(e) => setEventDate(e.target.value)}
+                            min={new Date().toISOString().split('T')[0]}
+                        />
                     </div>
-                )}
+                    <div className="input-group">
+                        <label htmlFor="event-time">Time</label>
+                        <select
+                            id="event-time"
+                            value={eventTime}
+                            onChange={(e) => setEventTime(e.target.value)}
+                        >
+                            <option value="">Select Time</option>
+                            {timeOptions.map((time) => (
+                                <option key={time} value={time}>
+                                    {new Date(
+                                        `2024-01-01T${time}`
+                                    ).toLocaleTimeString('en-US', {
+                                        hour: 'numeric',
+                                        minute: '2-digit',
+                                        hour12: true,
+                                    })}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
             </div>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
+            <div className="restaurants-grid">
                 {restaurants.map((restaurant) => (
-                    <div key={restaurant.id} style={{ width: '250px' }}>
+                    <div
+                        key={restaurant.id}
+                        onClick={() => setSelectedRestaurant(restaurant)}
+                        className={`restaurant-card ${
+                            selectedRestaurant?.id === restaurant.id
+                                ? 'selected'
+                                : ''
+                        }`}
+                    >
                         <h3>{restaurant.name}</h3>
                         <img
                             src={restaurant.image_url}
                             alt={`${restaurant.name} thumbnail`}
-                            style={{
-                                width: '100%',
-                                height: '150px',
-                                objectFit: 'cover',
-                                borderRadius: '8px',
-                            }}
+                            className="restaurant-image"
                         />
                         <p>Rating: {restaurant.rating}</p>
                         <p>
@@ -447,37 +462,33 @@ const GroupEvent: React.FC = () => {
                             Address: {restaurant.location.address1},{' '}
                             {restaurant.location.city}
                         </p>
+                        <p>
+                            <a
+                                href={restaurant.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()} // Prevent card selection when clicking link
+                            >
+                                View on Yelp
+                            </a>
+                        </p>
 
-                        {restaurant.hours &&
-                        restaurant.hours[0]?.open &&
-                        restaurant.hours[0]?.open.length > 0 ? (
+                        {restaurant.hours && restaurant.hours[0]?.open ? (
                             <>
                                 <p>
-                                    It is:{' '}
-                                    {restaurant.hours[0]?.is_open
+                                    Status:{' '}
+                                    {restaurant.hours[0]?.is_open_now
                                         ? 'Open'
                                         : 'Closed'}
                                 </p>
-                                <p>
+                                {/*}  <p>
                                     Hours:{' '}
                                     {formatHours(restaurant.hours[0].open)}
-                                </p>
+                                </p> */}
                             </>
                         ) : (
-                            <p>Status: Unknown</p>
+                            <p>Status: Hours not available</p>
                         )}
-                        <button
-                            onClick={() => setSelectedRestaurant(restaurant)}
-                            className={
-                                selectedRestaurant?.id === restaurant.id
-                                    ? 'selected'
-                                    : ''
-                            }
-                        >
-                            {selectedRestaurant?.id === restaurant.id
-                                ? 'Selected'
-                                : 'Select Restaurant'}
-                        </button>
                     </div>
                 ))}
             </div>
