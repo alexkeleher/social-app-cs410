@@ -871,7 +871,9 @@ app.post('/selections', async (req: Request, res: Response) => {
         await client.query('BEGIN');
 
         // Delete any existing event first
-        await client.query('DELETE FROM Selection WHERE groupid = $1', [groupId]);
+        await client.query('DELETE FROM Selection WHERE groupid = $1', [
+            groupId,
+        ]);
 
         // Insert restaurant if needed
         await client.query(
@@ -1252,20 +1254,16 @@ app.get(
     }
 );
 
-app.delete(
-    '/socialevents/:groupid',
-    async (req: Request, res: Response) => {
-        try {
-            const { groupid } = req.params;
-            await pool.query('DELETE FROM Selection WHERE groupid = $1', [groupid]);
-            res.json({ result: 'success' });
-        } catch (e) {
-            console.error((e as Error).message);
-            res.status(500).json({ error: (e as Error).message });
-        }
+app.delete('/socialevents/:groupid', async (req: Request, res: Response) => {
+    try {
+        const { groupid } = req.params;
+        await pool.query('DELETE FROM Selection WHERE groupid = $1', [groupid]);
+        res.json({ result: 'success' });
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
     }
-);
-
+});
 
 /*    GET /socialevents/debug/generate-new/:groupid    */
 /* ************************************************************************** 

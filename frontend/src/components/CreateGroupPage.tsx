@@ -123,7 +123,6 @@ const CreateGroupPage: React.FC = () => {
                     <option value="school">School</option>
                 </select> */}
 
-
                 <Button
                     type="submit"
                     variant="contained"
