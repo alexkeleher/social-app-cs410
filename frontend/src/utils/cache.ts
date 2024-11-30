@@ -27,7 +27,7 @@ export class YelpCache {
     static set(key: string, data: any): void {
         this.cache.set(key, {
             data,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         });
     }
 }
