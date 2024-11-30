@@ -19,6 +19,7 @@ import jwt from 'jsonwebtoken';
 import yelp from './yelp-axios';
 import { generateEvent } from './event-generator';
 import { getLatLonFromAddress } from './google-api-helper';
+import { dummyRestaurants } from './dummyData';
 //import { YelpResponse } from '@types';
 
 const app: Application = express();
@@ -48,6 +49,8 @@ interface Restaurant {
     Address?: string;
     PriceLevel?: string;
 }
+
+
 
 // Middleware
 app.use(
@@ -134,6 +137,8 @@ const pgSession = connectPgSimple(session);
 app.get('/', (req: Request, res: Response) => {
     res.send('This is Express working');
 });
+
+
 
 // /* LOGIN */
 app.post('/login', async (req: Request, res: Response): Promise<void> => {
@@ -863,65 +868,92 @@ app.get(
     }
 );
 
-app.get('/search', async (req: Request, res: Response) => {
-    // 1. Input validation
-    const { latitude, longitude, radius, categories, open_at, limit } =
-        req.query;
-
-    if (DEBUGGING_MODE) {
-        console.log('Received search request:', {
-            latitude,
-            longitude,
-            radius,
-            categories,
-            open_at,
-            limit,
-        });
-    }
-
-    if (!process.env.YELP_API_KEY) {
-        console.error('Missing YELP_API_KEY environment variable');
-        return res.status(500).json({ error: 'Yelp API configuration error' });
-    }
-
+app.post('/selections', async (req: Request, res: Response) => {
+    const client = await pool.connect();
     try {
-        // 2. Make request to Yelp
-        const response = await yelp.get('/businesses/search', {
-            headers: {
-                Authorization: `Bearer ${process.env.YELP_API_KEY}`,
-            },
+        const { groupId, yelpRestaurantId, dayOfWeek, time } = req.body;
+
+        await client.query('BEGIN');
+
+        // Delete any existing event first
+        await client.query('DELETE FROM Selection WHERE groupid = $1', [
+            groupId,
+        ]);
+
+        // Insert restaurant if needed
+        await client.query(
+            `INSERT INTO YelpRestaurant (YelpID)
+             SELECT $1::text
+             WHERE NOT EXISTS (
+                 SELECT 1 FROM YelpRestaurant WHERE yelpid = $1::text
+             );`,
+            [yelpRestaurantId]
+        );
+
+        // Create new event
+        await client.query(
+            `INSERT INTO Selection (GroupID, YelpRestaurantID, TimeStart, DayOfWeek, Time)
+             VALUES ($1, $2, NULL, $3, $4)`,
+            [groupId, yelpRestaurantId, dayOfWeek, time]
+        );
+
+        await client.query('COMMIT');
+        res.json({ message: 'Event created successfully' });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error creating event:', error);
+        res.status(500).json({ error: 'Failed to create event' });
+    } finally {
+        client.release();
+    }
+});
+
+
+
+
+app.get('/search', async (req: Request, res: Response) => {
+    try {
+        const { latitude, longitude, categories, sort_by, limit } = req.query;
+
+        // First get list of businesses
+        const searchResponse = await yelp.get('/search', {
             params: {
+                term: 'restaurants',
                 latitude: Number(latitude),
                 longitude: Number(longitude),
-                radius: Number(radius),
-                categories: String(categories),
-                open_at: Number(open_at),
-                limit: Number(limit),
-                sort_by: 'best_match',
-            },
+                categories: categories || 'restaurants',
+                sort_by: sort_by || 'best_match',
+                limit: Number(limit) || 5,
+                radius: 40000
+            }
         });
 
-        // 3. Log success
-        if (DEBUGGING_MODE) {
-            console.log('Yelp API Response:', {
-                status: response.status,
-                businessCount: response.data.businesses?.length || 0,
-            });
-        }
+        // Get detailed info (including hours) for each business
+        const detailedBusinesses = await Promise.all(
+            searchResponse.data.businesses.map(async (business: any) => {
+                try {
+                    const detailResponse = await yelp.get(`/${business.id}`);
+                    return {
+                        ...business,
+                        hours: detailResponse.data.hours
+                    };
+                } catch (error) {
+                    console.error(`Error fetching details for ${business.id}:`, error);
+                    return business;
+                }
+            })
+        );
 
-        // 4. Send response
-        return res.json(response.data);
+        return res.json({
+            ...searchResponse.data,
+            businesses: detailedBusinesses
+        });
+
     } catch (error: any) {
-        // 5. Error handling
-        console.error('Yelp API Error:', {
-            status: error.response?.status,
-            data: error.response?.data,
-            message: error.message,
-        });
-
+        console.error('Yelp API Error:', error);
         return res.status(500).json({
             error: 'Failed to fetch restaurants',
-            details: error.response?.data || error.message,
+            details: error.message
         });
     }
 });
@@ -949,6 +981,7 @@ app.post(
             });
         } catch (e) {
             console.error((e as Error).message);
+            console.log('Using Yelp API key:', process.env.YELP_API_KEY?.slice(0,10) + '...');
             res.status(500).json({ error: (e as Error).message });
         }
     }
@@ -1213,6 +1246,17 @@ app.get(
         }
     }
 );
+
+app.delete('/socialevents/:groupid', async (req: Request, res: Response) => {
+    try {
+        const { groupid } = req.params;
+        await pool.query('DELETE FROM Selection WHERE groupid = $1', [groupid]);
+        res.json({ result: 'success' });
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
 
 /*    GET /socialevents/debug/generate-new/:groupid    */
 /* ************************************************************************** 
