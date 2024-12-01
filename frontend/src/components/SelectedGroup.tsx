@@ -393,6 +393,13 @@ const SelectedGroup = () => {
         '11:00-12:00 AM',
     ];
 
+    const convertTo12Hour = (time24: string): string => {
+        const [hours24, minutes] = time24.split(':').map(Number);
+        const period = hours24 >= 12 ? 'PM' : 'AM';
+        const hours12 = hours24 % 12 || 12;
+        return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
+    };
+
     const getCoordinates = async (
         address: string
     ): Promise<Coordinates | null> => {
@@ -716,7 +723,7 @@ const SelectedGroup = () => {
                             <p>
                                 <b>When: </b>
                                 {groupEvent.startTime.day}{' '}
-                                {groupEvent.startTime.time}
+                                {convertTo12Hour(groupEvent.startTime.time)}
                             </p>
                             <p>
                                 <b>Restaurant:</b> {groupEvent.restaurant.name}
