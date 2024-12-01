@@ -835,7 +835,10 @@ const SelectedGroup = () => {
                         Create Event - Automatic
                     </button>
 
-                    <Link to={`/group-event/${groupid}`}>
+                    <Link
+                        to={`/group-event/${groupid}`}
+                        state={{ commonTimeSlots }}
+                    >
                         <button className="cta-button">
                             Create Event - Manual
                         </button>

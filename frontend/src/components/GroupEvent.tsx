@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import api from '../api/axios';
 import './GroupEvent.css';
 
@@ -35,6 +35,15 @@ interface AggregatedPreference {
     count: number;
 }
 
+interface CommonTimeSlot {
+    day: string;
+    slots: number[];
+}
+
+interface LocationState {
+    commonTimeSlots: CommonTimeSlot[];
+}
+
 const GroupEvent: React.FC = () => {
     const { groupid } = useParams<{ groupid: string }>();
     const [groupInfo, setGroupInfo] = useState<GroupInfo | null>(null);
@@ -49,6 +58,10 @@ const GroupEvent: React.FC = () => {
     const [eventDate, setEventDate] = useState<string>('');
     const [eventTime, setEventTime] = useState<string>('');
     const [isCreating, setIsCreating] = useState<boolean>(false);
+    const location = useLocation();
+    const { commonTimeSlots } = (location.state as LocationState) || {
+        commonTimeSlots: [],
+    };
 
     const [selectedRestaurant, setSelectedRestaurant] =
         useState<Restaurant | null>(null);
@@ -71,40 +84,53 @@ const GroupEvent: React.FC = () => {
         'middle eastern',
     ];
 
+    const convertSlotToTime = (slotIndex: number): string => {
+        const timeMap: { [key: number]: string } = {
+            0: '05:00',
+            1: '06:00',
+            2: '07:00',
+            3: '08:00',
+            4: '09:00',
+            5: '10:00',
+            6: '11:00',
+            7: '12:00',
+            8: '13:00',
+            9: '14:00',
+            10: '15:00',
+            11: '16:00',
+            12: '17:00',
+            13: '18:00',
+            14: '19:00',
+            15: '20:00',
+            16: '21:00',
+            17: '22:00',
+            18: '23:00',
+            19: '00:00',
+        };
+        return timeMap[slotIndex] || '';
+    };
+
     const timeOptions = [
+        '05:00',
         '06:00',
-        '06:30',
         '07:00',
-        '07:30',
         '08:00',
-        '08:30',
         '09:00',
-        '09:30',
         '10:00',
-        '10:30',
         '11:00',
-        '11:30',
         '12:00',
-        '12:30',
         '13:00',
-        '13:30',
         '14:00',
-        '14:30',
         '15:00',
-        '15:30',
         '16:00',
-        '16:30',
         '17:00',
-        '17:30',
         '18:00',
-        '18:30',
         '19:00',
-        '19:30',
         '20:00',
-        '20:30',
         '21:00',
-        '21:30',
         '22:00',
+        '23:00',
+        '00:00',
     ];
 
     const API_KEY = process.env.REACT_APP_YELP_API_KEY;
@@ -293,6 +319,20 @@ const GroupEvent: React.FC = () => {
         setRestaurantLimit(Number(event.target.value));
     };
 
+    const isDateAvailable = (dateString: string): boolean => {
+        const date = new Date(dateString);
+        const dayOfWeek = date.toLocaleString('en-US', { weekday: 'long' });
+        const daySlots = commonTimeSlots.find((slot) => slot.day === dayOfWeek);
+
+        // Check if daySlots exists and has slots array with length > 0
+        return (
+            (daySlots &&
+                Array.isArray(daySlots.slots) &&
+                daySlots.slots.length > 0) ||
+            false
+        );
+    };
+
     const formatHours = (
         hours: { start: string; end: string; day: number }[]
     ) => {
@@ -372,12 +412,11 @@ const GroupEvent: React.FC = () => {
                 value={restaurantLimit}
                 onChange={handleLimitChange}
             >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
+                <option value={4}>4</option>
+                <option value={8}>8</option>
+                <option value={12}>12</option>
+                <option value={16}>16</option>
                 <option value={20}>20</option>
-                <option value={30}>30</option>
-                <option value={40}>40</option>
-                <option value={50}>50</option>
             </select>
 
             {/*        <div
@@ -399,6 +438,77 @@ const GroupEvent: React.FC = () => {
                 </div> 
             </div>*/}
 
+            <div className="availability-summary">
+                <h3>Group Availability</h3>
+                <div className="availability-grid">
+                    {commonTimeSlots.map(
+                        ({ day, slots }) =>
+                            slots.length > 0 && (
+                                <div key={day} className="day-availability">
+                                    <h4>{day}</h4>
+                                    <div className="time-slots">
+                                        {[
+                                            {
+                                                label: 'Morning',
+                                                slots: slots.filter(
+                                                    (i) => i < 6
+                                                ),
+                                            },
+                                            {
+                                                label: 'Afternoon',
+                                                slots: slots.filter(
+                                                    (i) => i >= 6 && i < 12
+                                                ),
+                                            },
+                                            {
+                                                label: 'Evening',
+                                                slots: slots.filter(
+                                                    (i) => i >= 12
+                                                ),
+                                            },
+                                        ].map(
+                                            ({ label, slots }) =>
+                                                slots.length > 0 && (
+                                                    <div
+                                                        key={label}
+                                                        className="time-group"
+                                                    >
+                                                        <span className="time-label">
+                                                            {label}:
+                                                        </span>
+                                                        <span className="time-values">
+                                                            {slots.map(
+                                                                (slot) => (
+                                                                    <span
+                                                                        key={
+                                                                            slot
+                                                                        }
+                                                                        className="time-chip"
+                                                                    >
+                                                                        {new Date(
+                                                                            `2024-01-01T${convertSlotToTime(slot)}`
+                                                                        ).toLocaleTimeString(
+                                                                            'en-US',
+                                                                            {
+                                                                                hour: 'numeric',
+                                                                                minute: '2-digit',
+                                                                                hour12: true,
+                                                                            }
+                                                                        )}
+                                                                    </span>
+                                                                )
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                )
+                                        )}
+                                    </div>
+                                </div>
+                            )
+                    )}
+                </div>
+            </div>
+
             <div className="event-creation-form">
                 <h3>Create Group Event</h3>
                 <div className="datetime-container">
@@ -408,8 +518,15 @@ const GroupEvent: React.FC = () => {
                             id="event-date"
                             type="date"
                             value={eventDate}
-                            onChange={(e) => setEventDate(e.target.value)}
+                            onChange={(e) => {
+                                const selectedDate = e.target.value;
+                                if (isDateAvailable(selectedDate)) {
+                                    setEventDate(selectedDate);
+                                }
+                            }}
                             min={new Date().toISOString().split('T')[0]}
+                            className={`date-input ${eventDate && !isDateAvailable(eventDate) ? 'unavailable' : ''}`}
+                            onKeyDown={(e) => e.preventDefault()} // Prevent typing
                         />
                     </div>
                     <div className="input-group">
