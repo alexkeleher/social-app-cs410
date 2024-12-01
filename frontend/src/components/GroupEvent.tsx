@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import api from '../api/axios';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import './GroupEvent.css';
 
 interface Restaurant {
@@ -55,7 +57,7 @@ const GroupEvent: React.FC = () => {
     const [cuisineOption, setCuisineOption] = useState<string | null>(null);
     const [restaurantLimit, setRestaurantLimit] = useState<number>(4);
     const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
-    const [eventDate, setEventDate] = useState<string>('');
+    const [eventDate, setEventDate] = useState<Date | null>(null);
     const [eventTime, setEventTime] = useState<string>('');
     const [isCreating, setIsCreating] = useState<boolean>(false);
     const location = useLocation();
@@ -135,20 +137,7 @@ const GroupEvent: React.FC = () => {
 
     const API_KEY = process.env.REACT_APP_YELP_API_KEY;
 
-    /*     useEffect(() => {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                setLatitude(position.coords.latitude);
-                setLongitude(position.coords.longitude);
-            },
-            (error) => {
-                console.error('Error fetching location', error);
-            }
-        );
-    }, []); */
-
     useEffect(() => {
-        // Try to get saved center point
         const savedCenter = localStorage.getItem(`group_${groupid}_center`);
         if (savedCenter) {
             const center = JSON.parse(savedCenter);
@@ -156,7 +145,6 @@ const GroupEvent: React.FC = () => {
             setLongitude(center.lng);
             console.log('Using group center point:', center);
         } else {
-            // Fallback to user's location if no center point exists
             console.log('No center point found, using user location');
             navigator.geolocation.getCurrentPosition(
                 (position) => {
@@ -194,12 +182,10 @@ const GroupEvent: React.FC = () => {
 
                     console.log('Aggregated counts:', preferencesCount);
 
-                    // Find max count
                     const maxCount = Math.max(
                         ...Object.values(preferencesCount)
                     );
 
-                    // Get cuisines with max count (favorites)
                     const favoriteCuisines = Object.entries(preferencesCount)
                         .filter(([_, count]) => count === maxCount)
                         .map(([cuisine]) => cuisine.toLowerCase());
@@ -207,7 +193,6 @@ const GroupEvent: React.FC = () => {
                     console.log('Setting favorite cuisines:', favoriteCuisines);
                     setSelectedCuisines(favoriteCuisines);
 
-                    // Store all preferences for display
                     const aggregated = Object.entries(preferencesCount).map(
                         ([preference, count]) => ({
                             preference: preference.toLowerCase(),
@@ -226,7 +211,6 @@ const GroupEvent: React.FC = () => {
 
     useEffect(() => {
         if (latitude && longitude) {
-            // Remove API_KEY check
             console.log('Fetching restaurants with options:', {
                 sortOption,
                 dietOption,
@@ -252,11 +236,9 @@ const GroupEvent: React.FC = () => {
         try {
             setIsCreating(true);
 
-            // Delete any existing event first
             await api.delete(`/socialevents/${groupid}`);
 
-            // Create new event
-            const dayOfWeek = new Date(eventDate).toLocaleString('en-US', {
+            const dayOfWeek = eventDate.toLocaleString('en-US', {
                 weekday: 'long',
             });
 
@@ -319,18 +301,31 @@ const GroupEvent: React.FC = () => {
         setRestaurantLimit(Number(event.target.value));
     };
 
-    const isDateAvailable = (dateString: string): boolean => {
-        const date = new Date(dateString);
+    const isDateAvailable = (date: Date): boolean => {
         const dayOfWeek = date.toLocaleString('en-US', { weekday: 'long' });
         const daySlots = commonTimeSlots.find((slot) => slot.day === dayOfWeek);
 
-        // Check if daySlots exists and has slots array with length > 0
         return (
             (daySlots &&
                 Array.isArray(daySlots.slots) &&
                 daySlots.slots.length > 0) ||
             false
         );
+    };
+
+    const getAvailableTimesForDate = (selectedDate: Date | null): string[] => {
+        if (!selectedDate) return [];
+
+        const dayOfWeek = selectedDate.toLocaleString('en-US', {
+            weekday: 'long',
+        });
+        const daySlots = commonTimeSlots.find((slot) => slot.day === dayOfWeek);
+
+        if (!daySlots) return [];
+
+        return daySlots.slots
+            .map((slotIndex) => convertSlotToTime(slotIndex))
+            .filter((time) => time !== '');
     };
 
     const formatHours = (
@@ -352,6 +347,32 @@ const GroupEvent: React.FC = () => {
                 return `${daysOfWeek[hour.day]}: ${start} - ${end}`;
             })
             .join(', ');
+    };
+
+    const isRestaurantOpenAtDateTime = (
+        restaurant: Restaurant,
+        date: Date,
+        time: string
+    ): boolean => {
+        if (!restaurant.hours?.[0]?.open) return false;
+
+        const selectedDay = date.getDay(); // 0-6, Sunday-Saturday
+        const [hours, minutes] = time.split(':').map(Number);
+        const timeNumber = hours * 100 + minutes;
+
+        const dayHours = restaurant.hours[0].open.filter(
+            (h) => h.day === selectedDay
+        );
+
+        return dayHours.some((hour) => {
+            const start = parseInt(hour.start);
+            const end = parseInt(hour.end);
+            return timeNumber >= start && timeNumber <= end;
+        });
+    };
+
+    const highlightWithRanges = (date: Date) => {
+        return isDateAvailable(date) ? 'available' : 'unavailable';
     };
 
     return (
@@ -419,26 +440,7 @@ const GroupEvent: React.FC = () => {
                 <option value={20}>20</option>
             </select>
 
-            {/*        <div
-                className="debug-section"
-                style={{
-                    margin: '20px',
-                    padding: '20px',
-                    border: '1px solid #ccc',
-                }}
-            >
-                              <h3>Debug Info:</h3>
-                <div>
-                    <h4>Group Users Preferences:</h4>
-                    <pre>{JSON.stringify(aggregatedPreferences, null, 2)}</pre>
-                </div>
-                <div>
-                    <h4>Selected Cuisines:</h4>
-                    <pre>{JSON.stringify(selectedCuisines, null, 2)}</pre>
-                </div> 
-            </div>*/}
-
-            <div className="availability-summary">
+            {/*}   <div className="availability-summary">
                 <h3>Group Availability</h3>
                 <div className="availability-grid">
                     {commonTimeSlots.map(
@@ -507,26 +509,21 @@ const GroupEvent: React.FC = () => {
                             )
                     )}
                 </div>
-            </div>
+            </div> */}
 
             <div className="event-creation-form">
                 <h3>Create Group Event</h3>
                 <div className="datetime-container">
                     <div className="input-group">
                         <label htmlFor="event-date">Date</label>
-                        <input
+                        <DatePicker
                             id="event-date"
-                            type="date"
-                            value={eventDate}
-                            onChange={(e) => {
-                                const selectedDate = e.target.value;
-                                if (isDateAvailable(selectedDate)) {
-                                    setEventDate(selectedDate);
-                                }
-                            }}
-                            min={new Date().toISOString().split('T')[0]}
-                            className={`date-input ${eventDate && !isDateAvailable(eventDate) ? 'unavailable' : ''}`}
-                            onKeyDown={(e) => e.preventDefault()} // Prevent typing
+                            selected={eventDate}
+                            onChange={(date: Date | null) => setEventDate(date)}
+                            minDate={new Date()}
+                            filterDate={isDateAvailable}
+                            dayClassName={highlightWithRanges}
+                            className="date-input"
                         />
                     </div>
                     <div className="input-group">
@@ -537,7 +534,7 @@ const GroupEvent: React.FC = () => {
                             onChange={(e) => setEventTime(e.target.value)}
                         >
                             <option value="">Select Time</option>
-                            {timeOptions.map((time) => (
+                            {getAvailableTimesForDate(eventDate).map((time) => (
                                 <option key={time} value={time}>
                                     {new Date(
                                         `2024-01-01T${time}`
@@ -594,14 +591,18 @@ const GroupEvent: React.FC = () => {
                             <>
                                 <p>
                                     Status:{' '}
-                                    {restaurant.hours[0]?.is_open_now
-                                        ? 'Open'
-                                        : 'Closed'}
+                                    {eventDate && eventTime
+                                        ? isRestaurantOpenAtDateTime(
+                                              restaurant,
+                                              eventDate,
+                                              eventTime
+                                          )
+                                            ? 'Open at selected time'
+                                            : 'Closed at selected time'
+                                        : restaurant.hours[0]?.is_open_now
+                                          ? 'Open now'
+                                          : 'Closed now'}
                                 </p>
-                                {/*}  <p>
-                                    Hours:{' '}
-                                    {formatHours(restaurant.hours[0].open)}
-                                </p> */}
                             </>
                         ) : (
                             <p>Status: Hours not available</p>

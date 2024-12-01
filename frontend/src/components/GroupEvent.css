@@ -188,6 +188,12 @@
     cursor: pointer;
 }
 
+.react-datepicker__day--unavailable {
+    color: #ff0000 !important;
+    pointer-events: none;
+    background-color: #fff0f0 !important;
+}
+
 .date-input.unavailable {
     color: #ff0000;
     border-color: #ff0000;
@@ -289,4 +295,10 @@
     border-radius: 12px;
     font-size: 0.9em;
     color: #495057;
+}
+
+.react-datepicker__day--unavailable {
+    color: #ff0000 !important;
+    pointer-events: none;
+    background-color: #fff0f0 !important;
 }
