@@ -31,6 +31,7 @@
     display: flex;
     gap: 1rem;
     align-items: center;
+    position: relative;
 }
 
 .user-info {
@@ -42,4 +43,39 @@
     padding: 2rem;
     max-width: 1200px;
     margin: 0 auto;
+}
+
+.notification-dot {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 10px;
+    height: 10px;
+    background-color: red;
+    border-radius: 50%;
+}
+
+.notification-button {
+    position: relative;
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-right: 1rem;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dropdown-style {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    width: 500px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
 }

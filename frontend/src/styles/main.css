@@ -203,11 +203,13 @@ body {
 .preference-buttons {
     display: flex;
     flex-direction: column;
-    gap: 10px; /* Space between buttons */
+    gap: 10px;
+    /* Space between buttons */
 }
 
 .preference-link {
     background-color: red;
+
     .preference-link {
         background-color: red;
         color: white;
@@ -218,6 +220,7 @@ body {
         width: 200px;
         text-align: center;
     }
+
     border: none;
     padding: 10px 20px;
     border-radius: 5px;
@@ -248,8 +251,10 @@ body {
 /* Style the buttons */
 .button-container {
     display: flex;
-    justify-content: center; /* Center the buttons */
-    gap: 10px; /* Space between buttons */
+    justify-content: center;
+    /* Center the buttons */
+    gap: 10px;
+    /* Space between buttons */
     margin-bottom: 20px;
 }
 
@@ -285,6 +290,7 @@ form {
     align-items: center;
     gap: 10px;
 }
+
 input,
 select {
     padding: 10px;
@@ -302,12 +308,14 @@ select {
     border-radius: 10px;
     cursor: pointer;
     text-align: center;
-    min-width: 200px; /* Optional: ensure the button has a minimum width */
+    min-width: 200px;
+    /* Optional: ensure the button has a minimum width */
     transition: background-color 0.3s ease;
 }
 
 .create-button:hover {
-    background-color: rgb(97, 0, 0); /* Darken button on hover */
+    background-color: rgb(97, 0, 0);
+    /* Darken button on hover */
 }
 
 /* Ensure all buttons are aligned and centered */
@@ -316,7 +324,8 @@ select {
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    gap: 10px; /* Space between buttons */
+    gap: 10px;
+    /* Space between buttons */
 }
 
 .back-button {
@@ -344,15 +353,20 @@ select {
 
 .cuisine-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 columns */
-    gap: 20px; /* Space between the items */
-    width: 70%; /* Adjust to fit the content */
-    max-width: 1200px; /* Optional: Limit the max width */
+    grid-template-columns: repeat(3, 1fr);
+    /* 3 columns */
+    gap: 20px;
+    /* Space between the items */
+    width: 70%;
+    /* Adjust to fit the content */
+    max-width: 1200px;
+    /* Optional: Limit the max width */
     margin: 20px 0;
 }
 
 .cuisine-item {
-    position: relative; /* Needed for the overlay */
+    position: relative;
+    /* Needed for the overlay */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -381,17 +395,20 @@ select {
 }
 
 .cuisine-item.yes {
-    background-color: #00861f; /* Light green for "Yes" */
+    background-color: #00861f;
+    /* Light green for "Yes" */
     color: white;
 }
 
 .cuisine-item.no {
-    background-color: #be0010d3; /* Light red for "No" */
+    background-color: #be0010d3;
+    /* Light red for "No" */
     color: white;
 }
 
 .cuisine-item.no::after {
-    content: 'X'; /* The 'X' symbol */
+    content: 'X';
+    /* The 'X' symbol */
     position: absolute;
     top: 0;
     left: 0;
@@ -400,21 +417,28 @@ select {
     display: flex;
     justify-content: center;
     align-items: start + 10px;
-    font-size: 10rem; /* Large 'X' */
+    font-size: 10rem;
+    /* Large 'X' */
     color: white;
-    opacity: 0.5; /* Semi-transparent */
+    opacity: 0.5;
+    /* Semi-transparent */
     font-weight: bold;
-    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay */
-    border-radius: 20px; /* Ensures it follows the image's border radius */
-    pointer-events: none; /* Prevents the overlay from interfering with clicks */
+    background-color: rgba(0, 0, 0, 0.5);
+    /* Semi-transparent overlay */
+    border-radius: 20px;
+    /* Ensures it follows the image's border radius */
+    pointer-events: none;
+    /* Prevents the overlay from interfering with clicks */
 }
 
 .cuisine-item.off {
-    background-color: #f9f9f9; /* Default background for "Off" */
+    background-color: #f9f9f9;
+    /* Default background for "Off" */
 }
 
 .cuisine-item:hover {
-    opacity: 0.8; /* Make the item more translucent on hover */
+    opacity: 0.8;
+    /* Make the item more translucent on hover */
 }
 
 .scheduling-container {
@@ -458,18 +482,21 @@ select {
     text-align: center;
     padding: 8px;
     cursor: pointer;
-    grid-column: auto; /* Reset any column spanning */
+    grid-column: auto;
+    /* Reset any column spanning */
 }
 
 .time-row {
     display: grid;
-    grid-template-columns: 120px repeat(7, 1fr); /* Match parent grid */
+    grid-template-columns: 120px repeat(7, 1fr);
+    /* Match parent grid */
     gap: 10px;
 }
 
 .scheduling-grid {
     display: grid;
-    grid-template-columns: auto repeat(7, 1fr); /* Added column for buttons */
+    grid-template-columns: auto repeat(7, 1fr);
+    /* Added column for buttons */
     gap: 10px;
     margin: 20px 0;
     width: 100%;
@@ -488,7 +515,8 @@ select {
     width: 100%;
     transition: all 0.2s ease;
     text-align: left;
-    grid-column: 1; /* Ensure it stays in first column */
+    grid-column: 1;
+    /* Ensure it stays in first column */
 }
 
 .grid-cell {
@@ -542,16 +570,19 @@ select {
 
 /* Style for different preference states */
 .slot.off {
-    background-color: #f8f8f8; /* Default (Off) state */
+    background-color: #f8f8f8;
+    /* Default (Off) state */
 }
 
 .slot.yes {
-    background-color: #4caf50; /* Green for YES state */
+    background-color: #4caf50;
+    /* Green for YES state */
     color: white;
 }
 
 .slot.no {
-    background-color: #f44336; /* Red for NO state */
+    background-color: #f44336;
+    /* Red for NO state */
     color: white;
 }
 
@@ -564,15 +595,20 @@ select {
     position: absolute;
     top: 5px;
     right: 5px;
-    font-size: 20px; /* Adjust as needed */
-    color: white; /* Color for the 'X' */
+    font-size: 20px;
+    /* Adjust as needed */
+    color: white;
+    /* Color for the 'X' */
 }
 
 .button-group {
     display: flex;
-    justify-content: center; /* Center the buttons horizontally */
-    align-items: center; /* Vertically align buttons if needed */
-    gap: 10px; /* Space between the buttons */
+    justify-content: center;
+    /* Center the buttons horizontally */
+    align-items: center;
+    /* Vertically align buttons if needed */
+    gap: 10px;
+    /* Space between the buttons */
     margin-top: 20px;
 }
 
@@ -609,11 +645,16 @@ select {
 
 /* Center the heading */
 h1 {
-    text-align: center; /* Center the text */
-    margin-bottom: 20px; /* Add some space below the heading */
-    font-size: 2rem; /* Optional: Adjust the size if needed */
-    font-weight: bold; /* Make the heading bold */
-    color: #333; /* Optional: Adjust the color */
+    text-align: center;
+    /* Center the text */
+    margin-bottom: 20px;
+    /* Add some space below the heading */
+    font-size: 2rem;
+    /* Optional: Adjust the size if needed */
+    font-weight: bold;
+    /* Make the heading bold */
+    color: #333;
+    /* Optional: Adjust the color */
 }
 
 .save-preferences {
@@ -741,7 +782,8 @@ h1 {
     border-radius: 6px;
     margin-top: 0.5rem;
     font-size: 1.1rem;
-    color: white; /* Add this */
+    color: white;
+    /* Add this */
 }
 
 .code-text {
@@ -749,7 +791,8 @@ h1 {
     font-weight: bold;
     letter-spacing: 1px;
     background: rgb(255, 255, 255);
-    color: black; /* Add this explicitly */
+    color: black;
+    /* Add this explicitly */
     padding: 0.2rem 0.5rem;
     border-radius: 4px;
     margin-left: 0.5rem;
@@ -813,11 +856,13 @@ h1 {
     display: flex;
     gap: 1rem;
     margin-top: 2rem;
-    justify-content: flex-start; /* Aligns buttons to the start */
+    justify-content: flex-start;
+    /* Aligns buttons to the start */
 }
 
 .group-actions button {
-    min-width: 150px; /* Or whatever width matches your other buttons */
+    min-width: 150px;
+    /* Or whatever width matches your other buttons */
     padding: 0.5rem 1rem;
 }
 
@@ -990,7 +1035,8 @@ h1 {
 
 .availability-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr); /* Creates 2 equal columns */
+    grid-template-columns: repeat(2, 1fr);
+    /* Creates 2 equal columns */
     gap: 1rem;
     margin-top: 1rem;
 }
@@ -1035,12 +1081,7 @@ h1 {
 }
 
 .loading-skeleton {
-    background: linear-gradient(
-        90deg,
-        var(--gray-200) 25%,
-        var(--gray-300) 50%,
-        var(--gray-200) 75%
-    );
+    background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-300) 50%, var(--gray-200) 75%);
     background-size: 200% 100%;
     animation: loading 1.5s infinite;
 }
@@ -1049,6 +1090,7 @@ h1 {
     0% {
         background-position: 200% 0;
     }
+
     100% {
         background-position: -200% 0;
     }
@@ -1090,6 +1132,7 @@ h1 {
     left: 0;
     width: 60;
 }
+
 .availability-section {
     display: flex;
     flex-direction: column;
@@ -1101,11 +1144,7 @@ h1 {
 }
 
 .next-available-card {
-    background: linear-gradient(
-        100deg,
-        var(--primary-light) 10%,
-        var(--primary-dark) 90%
-    );
+    background: linear-gradient(100deg, var(--primary-light) 10%, var(--primary-dark) 90%);
     color: white;
     border-radius: 8px;
     overflow: hidden;
@@ -1159,6 +1198,7 @@ h1 {
 .day-schedule {
     border: 1px solid var(--gray-200);
     border-radius: 8px;
+  - Remove users from group
     overflow: hidden;
 }
 
@@ -1197,6 +1237,7 @@ h1 {
     border-radius: 4px;
     font-size: 0.9rem;
 }
+
 .search-preferences {
     background: var(--gray-100);
     padding: 1rem;
@@ -1296,4 +1337,15 @@ h1 {
 
 .transfer-admin-button:hover {
     background-color: #d1d5db;
+}
+
+.back-link {
+    text-decoration: none;
+    color: #1c1c1c;
+    margin-right: 10px;
+}
+
+.back-link:hover {
+    color: grey;
+    text-decoration: underline;
 }

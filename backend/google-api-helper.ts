@@ -1,9 +1,7 @@
 import axios from 'axios';
 import { Coordinates } from '@types';
 
-export const getLatLonFromAddress = async (
-    address: string
-): Promise<Coordinates | null> => {
+export const getLatLonFromAddress = async (address: string): Promise<Coordinates | null> => {
     try {
         const MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
         const response = await axios.get(
@@ -23,9 +21,7 @@ export const getLatLonFromAddress = async (
     }
 };
 
-export const calculateCenterPointFromMultipleLatLon = (
-    coordinates: Coordinates[]
-): Coordinates => {
+export const calculateCenterPointFromMultipleLatLon = (coordinates: Coordinates[]): Coordinates => {
     const total = coordinates.length;
     return coordinates.reduce(
         (acc, curr) => ({

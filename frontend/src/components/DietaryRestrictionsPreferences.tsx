@@ -8,15 +8,11 @@ enum PreferenceState {
 }
 
 const images = {
-    glutenFree:
-        'https://t3.ftcdn.net/jpg/05/89/81/70/360_F_589817083_iq2jX8gYocWYhe0gtdL1mPNJzN3C3KkM.jpg',
+    glutenFree: 'https://t3.ftcdn.net/jpg/05/89/81/70/360_F_589817083_iq2jX8gYocWYhe0gtdL1mPNJzN3C3KkM.jpg',
     vegan: 'https://seeklogo.com/images/V/vegan-logo-ACE43D0D9E-seeklogo.com.png',
-    vegetarian:
-        'https://t3.ftcdn.net/jpg/05/57/22/82/360_F_557228264_6zTpe9TNaRi3z1Qw3wt9mfYkBygX1F7u.jpg',
-    nutFree:
-        'https://supermarketlabels.com//img/product/100500-B.jpg?fv=87607B3F249F18FE8F6F641278054913',
-    dairyFree:
-        'https://www.shutterstock.com/image-vector/dairy-free-label-stamp-vector-600nw-2307872085.jpg',
+    vegetarian: 'https://t3.ftcdn.net/jpg/05/57/22/82/360_F_557228264_6zTpe9TNaRi3z1Qw3wt9mfYkBygX1F7u.jpg',
+    nutFree: 'https://supermarketlabels.com//img/product/100500-B.jpg?fv=87607B3F249F18FE8F6F641278054913',
+    dairyFree: 'https://www.shutterstock.com/image-vector/dairy-free-label-stamp-vector-600nw-2307872085.jpg',
     kosher: 'https://media.istockphoto.com/id/1456905781/zh/%E5%90%91%E9%87%8F/international-symbol-for-kosher-food.jpg?s=612x612&w=0&k=20&c=uIcyUM-go-pLmUPaYS2bvf1wPXo8z4MpLQ7svZ_j3lg=',
     // Add more images as needed
 };
@@ -74,11 +70,7 @@ const DietaryRestrictions: React.FC = () => {
                         className={`cuisine-item ${preferences[restriction.name].toLowerCase()}`} // Reuse the same classes
                         onClick={() => handleRestrictionClick(restriction.name)}
                     >
-                        <img
-                            src={restriction.img}
-                            alt={restriction.name}
-                            className="cuisine-img"
-                        />
+                        <img src={restriction.img} alt={restriction.name} className="cuisine-img" />
                         <p>{restriction.name}</p>
                     </div>
                 ))}

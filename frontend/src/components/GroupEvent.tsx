@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import api from '../api/axios';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import './GroupEvent.css';
 
 interface Restaurant {
@@ -35,6 +36,15 @@ interface AggregatedPreference {
     count: number;
 }
 
+interface CommonTimeSlot {
+    day: string;
+    slots: number[];
+}
+
+interface LocationState {
+    commonTimeSlots: CommonTimeSlot[];
+}
+
 const GroupEvent: React.FC = () => {
     const { groupid } = useParams<{ groupid: string }>();
     const [groupInfo, setGroupInfo] = useState<GroupInfo | null>(null);
@@ -43,18 +53,19 @@ const GroupEvent: React.FC = () => {
     const [longitude, setLongitude] = useState<number | null>(null);
     const [sortOption, setSortOption] = useState<string>('best_match');
     const [dietOption, setDietOption] = useState<string | null>(null);
-    const [cuisineOption, setCuisineOption] = useState<string | null>(null);
+    // const [cuisineOption, setCuisineOption] = useState<string | null>(null);
     const [restaurantLimit, setRestaurantLimit] = useState<number>(4);
     const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
-    const [eventDate, setEventDate] = useState<string>('');
+    const [eventDate, setEventDate] = useState<Date | null>(null);
     const [eventTime, setEventTime] = useState<string>('');
     const [isCreating, setIsCreating] = useState<boolean>(false);
+    const location = useLocation();
+    const { commonTimeSlots } = (location.state as LocationState) || {
+        commonTimeSlots: [],
+    };
 
-    const [selectedRestaurant, setSelectedRestaurant] =
-        useState<Restaurant | null>(null);
-    const [aggregatedPreferences, setAggregatedPreferences] = useState<
-        AggregatedPreference[]
-    >([]);
+    const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
+    const [aggregatedPreferences, setAggregatedPreferences] = useState<AggregatedPreference[]>([]);
     const cuisineOptions = [
         'chinese',
         'italian',
@@ -71,58 +82,58 @@ const GroupEvent: React.FC = () => {
         'middle eastern',
     ];
 
-    const timeOptions = [
-        '06:00',
-        '06:30',
-        '07:00',
-        '07:30',
-        '08:00',
-        '08:30',
-        '09:00',
-        '09:30',
-        '10:00',
-        '10:30',
-        '11:00',
-        '11:30',
-        '12:00',
-        '12:30',
-        '13:00',
-        '13:30',
-        '14:00',
-        '14:30',
-        '15:00',
-        '15:30',
-        '16:00',
-        '16:30',
-        '17:00',
-        '17:30',
-        '18:00',
-        '18:30',
-        '19:00',
-        '19:30',
-        '20:00',
-        '20:30',
-        '21:00',
-        '21:30',
-        '22:00',
-    ];
+    const convertSlotToTime = (slotIndex: number): string => {
+        const timeMap: { [key: number]: string } = {
+            0: '05:00',
+            1: '06:00',
+            2: '07:00',
+            3: '08:00',
+            4: '09:00',
+            5: '10:00',
+            6: '11:00',
+            7: '12:00',
+            8: '13:00',
+            9: '14:00',
+            10: '15:00',
+            11: '16:00',
+            12: '17:00',
+            13: '18:00',
+            14: '19:00',
+            15: '20:00',
+            16: '21:00',
+            17: '22:00',
+            18: '23:00',
+            19: '00:00',
+        };
+        return timeMap[slotIndex] || '';
+    };
 
-    const API_KEY = process.env.REACT_APP_YELP_API_KEY;
+    // const timeOptions = [
+    //     '05:00',
+    //     '06:00',
+    //     '07:00',
+    //     '08:00',
+    //     '09:00',
+    //     '10:00',
+    //     '11:00',
+    //     '12:00',
+    //     '13:00',
+    //     '14:00',
+    //     '15:00',
+    //     '16:00',
+    //     '17:00',
+    //     '18:00',
+    //     '19:00',
+    //     '20:00',
+    //     '21:00',
+    //     '22:00',
+    //     '23:00',
+    //     '00:00',
+    // ];
 
-    /*     useEffect(() => {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                setLatitude(position.coords.latitude);
-                setLongitude(position.coords.longitude);
-            },
-            (error) => {
-                console.error('Error fetching location', error);
-            }
-        );
-    }, []); */
+    // const API_KEY = process.env.REACT_APP_YELP_API_KEY;
 
     useEffect(() => {
-        // Try to get saved center point
         const savedCenter = localStorage.getItem(`group_${groupid}_center`);
         if (savedCenter) {
             const center = JSON.parse(savedCenter);
@@ -130,7 +141,6 @@ const GroupEvent: React.FC = () => {
             setLongitude(center.lng);
             console.log('Using group center point:', center);
         } else {
-            // Fallback to user's location if no center point exists
             console.log('No center point found, using user location');
             navigator.geolocation.getCurrentPosition(
                 (position) => {
@@ -161,19 +171,14 @@ const GroupEvent: React.FC = () => {
                     groupUsers.forEach((user: any) => {
                         user.cuisine_preferences?.forEach((pref: string) => {
                             const normalizedPref = pref.toLowerCase();
-                            preferencesCount[normalizedPref] =
-                                (preferencesCount[normalizedPref] || 0) + 1;
+                            preferencesCount[normalizedPref] = (preferencesCount[normalizedPref] || 0) + 1;
                         });
                     });
 
                     console.log('Aggregated counts:', preferencesCount);
 
-                    // Find max count
-                    const maxCount = Math.max(
-                        ...Object.values(preferencesCount)
-                    );
+                    const maxCount = Math.max(...Object.values(preferencesCount));
 
-                    // Get cuisines with max count (favorites)
                     const favoriteCuisines = Object.entries(preferencesCount)
                         .filter(([_, count]) => count === maxCount)
                         .map(([cuisine]) => cuisine.toLowerCase());
@@ -181,13 +186,10 @@ const GroupEvent: React.FC = () => {
                     console.log('Setting favorite cuisines:', favoriteCuisines);
                     setSelectedCuisines(favoriteCuisines);
 
-                    // Store all preferences for display
-                    const aggregated = Object.entries(preferencesCount).map(
-                        ([preference, count]) => ({
-                            preference: preference.toLowerCase(),
-                            count,
-                        })
-                    );
+                    const aggregated = Object.entries(preferencesCount).map(([preference, count]) => ({
+                        preference: preference.toLowerCase(),
+                        count,
+                    }));
                     setAggregatedPreferences(aggregated);
                 }
             } catch (error) {
@@ -200,7 +202,6 @@ const GroupEvent: React.FC = () => {
 
     useEffect(() => {
         if (latitude && longitude) {
-            // Remove API_KEY check
             console.log('Fetching restaurants with options:', {
                 sortOption,
                 dietOption,
@@ -208,14 +209,7 @@ const GroupEvent: React.FC = () => {
             });
             fetchRestaurants(latitude, longitude);
         }
-    }, [
-        latitude,
-        longitude,
-        sortOption,
-        dietOption,
-        selectedCuisines,
-        restaurantLimit,
-    ]);
+    }, [latitude, longitude, sortOption, dietOption, selectedCuisines, restaurantLimit]);
 
     const handleCreateEvent = async () => {
         if (!selectedRestaurant || !eventDate || !eventTime) {
@@ -226,11 +220,9 @@ const GroupEvent: React.FC = () => {
         try {
             setIsCreating(true);
 
-            // Delete any existing event first
             await api.delete(`/socialevents/${groupid}`);
 
-            // Create new event
-            const dayOfWeek = new Date(eventDate).toLocaleString('en-US', {
+            const dayOfWeek = eventDate.toLocaleString('en-US', {
                 weekday: 'long',
             });
 
@@ -283,9 +275,7 @@ const GroupEvent: React.FC = () => {
 
     const handleCuisineToggle = (cuisine: string) => {
         setSelectedCuisines((prev) =>
-            prev.includes(cuisine)
-                ? prev.filter((c) => c !== cuisine)
-                : [...prev, cuisine]
+            prev.includes(cuisine) ? prev.filter((c) => c !== cuisine) : [...prev, cuisine]
         );
     };
 
@@ -293,138 +283,198 @@ const GroupEvent: React.FC = () => {
         setRestaurantLimit(Number(event.target.value));
     };
 
-    const formatHours = (
-        hours: { start: string; end: string; day: number }[]
-    ) => {
-        const daysOfWeek = [
-            'Sunday',
-            'Monday',
-            'Tuesday',
-            'Wednesday',
-            'Thursday',
-            'Friday',
-            'Saturday',
-        ];
-        return hours
-            .map((hour) => {
-                const start = `${hour.start.slice(0, 2)}:${hour.start.slice(2)}`;
-                const end = `${hour.end.slice(0, 2)}:${hour.end.slice(2)}`;
-                return `${daysOfWeek[hour.day]}: ${start} - ${end}`;
-            })
-            .join(', ');
+    const isDateAvailable = (date: Date): boolean => {
+        const dayOfWeek = date.toLocaleString('en-US', { weekday: 'long' });
+        const daySlots = commonTimeSlots.find((slot) => slot.day === dayOfWeek);
+
+        return (daySlots && Array.isArray(daySlots.slots) && daySlots.slots.length > 0) || false;
+    };
+
+    const getAvailableTimesForDate = (selectedDate: Date | null): string[] => {
+        if (!selectedDate) return [];
+
+        const dayOfWeek = selectedDate.toLocaleString('en-US', {
+            weekday: 'long',
+        });
+        const daySlots = commonTimeSlots.find((slot) => slot.day === dayOfWeek);
+
+        if (!daySlots) return [];
+
+        return daySlots.slots.map((slotIndex) => convertSlotToTime(slotIndex)).filter((time) => time !== '');
+    };
+
+    // const formatHours = (hours: { start: string; end: string; day: number }[]) => {
+    //     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    //     return hours
+    //         .map((hour) => {
+    //             const start = `${hour.start.slice(0, 2)}:${hour.start.slice(2)}`;
+    //             const end = `${hour.end.slice(0, 2)}:${hour.end.slice(2)}`;
+    //             return `${daysOfWeek[hour.day]}: ${start} - ${end}`;
+    //         })
+    //         .join(', ');
+    // };
+
+    const isRestaurantOpenAtDateTime = (restaurant: Restaurant, date: Date, time: string): boolean => {
+        if (!restaurant.hours?.[0]?.open) return false;
+
+        const selectedDay = date.getDay(); // 0-6, Sunday-Saturday
+        const [hours, minutes] = time.split(':').map(Number);
+        const timeNumber = hours * 100 + minutes;
+
+        const dayHours = restaurant.hours[0].open.filter((h) => h.day === selectedDay);
+
+        return dayHours.some((hour) => {
+            const start = parseInt(hour.start);
+            const end = parseInt(hour.end);
+            return timeNumber >= start && timeNumber <= end;
+        });
+    };
+
+    const highlightWithRanges = (date: Date) => {
+        return isDateAvailable(date) ? 'available' : 'unavailable';
     };
 
     return (
         <div>
-            <header className="group-header">
-                <h1>
-                    {groupInfo ? (
-                        <>Planning Event for: {groupInfo.groupname}</>
-                    ) : (
-                        'Loading group...'
-                    )}
-                </h1>
+            <header className="options-header">
+                <h1>{groupInfo ? <>Planning Event for: {groupInfo.groupname}</> : 'Loading group...'}</h1>
             </header>
 
-            <div className="group-navigation">
-                <Link to={`/selected-group/${groupid}`} className="back-button">
-                    ← Back to {groupInfo ? groupInfo.groupname : 'Group'}
-                </Link>
+            <div className="form-group">
+                <label htmlFor="sort">Sort by: </label>
+                <select id="sort" value={sortOption} onChange={handleSortChange}>
+                    <option value="best_match">Best Match</option>
+                    <option value="rating">Rating</option>
+                    <option value="distance">Distance</option>
+                </select>
+
+                <label htmlFor="diet">Dietary Restrictions: </label>
+                <select id="diet" value={dietOption || ''} onChange={handleDietChange}>
+                    <option value="">All</option>
+                    <option value="vegetarian">Vegetarian</option>
+                    <option value="vegan">Vegan</option>
+                    <option value="gluten_free">Gluten Free</option>
+                    <option value="kosher">Kosher</option>
+                    <option value="muslim">Muslim</option>
+                </select>
             </div>
 
-            <label htmlFor="sort">Sort by: </label>
-            <select id="sort" value={sortOption} onChange={handleSortChange}>
-                <option value="best_match">Best Match</option>
-                <option value="rating">Rating</option>
-                <option value="distance">Distance</option>
-            </select>
-
-            <label htmlFor="diet">Dietary Restrictions: </label>
-            <select
-                id="diet"
-                value={dietOption || ''}
-                onChange={handleDietChange}
-            >
-                <option value="">All</option>
-                <option value="vegetarian">Vegetarian</option>
-                <option value="vegan">Vegan</option>
-                <option value="gluten_free">Gluten Free</option>
-                <option value="kosher">Kosher</option>
-                <option value="muslim">Muslim</option>
-            </select>
-
-            <div className="cuisine-grid">
+            <div className="cuisine-options">
                 {cuisineOptions.map((cuisine) => (
-                    <label key={cuisine} className="cuisine-checkbox">
-                        <input
-                            type="checkbox"
-                            checked={selectedCuisines.includes(cuisine)}
-                            onChange={() => handleCuisineToggle(cuisine)}
-                        />
+                    <div
+                        key={cuisine}
+                        className={`cuisine-button ${selectedCuisines.includes(cuisine) ? 'selected' : ''}`}
+                        onClick={() => handleCuisineToggle(cuisine)}
+                    >
                         {cuisine.charAt(0).toUpperCase() + cuisine.slice(1)}
-                    </label>
+                    </div>
                 ))}
             </div>
 
-            <label htmlFor="limit">Number of Restaurants: </label>
-            <select
-                id="limit"
-                value={restaurantLimit}
-                onChange={handleLimitChange}
-            >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={30}>30</option>
-                <option value={40}>40</option>
-                <option value={50}>50</option>
-            </select>
+            <div className="form-group">
+                <label htmlFor="limit">Number of Restaurants: </label>
+                <select id="limit" value={restaurantLimit} onChange={handleLimitChange}>
+                    <option value={4}>4</option>
+                    <option value={8}>8</option>
+                    <option value={12}>12</option>
+                    <option value={16}>16</option>
+                    <option value={20}>20</option>
+                </select>
+            </div>
 
-            {/*        <div
-                className="debug-section"
-                style={{
-                    margin: '20px',
-                    padding: '20px',
-                    border: '1px solid #ccc',
-                }}
-            >
-                              <h3>Debug Info:</h3>
-                <div>
-                    <h4>Group Users Preferences:</h4>
-                    <pre>{JSON.stringify(aggregatedPreferences, null, 2)}</pre>
+            {/*}   <div className="availability-summary">
+                <h3>Group Availability</h3>
+                <div className="availability-grid">
+                    {commonTimeSlots.map(
+                        ({ day, slots }) =>
+                            slots.length > 0 && (
+                                <div key={day} className="day-availability">
+                                    <h4>{day}</h4>
+                                    <div className="time-slots">
+                                        {[
+                                            {
+                                                label: 'Morning',
+                                                slots: slots.filter(
+                                                    (i) => i < 6
+                                                ),
+                                            },
+                                            {
+                                                label: 'Afternoon',
+                                                slots: slots.filter(
+                                                    (i) => i >= 6 && i < 12
+                                                ),
+                                            },
+                                            {
+                                                label: 'Evening',
+                                                slots: slots.filter(
+                                                    (i) => i >= 12
+                                                ),
+                                            },
+                                        ].map(
+                                            ({ label, slots }) =>
+                                                slots.length > 0 && (
+                                                    <div
+                                                        key={label}
+                                                        className="time-group"
+                                                    >
+                                                        <span className="time-label">
+                                                            {label}:
+                                                        </span>
+                                                        <span className="time-values">
+                                                            {slots.map(
+                                                                (slot) => (
+                                                                    <span
+                                                                        key={
+                                                                            slot
+                                                                        }
+                                                                        className="time-chip"
+                                                                    >
+                                                                        {new Date(
+                                                                            `2024-01-01T${convertSlotToTime(slot)}`
+                                                                        ).toLocaleTimeString(
+                                                                            'en-US',
+                                                                            {
+                                                                                hour: 'numeric',
+                                                                                minute: '2-digit',
+                                                                                hour12: true,
+                                                                            }
+                                                                        )}
+                                                                    </span>
+                                                                )
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                )
+                                        )}
+                                    </div>
+                                </div>
+                            )
+                    )}
                 </div>
-                <div>
-                    <h4>Selected Cuisines:</h4>
-                    <pre>{JSON.stringify(selectedCuisines, null, 2)}</pre>
-                </div> 
-            </div>*/}
+            </div> */}
 
             <div className="event-creation-form">
                 <h3>Create Group Event</h3>
                 <div className="datetime-container">
                     <div className="input-group">
                         <label htmlFor="event-date">Date</label>
-                        <input
+                        <DatePicker
                             id="event-date"
-                            type="date"
-                            value={eventDate}
-                            onChange={(e) => setEventDate(e.target.value)}
-                            min={new Date().toISOString().split('T')[0]}
+                            selected={eventDate}
+                            onChange={(date: Date | null) => setEventDate(date)}
+                            minDate={new Date()}
+                            filterDate={isDateAvailable}
+                            dayClassName={highlightWithRanges}
+                            className="date-input"
                         />
                     </div>
                     <div className="input-group">
                         <label htmlFor="event-time">Time</label>
-                        <select
-                            id="event-time"
-                            value={eventTime}
-                            onChange={(e) => setEventTime(e.target.value)}
-                        >
+                        <select id="event-time" value={eventTime} onChange={(e) => setEventTime(e.target.value)}>
                             <option value="">Select Time</option>
-                            {timeOptions.map((time) => (
+                            {getAvailableTimesForDate(eventDate).map((time) => (
                                 <option key={time} value={time}>
-                                    {new Date(
-                                        `2024-01-01T${time}`
-                                    ).toLocaleTimeString('en-US', {
+                                    {new Date(`2024-01-01T${time}`).toLocaleTimeString('en-US', {
                                         hour: 'numeric',
                                         minute: '2-digit',
                                         hour12: true,
@@ -441,11 +491,7 @@ const GroupEvent: React.FC = () => {
                     <div
                         key={restaurant.id}
                         onClick={() => setSelectedRestaurant(restaurant)}
-                        className={`restaurant-card ${
-                            selectedRestaurant?.id === restaurant.id
-                                ? 'selected'
-                                : ''
-                        }`}
+                        className={`restaurant-card ${selectedRestaurant?.id === restaurant.id ? 'selected' : ''}`}
                     >
                         <h3>{restaurant.name}</h3>
                         <img
@@ -454,13 +500,9 @@ const GroupEvent: React.FC = () => {
                             className="restaurant-image"
                         />
                         <p>Rating: {restaurant.rating}</p>
+                        <p>Distance: {(restaurant.distance / 1000).toFixed(2)} km</p>
                         <p>
-                            Distance: {(restaurant.distance / 1000).toFixed(2)}{' '}
-                            km
-                        </p>
-                        <p>
-                            Address: {restaurant.location.address1},{' '}
-                            {restaurant.location.city}
+                            Address: {restaurant.location.address1}, {restaurant.location.city}
                         </p>
                         <p>
                             <a
@@ -477,14 +519,14 @@ const GroupEvent: React.FC = () => {
                             <>
                                 <p>
                                     Status:{' '}
-                                    {restaurant.hours[0]?.is_open_now
-                                        ? 'Open'
-                                        : 'Closed'}
+                                    {eventDate && eventTime
+                                        ? isRestaurantOpenAtDateTime(restaurant, eventDate, eventTime)
+                                            ? 'Open at selected time'
+                                            : 'Closed at selected time'
+                                        : restaurant.hours[0]?.is_open_now
+                                          ? 'Open now'
+                                          : 'Closed now'}
                                 </p>
-                                {/*}  <p>
-                                    Hours:{' '}
-                                    {formatHours(restaurant.hours[0].open)}
-                                </p> */}
                             </>
                         ) : (
                             <p>Status: Hours not available</p>
@@ -492,15 +534,14 @@ const GroupEvent: React.FC = () => {
                     </div>
                 ))}
             </div>
+            <Link to={`/selected-group/${groupid}`} className="back-link">
+                ← Back to {groupInfo ? groupInfo.groupname : 'Group'}
+            </Link>
+
             <button
                 className="cta-button"
                 onClick={handleCreateEvent}
-                disabled={
-                    !selectedRestaurant ||
-                    !eventDate ||
-                    !eventTime ||
-                    isCreating
-                }
+                disabled={!selectedRestaurant || !eventDate || !eventTime || isCreating}
             >
                 {isCreating ? 'Creating Event...' : 'Create Event'}
             </button>

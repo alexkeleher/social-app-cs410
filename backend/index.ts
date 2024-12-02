@@ -3,14 +3,7 @@ import cors from 'cors';
 import pool from './db';
 import { QueryResult } from 'pg';
 import { Application, Request, Response } from 'express';
-import {
-    User,
-    GroupAndCreator,
-    YelpRestaurant,
-    SocialEvent,
-    DayOfWeekAndTime,
-    Coordinates,
-} from '@types';
+import { User, GroupAndCreator, YelpRestaurant, SocialEvent, DayOfWeekAndTime, Coordinates } from '@types';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import crypto from 'crypto';
@@ -49,8 +42,6 @@ interface Restaurant {
     Address?: string;
     PriceLevel?: string;
 }
-
-
 
 // Middleware
 app.use(
@@ -138,8 +129,6 @@ app.get('/', (req: Request, res: Response) => {
     res.send('This is Express working');
 });
 
-
-
 // /* LOGIN */
 app.post('/login', async (req: Request, res: Response): Promise<void> => {
     try {
@@ -147,10 +136,7 @@ app.post('/login', async (req: Request, res: Response): Promise<void> => {
         const { email, password }: User = req.body;
 
         // Query database to find the user
-        const userResult: QueryResult = await pool.query(
-            'SELECT * FROM users WHERE email = $1',
-            [email]
-        );
+        const userResult: QueryResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
         console.log('User result:', userResult.rows);
 
         if (userResult.rows.length === 0) {
@@ -189,35 +175,28 @@ app.post('/login', async (req: Request, res: Response): Promise<void> => {
 });
 
 // Add refresh token endpoint
-app.post(
-    '/refresh-token',
-    async (req: Request, res: Response): Promise<void> => {
-        const { token } = req.body;
+app.post('/refresh-token', async (req: Request, res: Response): Promise<void> => {
+    const { token } = req.body;
 
-        if (!token) {
-            res.status(401).json({ error: 'No token provided' });
-            return; // Explicitly return after sending a response
-        }
-
-        try {
-            const decoded = jwt.verify(token, 'your-secret-key', {
-                ignoreExpiration: true,
-            }) as { id: number; email: string };
-
-            // Generate new token
-            const newToken = jwt.sign(
-                { id: decoded.id, email: decoded.email },
-                'your-secret-key',
-                { expiresIn: '24h' }
-            );
-
-            res.json({ token: newToken });
-        } catch (error) {
-            console.error('Token refresh error:', error);
-            res.status(401).json({ error: 'Invalid token' });
-        }
+    if (!token) {
+        res.status(401).json({ error: 'No token provided' });
+        return; // Explicitly return after sending a response
     }
-);
+
+    try {
+        const decoded = jwt.verify(token, 'your-secret-key', {
+            ignoreExpiration: true,
+        }) as { id: number; email: string };
+
+        // Generate new token
+        const newToken = jwt.sign({ id: decoded.id, email: decoded.email }, 'your-secret-key', { expiresIn: '24h' });
+
+        res.json({ token: newToken });
+    } catch (error) {
+        console.error('Token refresh error:', error);
+        res.status(401).json({ error: 'Invalid token' });
+    }
+});
 
 // /* LOGOUT */
 app.post('/logout', (req: Request, res: Response) => {
@@ -309,12 +288,8 @@ GROUP BY g.name, g.joincode, u.id, u.firstname, u.lastname, u.username, u.email,
             groupname: allData.rows[0]?.groupname || '',
             joincode: allData.rows[0]?.joincode || '',
             members: allData.rows,
-            maxPrice: Math.max(
-                ...allData.rows.map((u) => u.preferredpricerange || 0)
-            ),
-            maxDistance: Math.max(
-                ...allData.rows.map((u) => u.preferredmaxdistance || 0)
-            ),
+            maxPrice: Math.max(...allData.rows.map((u) => u.preferredpricerange || 0)),
+            maxDistance: Math.max(...allData.rows.map((u) => u.preferredmaxdistance || 0)),
         };
 
         res.json(allData.rows);
@@ -325,169 +300,167 @@ GROUP BY g.name, g.joincode, u.id, u.firstname, u.lastname, u.username, u.email,
 });
 
 // CREATE a user
-app.post(
-    '/users',
-    async (req: Request<unknown, unknown, User>, res: Response) => {
-        try {
-            const {
+app.post('/users', async (req: Request<unknown, unknown, User>, res: Response) => {
+    try {
+        const {
+            firstname,
+            lastname,
+            username,
+            email,
+            password,
+            phone,
+            address,
+            preferredpricerange,
+            preferredmaxdistance,
+        } = req.body;
+
+        // Hash the new password
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+        // Store the hashed password in the database
+        const newData: QueryResult = await pool.query(
+            `INSERT INTO Users (firstname, lastname, username, email, password, phone, address, preferredpricerange, preferredmaxdistance)
+             VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+            [
                 firstname,
                 lastname,
                 username,
                 email,
-                password,
+                hashedPassword,
                 phone,
                 address,
                 preferredpricerange,
                 preferredmaxdistance,
-            } = req.body;
-
-            // Hash the new password
-            const saltRounds = 10;
-            const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-            // Store the hashed password in the database
-            const newData: QueryResult = await pool.query(
-                `INSERT INTO Users (firstname, lastname, username, email, password, phone, address, preferredpricerange, preferredmaxdistance)
-             VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-                [
-                    firstname,
-                    lastname,
-                    username,
-                    email,
-                    hashedPassword,
-                    phone,
-                    address,
-                    preferredpricerange,
-                    preferredmaxdistance,
-                ]
-            );
-            res.json({
-                Result: 'Success',
-                InsertedEntry: newData.rows,
-            });
-        } catch (e) {
-            console.error((e as Error).message);
-            res.status(500).json({ error: (e as Error).message });
-        }
+            ]
+        );
+        res.json({
+            Result: 'Success',
+            InsertedEntry: newData.rows,
+        });
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
     }
-);
+});
 
 // UPDATE a user
-app.put(
-    '/users/:id',
-    async (req: Request<Parameters, unknown, UpdateBody>, res: Response) => {
-        try {
-            const { id } = req.params;
-            const {
-                FirstName,
-                LastName,
-                UserName,
-                Email,
-                Password,
-                Phone,
-                Address,
-                PreferredPriceRange,
-                PreferredMaxDistance,
-                SerializedScheduleMatrix,
-            } = req.body;
+app.put('/users/:id', async (req: Request<Parameters, unknown, UpdateBody>, res: Response) => {
+    try {
+        const { id } = req.params;
+        const {
+            FirstName,
+            LastName,
+            UserName,
+            Email,
+            Password,
+            Phone,
+            Address,
+            PreferredPriceRange,
+            PreferredMaxDistance,
+            SerializedScheduleMatrix,
+        } = req.body;
 
-            let Latitude: number | null = null;
-            let Longitude: number | null = null;
+        let Latitude: number | null = null;
+        let Longitude: number | null = null;
 
-            // Dynamically build the SET clause based on provided fields (since we don't have to provide every field)
-            // An array to store the individual SET clauses (e.g., firstname = $1, lastname = $2)
+        // Dynamically build the SET clause based on provided fields (since we don't have to provide every field)
+        // An array to store the individual SET clauses (e.g., firstname = $1, lastname = $2)
 
-            const updates: string[] = [];
+        const updates: string[] = [];
 
-            // An array to store the corresponding values for the SET clauses.
-            const values: string[] = [];
+        // An array to store the corresponding values for the SET clauses.
+        const values: string[] = [];
 
-            // Counter to track parameter index ($1, $2, etc.)
-            let count = 1;
+        // Counter to track parameter index ($1, $2, etc.)
+        let count = 1;
 
-            if (FirstName) {
-                updates.push(`firstname = $${count}`);
-                values.push(FirstName);
-                count++;
-            }
-            if (LastName) {
-                updates.push(`lastname = $${count}`);
-                values.push(LastName);
-                count++;
-            }
-            if (UserName) {
-                updates.push(`username = $${count}`);
-                values.push(UserName);
-                count++;
-            }
-            if (Email) {
-                updates.push(`email = $${count}`);
-                values.push(Email);
-                count++;
-            }
-            // TODO: For security updating the password should not be part of this route
-            if (Password) {
-                // Hash the new password
-                const saltRounds = 10;
-                const hashedPassword = await bcrypt.hash(Password, saltRounds);
-
-                updates.push(`password = $${count}`);
-                values.push(hashedPassword); // Store the hashed password
-                count++;
-            }
-            if (Phone) {
-                updates.push(`phone = $${count}`);
-                values.push(Phone);
-                count++;
-            }
-            if (Address) {
-                updates.push(`address = $${count}`);
-                values.push(Address);
-                count++;
-
-                // If updating the address, get lat lon from google api and store those as well
-                const { lat: Latitude, lng: Longitude } =
-                    (await getLatLonFromAddress(Address)) || {};
-
-                updates.push(`latitude = $${count}`);
-                values.push('' + Latitude);
-                count++;
-                updates.push(`longitude = $${count}`);
-                values.push('' + Longitude);
-                count++;
-            }
-            if (PreferredPriceRange) {
-                updates.push(`PreferredPriceRange = $${count}`);
-                values.push(String(PreferredPriceRange));
-                count++;
-            }
-            if (PreferredMaxDistance) {
-                updates.push(`PreferredMaxDistance = $${count}`);
-                values.push(String(PreferredMaxDistance));
-                count++;
-            }
-            if (SerializedScheduleMatrix) {
-                updates.push(`SerializedScheduleMatrix = $${count}`);
-                values.push(String(SerializedScheduleMatrix));
-                count++;
-            }
-
-            // Construct SQL query to dynamically update user fields based on request body
-            const query = `UPDATE users SET ${updates.join(', ')} WHERE id = $${count} RETURNING *`;
-            values.push(id);
-
-            // Executes the SQL query and sends response back to client
-            const updatedData: QueryResult = await pool.query(query, values);
-            res.json({
-                Result: 'Success',
-                UpdateEntry: updatedData.rows[0],
-            });
-        } catch (e) {
-            console.error((e as Error).message);
-            res.status(500).json({ error: (e as Error).message });
+        if (FirstName) {
+            updates.push(`firstname = $${count}`);
+            values.push(FirstName);
+            count++;
         }
+        if (LastName) {
+            updates.push(`lastname = $${count}`);
+            values.push(LastName);
+            count++;
+        }
+        if (UserName) {
+            updates.push(`username = $${count}`);
+            values.push(UserName);
+            count++;
+        }
+        if (Email) {
+            updates.push(`email = $${count}`);
+            values.push(Email);
+            count++;
+        }
+        // TODO: For security updating the password should not be part of this route
+        if (Password) {
+            // Hash the new password
+            const saltRounds = 10;
+            const hashedPassword = await bcrypt.hash(Password, saltRounds);
+
+            updates.push(`password = $${count}`);
+            values.push(hashedPassword); // Store the hashed password
+            count++;
+        }
+        if (Phone) {
+            updates.push(`phone = $${count}`);
+            values.push(Phone);
+            count++;
+        }
+        if (Address) {
+            updates.push(`address = $${count}`);
+            values.push(Address);
+            count++;
+
+            // If updating the address, get lat lon from google api and store those as well
+            const { lat: Latitude, lng: Longitude } = (await getLatLonFromAddress(Address)) || {};
+
+            updates.push(`latitude = $${count}`);
+            values.push('' + Latitude);
+            count++;
+            updates.push(`longitude = $${count}`);
+            values.push('' + Longitude);
+            count++;
+        }
+        if (PreferredPriceRange) {
+            updates.push(`PreferredPriceRange = $${count}`);
+            values.push(String(PreferredPriceRange));
+            count++;
+        }
+        if (PreferredMaxDistance) {
+            updates.push(`PreferredMaxDistance = $${count}`);
+            values.push(String(PreferredMaxDistance));
+            count++;
+        }
+        if (SerializedScheduleMatrix) {
+            updates.push(`SerializedScheduleMatrix = $${count}`);
+            values.push(String(SerializedScheduleMatrix));
+            count++;
+        }
+        // Construct SQL query to dynamically update user fields based on request body
+        const query = `UPDATE users SET ${updates.join(', ')} WHERE id = $${count} RETURNING *`;
+        values.push(id);
+
+        if (DEBUGGING_MODE) console.log('updates');
+        if (DEBUGGING_MODE) console.log(updates);
+        if (DEBUGGING_MODE) console.log('values');
+        if (DEBUGGING_MODE) console.log(values);
+        if (DEBUGGING_MODE) console.log(query);
+
+        // Executes the SQL query and sends response back to client
+        const updatedData: QueryResult = await pool.query(query, values);
+        res.json({
+            Result: 'Success',
+            UpdateEntry: updatedData.rows[0],
+        });
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
     }
-);
+});
 
 // DELETE a user (protected)
 app.delete('/users/:id', async (req: Request<Parameters>, res: Response) => {
@@ -567,11 +540,19 @@ app.post(
                         [groupname, joinCode]
                     );
                     const newlyCreatedGroupID = insertedGroupData.rows[0].id;
+
                     // Add the creating user to the group WITH admin status
 await pool.query(
     'INSERT INTO UserGroupXRef (UserID, GroupID, isAdmin) VALUES($1, $2, $3);',
     [creatoruserid, newlyCreatedGroupID, true]
 );
+
+                    // Add the creating user to the group
+                    await pool.query('INSERT INTO UserGroupXRef (UserID, GroupID) VALUES($1, $2);', [
+                        creatoruserid,
+                        newlyCreatedGroupID,
+                    ]);
+
                     // Send response back to the client
                     res.json({
                         Result: 'Success',
@@ -602,10 +583,7 @@ app.post('/groups/join', async (req: Request, res: Response): Promise<void> => {
         }
 
         // Find the group
-        const groupResult = await pool.query(
-            'SELECT id FROM Groups WHERE JoinCode = $1',
-            [joinCode]
-        );
+        const groupResult = await pool.query('SELECT id FROM Groups WHERE JoinCode = $1', [joinCode]);
 
         if (groupResult.rows.length === 0) {
             res.status(404).json({ error: 'Invalid join code' });
@@ -615,10 +593,10 @@ app.post('/groups/join', async (req: Request, res: Response): Promise<void> => {
         const groupId = groupResult.rows[0].id;
 
         // Check if already member
-        const memberCheck = await pool.query(
-            'SELECT 1 FROM UserGroupXRef WHERE UserID = $1 AND GroupID = $2',
-            [userId, groupId]
-        );
+        const memberCheck = await pool.query('SELECT 1 FROM UserGroupXRef WHERE UserID = $1 AND GroupID = $2', [
+            userId,
+            groupId,
+        ]);
 
         const isMember = memberCheck.rows.length > 0;
 
@@ -635,10 +613,7 @@ app.post('/groups/join', async (req: Request, res: Response): Promise<void> => {
         }
 
         // Add user to group
-        await pool.query(
-            'INSERT INTO UserGroupXRef (UserID, GroupID) VALUES ($1, $2)',
-            [userId, groupId]
-        );
+        await pool.query('INSERT INTO UserGroupXRef (UserID, GroupID) VALUES ($1, $2)', [userId, groupId]);
 
         res.json({ message: 'Successfully joined group', groupId });
     } catch (e) {
@@ -647,67 +622,58 @@ app.post('/groups/join', async (req: Request, res: Response): Promise<void> => {
     }
 });
 // Send invite
-app.post(
-    '/groups/:id/invite',
-    async (req: Request, res: Response): Promise<void> => {
-        try {
-            const { id } = req.params;
-            const { email } = req.body;
+app.post('/groups/:id/invite', async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id } = req.params;
+        const { email } = req.body;
 
-            const authHeader = req.headers.authorization;
-            if (!authHeader) {
-                res.status(401).json({ error: 'No token provided' });
-                return;
-            }
-
-            // Verify user exists first
-            const userExists = await pool.query(
-                'SELECT id FROM Users WHERE email = $1',
-                [email]
-            );
-
-            if (userExists.rows.length === 0) {
-                res.status(404).json({ error: 'User not found' });
-                return;
-            }
-
-            const userId = userExists.rows[0].id;
-
-            // Check if already member
-            const isMember = await pool.query(
-                'SELECT 1 FROM UserGroupXRef WHERE UserID = $1 AND GroupID = $2',
-                [userId, id]
-            );
-
-            if (isMember.rows.length > 0) {
-                res.status(400).json({ error: 'User is already in group' });
-                return;
-            }
-
-            // Check for existing invite
-            const existingInvite = await pool.query(
-                'SELECT 1 FROM GroupInvites WHERE GroupID = $1 AND Email = $2',
-                [id, email]
-            );
-
-            if (existingInvite.rows.length > 0) {
-                res.status(400).json({ error: 'Invite already sent' });
-                return;
-            }
-
-            // Create invite
-            await pool.query(
-                'INSERT INTO GroupInvites (GroupID, Email) VALUES ($1, $2)',
-                [id, email]
-            );
-
-            res.json({ message: 'Invite sent successfully' });
-        } catch (e) {
-            console.error('Error sending invite:', e);
-            res.status(500).json({ error: (e as Error).message });
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            res.status(401).json({ error: 'No token provided' });
+            return;
         }
+
+        // Verify user exists first
+        const userExists = await pool.query('SELECT id FROM Users WHERE email = $1', [email]);
+
+        if (userExists.rows.length === 0) {
+            res.status(404).json({ error: 'User not found' });
+            return;
+        }
+
+        const userId = userExists.rows[0].id;
+
+        // Check if already member
+        const isMember = await pool.query('SELECT 1 FROM UserGroupXRef WHERE UserID = $1 AND GroupID = $2', [
+            userId,
+            id,
+        ]);
+
+        if (isMember.rows.length > 0) {
+            res.status(400).json({ error: 'User is already in group' });
+            return;
+        }
+
+        // Check for existing invite
+        const existingInvite = await pool.query('SELECT 1 FROM GroupInvites WHERE GroupID = $1 AND Email = $2', [
+            id,
+            email,
+        ]);
+
+        if (existingInvite.rows.length > 0) {
+            res.status(400).json({ error: 'Invite already sent' });
+            return;
+        }
+
+        // Create invite
+        await pool.query('INSERT INTO GroupInvites (GroupID, Email) VALUES ($1, $2)', [id, email]);
+
+        res.json({ message: 'Invite sent successfully' });
+    } catch (e) {
+        console.error('Error sending invite:', e);
+        res.status(500).json({ error: (e as Error).message });
     }
-);
+});
 
 // Get pending invites for user
 app.get('/invites', async (req: Request, res: Response): Promise<void> => {
@@ -746,68 +712,59 @@ app.get('/invites', async (req: Request, res: Response): Promise<void> => {
     }
 });
 
-app.delete(
-    '/invites/:id',
-    async (req: Request, res: Response): Promise<void> => {
-        try {
-            const { id } = req.params;
+app.delete('/invites/:id', async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id } = req.params;
 
-            // Get user ID from JWT token
-            const authHeader = req.headers.authorization;
-            if (!authHeader) {
-                res.status(401).json({ error: 'No token provided' });
-                return;
-            }
-
-            const token = authHeader.split(' ')[1];
-            const decoded = jwt.verify(token, 'your-secret-key') as {
-                id: number;
-                email: string;
-            };
-            const userId = decoded.id;
-
-            // Delete the invitation
-            await pool.query(
-                'DELETE FROM GroupInvites WHERE GroupID = $1 AND Email = (SELECT email FROM Users WHERE id = $2)',
-                [id, userId]
-            );
-
-            res.json({ message: 'Invitation deleted successfully' });
-        } catch (e) {
-            console.error('Error deleting invite:', e);
-            res.status(500).json({ error: (e as Error).message });
+        // Get user ID from JWT token
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            res.status(401).json({ error: 'No token provided' });
+            return;
         }
+
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, 'your-secret-key') as {
+            id: number;
+            email: string;
+        };
+        const userId = decoded.id;
+
+        // Delete the invitation
+        await pool.query(
+            'DELETE FROM GroupInvites WHERE GroupID = $1 AND Email = (SELECT email FROM Users WHERE id = $2)',
+            [id, userId]
+        );
+
+        res.json({ message: 'Invitation deleted successfully' });
+    } catch (e) {
+        console.error('Error deleting invite:', e);
+        res.status(500).json({ error: (e as Error).message });
     }
-);
+});
 
 // UPDATE a group (protected)
-app.put(
-    '/groups/:id',
-    async (
-        req: Request<Parameters, unknown, { Name: string }>,
-        res: Response
-    ) => {
-        try {
-            // Extract the group ID from the URL parameters
-            const { id } = req.params;
-            // Extract the updated group name from the request body
-            const { Name } = req.body;
+app.put('/groups/:id', async (req: Request<Parameters, unknown, { Name: string }>, res: Response) => {
+    try {
+        // Extract the group ID from the URL parameters
+        const { id } = req.params;
+        // Extract the updated group name from the request body
+        const { Name } = req.body;
 
-            // Update the group name in the database where the ID matches
-            const updateData: QueryResult = await pool.query(
-                'UPDATE groups SET name = $1 WHERE id = $2 RETURNING *',
-                [Name, id]
-            );
-            res.json({
-                Result: 'Success',
-                UpdatedEntry: updateData.rows[0],
-            });
-        } catch (e) {
-            console.error((e as Error).message);
-            res.status(500).json({ error: (e as Error).message });
-        }
+        // Update the group name in the database where the ID matches
+        const updateData: QueryResult = await pool.query('UPDATE groups SET name = $1 WHERE id = $2 RETURNING *', [
+            Name,
+            id,
+        ]);
+        res.json({
+            Result: 'Success',
+            UpdatedEntry: updateData.rows[0],
+        });
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
     }
-);
+});
 
 // DELETE a group (protected)
 app.delete('/groups/:id', async (req: Request<Parameters>, res: Response) => {
@@ -828,9 +785,7 @@ app.delete('/groups/:id', async (req: Request<Parameters>, res: Response) => {
 // CUISINE TYPES
 app.get('/cuisine-types', async (req: Request, res: Response) => {
     try {
-        const allCuisineTypes: QueryResult = await pool.query(
-            'SELECT * FROM CuisineTypes'
-        );
+        const allCuisineTypes: QueryResult = await pool.query('SELECT * FROM CuisineTypes');
         res.json(allCuisineTypes.rows);
     } catch (e) {
         console.error((e as Error).message);
@@ -839,35 +794,32 @@ app.get('/cuisine-types', async (req: Request, res: Response) => {
 });
 
 // CUISINE PREFERENCES of Users
-app.get(
-    '/users/:id/cuisines',
-    async (req: Request<{ id: string }>, res: Response) => {
-        try {
-            const { id } = req.params;
+app.get('/users/:id/cuisines', async (req: Request<{ id: string }>, res: Response) => {
+    try {
+        const { id } = req.params;
 
-            const result: QueryResult = await pool.query(
-                `SELECT CuisineType FROM UserCuisinePreferences WHERE UserID = $1`,
-                [id]
-            );
+        const result: QueryResult = await pool.query(
+            `SELECT CuisineType FROM UserCuisinePreferences WHERE UserID = $1`,
+            [id]
+        );
 
-            //console.log("Raw database result:", result); // Log the entire result object
-            //console.log("Rows from the database:", result.rows); // Log the rows array
+        //console.log("Raw database result:", result); // Log the entire result object
+        //console.log("Rows from the database:", result.rows); // Log the rows array
 
-            // Extract cuisine types from the query result
-            const cuisineTypes = result.rows.map((row) => row.cuisinetype);
+        // Extract cuisine types from the query result
+        const cuisineTypes = result.rows.map((row) => row.cuisinetype);
 
-            //console.log("Extracted cuisine types:", cuisineTypes); // Log the extracted array
+        //console.log("Extracted cuisine types:", cuisineTypes); // Log the extracted array
 
-            res.json({
-                userId: id,
-                cuisinePreferences: cuisineTypes,
-            });
-        } catch (e) {
-            console.error((e as Error).message);
-            res.status(500).json({ error: (e as Error).message });
-        }
+        res.json({
+            userId: id,
+            cuisinePreferences: cuisineTypes,
+        });
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
     }
-);
+});
 
 app.post('/selections', async (req: Request, res: Response) => {
     const client = await pool.connect();
@@ -877,9 +829,7 @@ app.post('/selections', async (req: Request, res: Response) => {
         await client.query('BEGIN');
 
         // Delete any existing event first
-        await client.query('DELETE FROM Selection WHERE groupid = $1', [
-            groupId,
-        ]);
+        await client.query('DELETE FROM Selection WHERE groupid = $1', [groupId]);
 
         // Insert restaurant if needed
         await client.query(
@@ -909,9 +859,6 @@ app.post('/selections', async (req: Request, res: Response) => {
     }
 });
 
-
-
-
 app.get('/search', async (req: Request, res: Response) => {
     try {
         const { latitude, longitude, categories, sort_by, limit } = req.query;
@@ -925,8 +872,8 @@ app.get('/search', async (req: Request, res: Response) => {
                 categories: categories || 'restaurants',
                 sort_by: sort_by || 'best_match',
                 limit: Number(limit) || 5,
-                radius: 40000
-            }
+                radius: 40000,
+            },
         });
 
         // Get detailed info (including hours) for each business
@@ -936,7 +883,7 @@ app.get('/search', async (req: Request, res: Response) => {
                     const detailResponse = await yelp.get(`/${business.id}`);
                     return {
                         ...business,
-                        hours: detailResponse.data.hours
+                        hours: detailResponse.data.hours,
                     };
                 } catch (error) {
                     console.error(`Error fetching details for ${business.id}:`, error);
@@ -947,14 +894,13 @@ app.get('/search', async (req: Request, res: Response) => {
 
         return res.json({
             ...searchResponse.data,
-            businesses: detailedBusinesses
+            businesses: detailedBusinesses,
         });
-
     } catch (error: any) {
         console.error('Yelp API Error:', error);
         return res.status(500).json({
             error: 'Failed to fetch restaurants',
-            details: error.message
+            details: error.message,
         });
     }
 });
@@ -963,10 +909,7 @@ app.get('/search', async (req: Request, res: Response) => {
 // Expects "cuisineType": "some cuisine"
 app.post(
     '/users/:id/cuisines',
-    async (
-        req: Request<{ id: string }, unknown, { cuisineType: string }>,
-        res: Response
-    ) => {
+    async (req: Request<{ id: string }, unknown, { cuisineType: string }>, res: Response) => {
         try {
             const { id } = req.params;
             const { cuisineType } = req.body;
@@ -982,7 +925,7 @@ app.post(
             });
         } catch (e) {
             console.error((e as Error).message);
-            console.log('Using Yelp API key:', process.env.YELP_API_KEY?.slice(0,10) + '...');
+            console.log('Using Yelp API key:', process.env.YELP_API_KEY?.slice(0, 10) + '...');
             res.status(500).json({ error: (e as Error).message });
         }
     }
@@ -992,19 +935,13 @@ app.post(
 // Expects array format "cuisineTypes": ["Chinese", "Japanese"]
 app.put(
     '/users/:id/cuisines',
-    async (
-        req: Request<{ id: string }, unknown, { cuisineTypes: string[] }>,
-        res: Response
-    ) => {
+    async (req: Request<{ id: string }, unknown, { cuisineTypes: string[] }>, res: Response) => {
         try {
             const { id } = req.params;
             const { cuisineTypes } = req.body;
 
             // Delete existing preferences
-            await pool.query(
-                `DELETE FROM UserCuisinePreferences WHERE UserID = $1`,
-                [id]
-            );
+            await pool.query(`DELETE FROM UserCuisinePreferences WHERE UserID = $1`, [id]);
 
             // Insert new preferences
             const insertPromises = cuisineTypes.map((CuisineType) => {
@@ -1029,10 +966,7 @@ app.put(
 // DELETE a cuisine preference for a user
 app.delete(
     '/users/:id/cuisines/:cuisineType',
-    async (
-        req: Request<{ id: string; cuisineType: string }>,
-        res: Response
-    ) => {
+    async (req: Request<{ id: string; cuisineType: string }>, res: Response) => {
         try {
             const { id, cuisineType } = req.params;
 
@@ -1053,11 +987,38 @@ app.delete(
     }
 );
 
+// Get all notifications for a user
+app.get('/users/:id/notifications', async (req: Request<{ id: string }>, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        const queryResults = await pool.query('SELECT * FROM UserNotification WHERE UserID = $1 ORDER BY ID DESC', [
+            id,
+        ]);
+
+        res.json(queryResults.rows);
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
+// Mark all the notifications for specified userID as read in the database
+app.put('/users/:id/notifications/mark-read', async (req: Request<{ id: string }>, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        const queryResults = await pool.query(`UPDATE UserNotification SET IsRead = 'True' WHERE UserID = $1`, [id]);
+        res.json({ Result: 'Success' });
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
+    }
+});
+
 app.get('/restaurant', async (req: Request, res: Response) => {
     try {
-        const allData: QueryResult = await pool.query(
-            'SELECT * FROM restaurant'
-        );
+        const allData: QueryResult = await pool.query('SELECT * FROM restaurant');
         res.json(allData.rows);
     } catch (e) {
         console.error((e as Error).message);
@@ -1096,9 +1057,7 @@ app.post(
 
 app.get('/restauranthours', async (req: Request, res: Response) => {
     try {
-        const allData: QueryResult = await pool.query(
-            'SELECT * FROM restauranthours'
-        );
+        const allData: QueryResult = await pool.query('SELECT * FROM restauranthours');
         res.json(allData.rows);
     } catch (e) {
         console.error((e as Error).message);
@@ -1108,9 +1067,7 @@ app.get('/restauranthours', async (req: Request, res: Response) => {
 
 app.get('/restauranttype', async (req: Request, res: Response) => {
     try {
-        const allData: QueryResult = await pool.query(
-            'SELECT * FROM restauranttype'
-        );
+        const allData: QueryResult = await pool.query('SELECT * FROM restauranttype');
         res.json(allData.rows);
     } catch (e) {
         console.error((e as Error).message);
@@ -1120,9 +1077,7 @@ app.get('/restauranttype', async (req: Request, res: Response) => {
 
 app.get('/selection', async (req: Request, res: Response) => {
     try {
-        const allData: QueryResult = await pool.query(
-            'SELECT * FROM selection'
-        );
+        const allData: QueryResult = await pool.query('SELECT * FROM selection');
         res.json(allData.rows);
     } catch (e) {
         console.error((e as Error).message);
@@ -1132,9 +1087,7 @@ app.get('/selection', async (req: Request, res: Response) => {
 
 app.get('/usergroupxref', async (req: Request, res: Response) => {
     try {
-        const allData: QueryResult = await pool.query(
-            'SELECT * FROM usergroupxref'
-        );
+        const allData: QueryResult = await pool.query('SELECT * FROM usergroupxref');
         res.json(allData.rows);
     } catch (e) {
         console.error((e as Error).message);
@@ -1144,9 +1097,7 @@ app.get('/usergroupxref', async (req: Request, res: Response) => {
 
 app.get('/userhours', async (req: Request, res: Response) => {
     try {
-        const allData: QueryResult = await pool.query(
-            'SELECT * FROM userhours'
-        );
+        const allData: QueryResult = await pool.query('SELECT * FROM userhours');
         res.json(allData.rows);
     } catch (e) {
         console.error((e as Error).message);
@@ -1156,9 +1107,7 @@ app.get('/userhours', async (req: Request, res: Response) => {
 
 app.get('/userrestauranttypexref', async (req: Request, res: Response) => {
     try {
-        const allData: QueryResult = await pool.query(
-            'SELECT * FROM userrestauranttypexref'
-        );
+        const allData: QueryResult = await pool.query('SELECT * FROM userrestauranttypexref');
         res.json(allData.rows);
     } catch (e) {
         console.error((e as Error).message);
@@ -1186,31 +1135,25 @@ Operation: Apply algorithm to find optimal social event for group.
 Insert the social event into the database (Selection table)
 Output: (JSON Object) Json object with generated social event information {Restaurant, StartTime} 
 */
-app.get(
-    '/socialevents/generate-new/:groupid',
-    async (req: Request, res: Response) => {
-        const client = await pool.connect();
-        try {
-            const { groupid } = req.params;
+app.get('/socialevents/generate-new/:groupid', async (req: Request, res: Response) => {
+    const client = await pool.connect();
+    try {
+        const { groupid } = req.params;
 
-            await client.query('BEGIN');
+        await client.query('BEGIN');
 
-            // Delete existing events before creating a new one
+        // Delete existing events before creating a new one
 
-            await pool.query(`DELETE FROM Selection WHERE groupid = $1`, [
-                groupid,
-            ]);
+        await pool.query(`DELETE FROM Selection WHERE groupid = $1`, [groupid]);
 
-            console.log('attempting to generate a social event'); // Debugging
-            // Generate an event using the special algorithm in the event-generator module
-            const generatedSocialEvent: SocialEvent = await generateEvent(
-                Number(groupid)
-            );
-            // Insert into database here
+        console.log('attempting to generate a social event'); // Debugging
+        // Generate an event using the special algorithm in the event-generator module
+        const generatedSocialEvent: SocialEvent = await generateEvent(Number(groupid));
+        // Insert into database here
 
-            // first check if the Yelp restaurant exists in YelpRestaurant, if it doesn't, insert it into YelpRestaurant
-            await client.query(
-                `
+        // first check if the Yelp restaurant exists in YelpRestaurant, if it doesn't, insert it into YelpRestaurant
+        await client.query(
+            `
                 INSERT INTO YelpRestaurant (YelpID)
                 SELECT $1::text
                 WHERE NOT EXISTS (
@@ -1219,34 +1162,33 @@ app.get(
                     WHERE yelpid = $1::text
                 );
                 `,
-                [generatedSocialEvent.restaurant.id]
-            );
+            [generatedSocialEvent.restaurant.id]
+        );
 
-            await client.query(
-                `
+        await client.query(
+            `
                 INSERT INTO Selection (GroupID, YelpRestaurantID, TimeStart, DayOfWeek, Time) VALUES
                 ($1, $2, NULL, $3, $4);
                 `,
-                [
-                    groupid,
-                    generatedSocialEvent.restaurant.id,
-                    generatedSocialEvent.startTime.day,
-                    generatedSocialEvent.startTime.time,
-                ]
-            );
-            res.json(generatedSocialEvent);
-        } catch (e) {
-            await client.query('ROLLBACK');
-            console.error('Error in generate event:', e);
-            res.status(500).json({
-                error: (e as Error).message,
-                detail: 'Failed to generate/save event',
-            });
-        } finally {
-            client.release();
-        }
+            [
+                groupid,
+                generatedSocialEvent.restaurant.id,
+                generatedSocialEvent.startTime.day,
+                generatedSocialEvent.startTime.time,
+            ]
+        );
+        res.json(generatedSocialEvent);
+    } catch (e) {
+        await client.query('ROLLBACK');
+        console.error('Error in generate event:', e);
+        res.status(500).json({
+            error: (e as Error).message,
+            detail: 'Failed to generate/save event',
+        });
+    } finally {
+        client.release();
     }
-);
+});
 
 app.delete('/socialevents/:groupid', async (req: Request, res: Response) => {
     try {
@@ -1266,22 +1208,17 @@ Operation: Apply algorithm to find optimal social event for group. Insert the so
 Output: (JSON Object) Json object with generated social event information {Restaurant, StartTime} 
 THIS IS A DEBUGGING VERSION THAT DOESN'T INSERT INTO THE DB
 */
-app.get(
-    '/socialevents/debug/generate-new/:groupid',
-    async (req: Request, res: Response) => {
-        try {
-            const { groupid } = req.params;
-            console.log('attempting to generate a social event'); // Debugging
-            const generatedSocialEvent: SocialEvent = await generateEvent(
-                Number(groupid)
-            );
-            res.json(generatedSocialEvent);
-        } catch (e) {
-            console.error((e as Error).message);
-            res.status(500).json({ error: (e as Error).message });
-        }
+app.get('/socialevents/debug/generate-new/:groupid', async (req: Request, res: Response) => {
+    try {
+        const { groupid } = req.params;
+        console.log('attempting to generate a social event'); // Debugging
+        const generatedSocialEvent: SocialEvent = await generateEvent(Number(groupid));
+        res.json(generatedSocialEvent);
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
     }
-);
+});
 
 /*    GET /socialevents/bygroupid/:groupid    */
 /* ************************************************************************** 
@@ -1289,57 +1226,50 @@ Input: (URL Param) Group ID
 Operation: Search in the database for the event with the supplied groupid
 Output: (JSON Object) Json object with the found event
 */
-app.get(
-    '/socialevents/bygroupid/:groupid',
-    async (req: Request, res: Response) => {
-        try {
-            const { groupid } = req.params;
-            const allData: QueryResult = await pool.query(
-                'SELECT groupid, yelprestaurantid, timestart, dayofweek, time FROM Selection WHERE groupid = $1',
-                [groupid]
-            );
-            const fetchYelpRestaurantByID = async (
-                yelprestaurantid: number
-            ): Promise<YelpRestaurant> => {
-                try {
-                    const response = await yelp.get(`/${yelprestaurantid}`);
-                    return response.data;
-                } catch (error) {
-                    console.error(
-                        'There was an error fetching a restaurant from Yelp API (fetchYelpRestaurantByID)',
-                        error
-                    );
-                    throw error;
-                }
-            };
-            // Return empty object response if there are no social events for this group in the database
-            if (allData.rows.length == 0) {
-                res.json({});
-                return;
+app.get('/socialevents/bygroupid/:groupid', async (req: Request, res: Response) => {
+    try {
+        const { groupid } = req.params;
+        const allData: QueryResult = await pool.query(
+            'SELECT groupid, yelprestaurantid, timestart, dayofweek, time FROM Selection WHERE groupid = $1',
+            [groupid]
+        );
+        const fetchYelpRestaurantByID = async (yelprestaurantid: number): Promise<YelpRestaurant> => {
+            try {
+                const response = await yelp.get(`/${yelprestaurantid}`);
+                return response.data;
+            } catch (error) {
+                console.error(
+                    'There was an error fetching a restaurant from Yelp API (fetchYelpRestaurantByID)',
+                    error
+                );
+                throw error;
             }
-            const row = allData.rows[0];
-            //  Create a restaurant object
-            const restaurant: YelpRestaurant = await fetchYelpRestaurantByID(
-                row.yelprestaurantid
-            );
-            // Create a DayOfWeekAndTime object using data from the selection db row
-            const dayOfWeekAndTime: DayOfWeekAndTime = {
-                day: row.dayofweek,
-                time: row.time,
-            };
-            //  Create a SocialEvent object with data from Selection (Restaurant goes inside SocialEvent)
-            const socialEvent: SocialEvent = {
-                restaurant: restaurant,
-                startTime: dayOfWeekAndTime,
-            };
-            // Return the socialEvent
-            res.json(socialEvent);
-        } catch (e) {
-            console.error((e as Error).message);
-            res.status(500).json({ error: (e as Error).message });
+        };
+        // Return empty object response if there are no social events for this group in the database
+        if (allData.rows.length == 0) {
+            res.json({});
+            return;
         }
+        const row = allData.rows[0];
+        //  Create a restaurant object
+        const restaurant: YelpRestaurant = await fetchYelpRestaurantByID(row.yelprestaurantid);
+        // Create a DayOfWeekAndTime object using data from the selection db row
+        const dayOfWeekAndTime: DayOfWeekAndTime = {
+            day: row.dayofweek,
+            time: row.time,
+        };
+        //  Create a SocialEvent object with data from Selection (Restaurant goes inside SocialEvent)
+        const socialEvent: SocialEvent = {
+            restaurant: restaurant,
+            startTime: dayOfWeekAndTime,
+        };
+        // Return the socialEvent
+        res.json(socialEvent);
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
     }
-);
+});
 
 app.put('/groups/:groupId/transfer-admin', async (req: Request, res: Response) => {
     const client = await pool.connect();
@@ -1379,22 +1309,16 @@ Input: (URL Param) Group ID
 Operation: Delete all selection entries for the specified groupid
 Output: (JSON Object) Json that indicates success or failure
 */
-app.delete(
-    '/socialevents/delete-by-groupid/:groupid',
-    async (req: Request, res: Response) => {
-        try {
-            const { groupid } = req.params;
-            const allData: QueryResult = await pool.query(
-                'DELETE FROM Selection WHERE groupid = $1',
-                [groupid]
-            );
-            res.json({ result: 'success' });
-        } catch (e) {
-            console.error((e as Error).message);
-            res.status(500).json({ error: (e as Error).message });
-        }
+app.delete('/socialevents/delete-by-groupid/:groupid', async (req: Request, res: Response) => {
+    try {
+        const { groupid } = req.params;
+        const allData: QueryResult = await pool.query('DELETE FROM Selection WHERE groupid = $1', [groupid]);
+        res.json({ result: 'success' });
+    } catch (e) {
+        console.error((e as Error).message);
+        res.status(500).json({ error: (e as Error).message });
     }
-);
+});
 
 /* END OF ROUTES */
 /* ********************************************************************** */

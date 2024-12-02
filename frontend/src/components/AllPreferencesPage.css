@@ -11,11 +11,7 @@
 }
 
 .dropdown-toggle {
-    background-color: linear-gradient(
-        135deg,
-        #ff1010 0%,
-        #cc0000 100%
-    ); /* More vibrant red */
+    background-color: linear-gradient(135deg, #ff1010 0%, #cc0000 100%); /* More vibrant red */
     color: rgb(179, 39, 39);
     border: inset 2px rgba(172, 0, 0, 0.2); /* Inset border for depth */
     padding: 12px 20px; /* Increased padding for a more inviting look */

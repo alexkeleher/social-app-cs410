@@ -16,10 +16,7 @@ const setupTestDatabase = async () => {
             database: 'postgres',
         });
 
-        const databaseExistsResult = await pgPool.query(
-            'SELECT 1 FROM pg_database WHERE datname = $1',
-            [TEST_DB_NAME]
-        );
+        const databaseExistsResult = await pgPool.query('SELECT 1 FROM pg_database WHERE datname = $1', [TEST_DB_NAME]);
 
         if (databaseExistsResult.rows.length > 0) {
             await pgPool.query(

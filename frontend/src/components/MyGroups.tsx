@@ -79,9 +79,7 @@ const MyGroups: React.FC = () => {
                 headers: { Authorization: `Bearer ${auth.token}` },
             });
 
-            setPendingInvites((prev) =>
-                prev.filter((inv) => inv.id !== invite.id)
-            );
+            setPendingInvites((prev) => prev.filter((inv) => inv.id !== invite.id));
 
             await getMyGroups();
         } catch (err: any) {
@@ -100,9 +98,7 @@ const MyGroups: React.FC = () => {
                 headers: { Authorization: `Bearer ${auth.token}` },
             });
 
-            setPendingInvites((prev) =>
-                prev.filter((inv) => inv.id !== invite.id)
-            );
+            setPendingInvites((prev) => prev.filter((inv) => inv.id !== invite.id));
         } catch (err: any) {
             console.error('Error rejecting invite:', err);
             alert(err.response?.data?.error || 'Failed to reject invite');
@@ -145,19 +141,13 @@ const MyGroups: React.FC = () => {
                 <div className="my-groups-container1">
                     <div className="group-list1">
                         {myGroups.map((group: Group) => (
-                            <Link
-                                key={group.id}
-                                to={`/selected-group/${group.id}`}
-                                className="group-link1"
-                            >
+                            <Link key={group.id} to={`/selected-group/${group.id}`} className="group-link1">
                                 <div className="group-card1">
                                     <h2>{group.name}</h2>
                                     <p className="group-info1">
                                         Date Created:{' '}
                                         {group.datecreated
-                                            ? new Date(
-                                                  group.datecreated
-                                              ).toLocaleString('en-US', {
+                                            ? new Date(group.datecreated).toLocaleString('en-US', {
                                                   year: 'numeric',
                                                   month: 'short',
                                                   day: 'numeric',
@@ -167,9 +157,7 @@ const MyGroups: React.FC = () => {
                                               })
                                             : 'N/A'}
                                     </p>
-                                    <p className="group-info1">
-                                        Join Code: {group.joincode}
-                                    </p>
+                                    <p className="group-info1">Join Code: {group.joincode}</p>
                                 </div>
                             </Link>
                         ))}
@@ -182,9 +170,7 @@ const MyGroups: React.FC = () => {
                             <p>
                                 Invited:{' '}
                                 {invite.datecreated
-                                    ? new Date(
-                                          invite.datecreated
-                                      ).toLocaleString('en-US', {
+                                    ? new Date(invite.datecreated).toLocaleString('en-US', {
                                           year: 'numeric',
                                           month: 'short',
                                           day: 'numeric',
@@ -197,24 +183,16 @@ const MyGroups: React.FC = () => {
                             <button
                                 onClick={() => handleAcceptInvite(invite)}
                                 className="cta-button"
-                                disabled={
-                                    acceptingInvite === invite.id.toString()
-                                }
+                                disabled={acceptingInvite === invite.id.toString()}
                             >
-                                {acceptingInvite === invite.id.toString()
-                                    ? 'Accepting...'
-                                    : 'Accept Invite'}
+                                {acceptingInvite === invite.id.toString() ? 'Accepting...' : 'Accept Invite'}
                             </button>
                             <button
                                 onClick={() => handleRejectInvite(invite)}
                                 className="cta-button"
-                                disabled={
-                                    rejectingInvite === invite.id.toString()
-                                }
+                                disabled={rejectingInvite === invite.id.toString()}
                             >
-                                {rejectingInvite === invite.id.toString()
-                                    ? 'Rejecting...'
-                                    : 'Reject Invite'}
+                                {rejectingInvite === invite.id.toString() ? 'Rejecting...' : 'Reject Invite'}
                             </button>
                         </div>
                     ))}

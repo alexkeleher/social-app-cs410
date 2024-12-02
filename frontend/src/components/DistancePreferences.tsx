@@ -27,8 +27,8 @@ const PriceAndDistanceSelection: React.FC = () => {
                 'Attempting to store new preference for price level and distance on the database for this user'
             );
             const response = await api.put(`/users/${auth.id}`, {
-                preferredpricerange: priceLevel,
-                preferredmaxdistance: distance,
+                PreferredPriceRange: priceLevel,
+                PreferredMaxDistance: distance,
             });
             setSaveMessage('Preferences saved successfully!');
             setTimeout(() => setSaveMessage(''), 3000);
@@ -85,9 +85,7 @@ const PriceAndDistanceSelection: React.FC = () => {
                     Save Preferences
                 </button>
                 {saveMessage && (
-                    <p
-                        className={`save-message ${saveMessage.includes('Error') ? 'error' : 'success'}`}
-                    >
+                    <p className={`save-message ${saveMessage.includes('Error') ? 'error' : 'success'}`}>
                         {saveMessage}
                     </p>
                 )}

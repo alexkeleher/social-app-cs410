@@ -1,16 +1,8 @@
-import React, { useContext, useEffect, useState } from 'react';
-import {
-    Box,
-    Button,
-    Container,
-    CssBaseline,
-    TextField,
-    Typography,
-} from '@mui/material';
+import { useContext, useEffect, useState } from 'react';
+import { Box, Container, TextField } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import api from '../api/axios';
 import AuthContext from '../context/AuthProvider';
-import { AssertionError } from 'assert';
 
 // interface ChildProps {
 //     myPrettyField: string;
@@ -36,9 +28,7 @@ function LocationPreferences() {
     const saveNewAddress = async () => {
         setSaveMessage('');
         try {
-            console.log(
-                'Attempting to store address on the database for this user'
-            );
+            console.log('Attempting to store address on the database for this user');
             const response = await api.put(`/users/${auth.id}`, {
                 Address: address,
             });
@@ -118,9 +108,7 @@ function LocationPreferences() {
                             Save Preferences
                         </button>
                         {saveMessage && (
-                            <p
-                                className={`save-message ${saveMessage.includes('Error') ? 'error' : 'success'}`}
-                            >
+                            <p className={`save-message ${saveMessage.includes('Error') ? 'error' : 'success'}`}>
                                 {saveMessage}
                             </p>
                         )}
