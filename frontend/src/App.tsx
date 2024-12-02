@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-    BrowserRouter as Router,
-    Routes,
-    Route,
-    Navigate,
-} from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import CreateGroupPage from './components/CreateGroupPage';
 import MyGroups from './components/MyGroups';
@@ -85,51 +80,24 @@ const App: React.FC = () => {
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/test-page" element={<TestPage />} />
-                    <Route
-                        path="/TestYelpRestaurants"
-                        element={<YelpRestaurants />}
-                    />
+                    <Route path="/TestYelpRestaurants" element={<YelpRestaurants />} />
                     {/* PUBLIC PAGES END ******************************** */}
 
                     {/* PRIVATE PAGES BEGIN ******************************** */}
                     <Route element={<ProtectedRoute />}>
                         <Route path="/landingpage" element={<LandingPage />} />
-                        <Route
-                            path="/create-group"
-                            element={<CreateGroupPage />}
-                        />
+                        <Route path="/create-group" element={<CreateGroupPage />} />
                         <Route path="/my-groups" element={<MyGroups />} />
-                        <Route
-                            path="/selected-group/:groupid"
-                            element={<SelectedGroup />}
-                        />
+                        <Route path="/selected-group/:groupid" element={<SelectedGroup />} />
                         <Route path="/dashboard" element={<Dashboard />} />
-                        <Route
-                            path="/distance-preferences"
-                            element={<DistancePreferences />}
-                        />
-                        <Route
-                            path="/dietary-restrictions"
-                            element={<DietaryRestrictionsPreferences />}
-                        />
-                        <Route
-                            path="/cuisine-preferences"
-                            element={<CuisinePreferences />}
-                        />
-                        <Route
-                            path="/scheduling"
-                            element={<SchedulingPage />}
-                        />
+                        <Route path="/distance-preferences" element={<DistancePreferences />} />
+                        <Route path="/dietary-restrictions" element={<DietaryRestrictionsPreferences />} />
+                        <Route path="/cuisine-preferences" element={<CuisinePreferences />} />
+                        <Route path="/scheduling" element={<SchedulingPage />} />
                         <Route path="/join-group" element={<JoinGroup />} />
-                        <Route
-                            path="/all-preferences"
-                            element={<AllPreferencesPage />}
-                        />
+                        <Route path="/all-preferences" element={<AllPreferencesPage />} />
                         <Route path="/group-event" element={<GroupEvent />} />
-                        <Route
-                            path="group-event/:groupid"
-                            element={<GroupEvent />}
-                        />
+                        <Route path="group-event/:groupid" element={<GroupEvent />} />
                         <Route path="/groups" element={<CreateGroupPage />} />
                     </Route>
                     {/* PRIVATE PAGES END ******************************** */}

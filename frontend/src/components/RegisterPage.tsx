@@ -1,11 +1,4 @@
-import {
-    Box,
-    Button,
-    Container,
-    CssBaseline,
-    TextField,
-    Typography,
-} from '@mui/material';
+import { Box, Button, Container, CssBaseline, TextField, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -125,9 +118,7 @@ const Register = () => {
                                 label="Confirm Password"
                                 name="confirm-password"
                                 value={confirmPassword}
-                                onChange={(e) =>
-                                    setConfirmPassword(e.target.value)
-                                }
+                                onChange={(e) => setConfirmPassword(e.target.value)}
                                 type="password"
                                 sx={{ fontFamily: "'Roboto', sans-serif" }}
                             />

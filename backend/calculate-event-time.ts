@@ -45,11 +45,7 @@ function findOptimalStartTime(
 
         // Check how many group members are available at this time
         for (const userId in groupAvailability) {
-            if (
-                groupAvailability[userId].some(
-                    (slot) => slot.hour === currentTimeSlot.hour
-                )
-            ) {
+            if (groupAvailability[userId].some((slot) => slot.hour === currentTimeSlot.hour)) {
                 availability++;
             }
         }

@@ -77,28 +77,19 @@ const CreateGroupPage: React.FC = () => {
             {alert && (
                 <div style={alertStyle} className={`alert ${alert.type}`}>
                     <span>{alert.message}</span>
-                    <button
-                        style={dismissButtonStyle}
-                        onClick={dismissAlert}
-                        className="dismiss-button"
-                    >
+                    <button style={dismissButtonStyle} onClick={dismissAlert} className="dismiss-button">
                         ×
                     </button>
                 </div>
             )}
 
-            <form
-                onSubmit={registerGroup}
-                style={{ width: '100%', maxWidth: '400px' }}
-            >
+            <form onSubmit={registerGroup} style={{ width: '100%', maxWidth: '400px' }}>
                 <Box sx={{ mb: 2 }}>
                     <input
                         type="text"
                         id="groupName"
                         value={groupName}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setGroupName(e.target.value)
-                        }
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGroupName(e.target.value)}
                         placeholder="Enter your group name"
                         style={{
                             width: '100%',

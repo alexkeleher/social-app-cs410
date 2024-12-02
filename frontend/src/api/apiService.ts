@@ -16,10 +16,7 @@ export const getUsers = async (): Promise<User[]> => {
 
 export const createUser = async (userData: User): Promise<User> => {
     try {
-        const response = await api.post<{ InsertedEntry: User }>(
-            `${API_URL}/users`,
-            userData
-        );
+        const response = await api.post<{ InsertedEntry: User }>(`${API_URL}/users`, userData);
         return response.data.InsertedEntry;
     } catch (e) {
         console.error('Error creating user:', e);
@@ -37,14 +34,9 @@ export const getGroups = async (): Promise<Group[]> => {
     }
 };
 
-export const createGroup = async (
-    groupData: GroupAndCreator
-): Promise<Group> => {
+export const createGroup = async (groupData: GroupAndCreator): Promise<Group> => {
     try {
-        const response = await api.post<{ InsertedEntry: Group }>(
-            `${API_URL}/groups`,
-            groupData
-        );
+        const response = await api.post<{ InsertedEntry: Group }>(`${API_URL}/groups`, groupData);
         return response.data.InsertedEntry;
     } catch (e) {
         console.error('Error creating group:', e);

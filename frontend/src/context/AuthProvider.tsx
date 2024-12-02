@@ -45,11 +45,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setLoading(false); // Set loading to false when done
     }, []);
 
-    return (
-        <AuthContext.Provider value={{ auth, setAuth, loading }}>
-            {children}
-        </AuthContext.Provider>
-    );
+    return <AuthContext.Provider value={{ auth, setAuth, loading }}>{children}</AuthContext.Provider>;
 };
 
 export default AuthContext;

@@ -12,8 +12,8 @@ const LandingPage: React.FC = () => {
             <main className="landing-main">
                 <h2>Decide where to eat, together</h2>
                 <p>
-                    GroupEats helps your group easily find the best places to
-                    eat, taking into account everyone’s preferences.
+                    GroupEats helps your group easily find the best places to eat, taking into account everyone’s
+                    preferences.
                 </p>
                 <Link to="/create-group">
                     <button className="cta-button">Create Group</button>

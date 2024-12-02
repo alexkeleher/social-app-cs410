@@ -3,24 +3,9 @@ import { QueryResult } from 'pg';
 import pool from './db';
 import yelp from './yelp-axios';
 import { calculateCenterPointFromMultipleLatLon } from './google-api-helper';
-import {
-    User,
-    SocialEvent,
-    YelpRestaurant,
-    DayOfWeekAndTime,
-    BusinessHours,
-    Coordinates,
-} from '@types';
+import { User, SocialEvent, YelpRestaurant, DayOfWeekAndTime, BusinessHours, Coordinates } from '@types';
 const DEBUGGING_MODE = process.env.DEBUGGING_MODE === 'YES';
-const daysOfWeek = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-];
+const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const timeSlots = [
     '5:00-6:00 AM',
     '6:00-7:00 AM',
@@ -100,8 +85,7 @@ export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
         //  1. Get all the group members from the database
         // - - - - - - - - - - - - - - - - - - - - - - - - -
         members = membersQueryResult.rows;
-        if (DEBUGGING_MODE)
-            console.log('Fetched the following group members:.\n');
+        if (DEBUGGING_MODE) console.log('Fetched the following group members:.\n');
         if (DEBUGGING_MODE) console.log(members);
 
         // 2. Get all the preferences for this group from the database
@@ -120,16 +104,12 @@ export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
         if (DEBUGGING_MODE) console.log('PREFERENCE ARR XXXXXXXXXXX');
         if (DEBUGGING_MODE) console.log(preferenceArr);
         mostCommonCategory = getMostFrequentString(preferenceArr) || '';
-        if (DEBUGGING_MODE)
-            console.log('Most common category: ' + mostCommonCategory + '\n');
+        if (DEBUGGING_MODE) console.log('Most common category: ' + mostCommonCategory + '\n');
 
         // 3. Get the average price preference and max distance
         // - - - - - - - - - - - - - - - - - - - - - - - - -
-        averagePrice = calculateAndRoundAverage(
-            membersQueryResult.rows.map((u) => u.preferredpricerange || 0)
-        );
-        if (DEBUGGING_MODE)
-            console.log('Average Price Level: ' + averagePrice + '\n');
+        averagePrice = calculateAndRoundAverage(membersQueryResult.rows.map((u) => u.preferredpricerange || 0));
+        if (DEBUGGING_MODE) console.log('Average Price Level: ' + averagePrice + '\n');
     } catch (e) {
         console.error('Error in generateEvent', e);
     }
@@ -148,8 +128,7 @@ export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
         });
     }
     // Call the google helper function to get the central lat lon
-    const { lat: centerLatitude, lng: centerLongitude } =
-        calculateCenterPointFromMultipleLatLon(coordinateAr);
+    const { lat: centerLatitude, lng: centerLongitude } = calculateCenterPointFromMultipleLatLon(coordinateAr);
 
     // 4 Get top 3 restaurants
     // - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -160,13 +139,10 @@ export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
         mostCommonCategory,
         averagePrice
     );
-    if (DEBUGGING_MODE)
-        console.log('Most common category: ' + mostCommonCategory + '\n');
+    if (DEBUGGING_MODE) console.log('Most common category: ' + mostCommonCategory + '\n');
 
     if (DEBUGGING_MODE) {
-        console.log(
-            'we have fetched the restaurants and they are the following:'
-        );
+        console.log('we have fetched the restaurants and they are the following:');
         console.log(restaurants);
     }
 
@@ -176,10 +152,7 @@ export const generateEvent = async (groupid: number): Promise<SocialEvent> => {
 
     // 6 Get optimal start time
     // - - - - - - - - - - - - - - - - - - - - - - - - -
-    var startTime: DayOfWeekAndTime = getOptimalStartTimeForGroupAndRestaurant(
-        members,
-        aRestaurant
-    );
+    var startTime: DayOfWeekAndTime = getOptimalStartTimeForGroupAndRestaurant(members, aRestaurant);
     if (DEBUGGING_MODE) console.log('Start Time:');
     if (DEBUGGING_MODE) console.log(startTime);
 
@@ -271,9 +244,7 @@ function getOptimalStartTimeForGroupAndRestaurant(
     // Build a matrix of schedules
     //const sharedUserSchedules2 = Array(7).fill(Array(19).fill(0));
     // Correct way to initialize a 7x19 matrix with zeros
-    const sharedUserSchedules = Array.from({ length: 7 }, () =>
-        Array(19).fill(0)
-    );
+    const sharedUserSchedules = Array.from({ length: 7 }, () => Array(19).fill(0));
 
     // DEBUGGING
     // console.log('before frequencies added');
@@ -290,8 +261,7 @@ function getOptimalStartTimeForGroupAndRestaurant(
         const userSerializedSchedule = member.serializedschedulematrix || '';
         for (let i = 0; i < 7; i++) {
             for (let j = 0; j < 19; j++) {
-                if (userSerializedSchedule[19 * i + j] == '1')
-                    sharedUserSchedules[i][j]++; // increment frequency map value count at each cell
+                if (userSerializedSchedule[19 * i + j] == '1') sharedUserSchedules[i][j]++; // increment frequency map value count at each cell
             }
         }
     }
@@ -346,14 +316,11 @@ function getOptimalStartTimeForGroupAndRestaurant(
         if (spanBlocks == 0) throw new Error('Could not find a 2 hour block');
 
         // Convert restaurant times to matrix form
-        const restaurantHoursMatrix = Array.from({ length: 7 }, () =>
-            Array(19).fill(0)
-        );
+        const restaurantHoursMatrix = Array.from({ length: 7 }, () => Array(19).fill(0));
 
         // Check if restaurant.hours is defined before accessing it
         // Handle case where restaurant.hours is undefined (e.g., not available from Yelp)
-        if (!restaurant.business_hours)
-            throw new Error('Restaurant hours are not available.');
+        if (!restaurant.business_hours) throw new Error('Restaurant hours are not available.');
 
         //console.log('Restaurant open hours:');
         //console.log(restaurant.business_hours);

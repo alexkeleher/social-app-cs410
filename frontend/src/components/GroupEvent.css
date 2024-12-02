@@ -19,7 +19,9 @@
     border-radius: 4px;
     background-color: #f8f8f8;
     cursor: pointer;
-    transition: background 0.3s, box-shadows 0.3s;
+    transition:
+        background 0.3s,
+        box-shadows 0.3s;
     text-align: center;
 }
 

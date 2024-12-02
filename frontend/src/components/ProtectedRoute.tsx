@@ -11,8 +11,7 @@ const ProtectedRoute = () => {
     const { auth, loading } = useContext(AuthContext);
     const [notifications, setNotifications] = useState<UserNotification[]>([]);
     const [showNotifications, setShowNotifications] = useState(false);
-    const [areAllNotificationsRead, setAreAllNotificationsRead] =
-        useState(true);
+    const [areAllNotificationsRead, setAreAllNotificationsRead] = useState(true);
 
     const toggleNotifications = () => {
         setAreAllNotificationsRead(true); // Now user has read all notifs so we can show bell with black color
@@ -27,9 +26,7 @@ const ProtectedRoute = () => {
 
     const getUserNotifications = async () => {
         try {
-            const jsonResponse = await api.get(
-                `/users/${auth.id}/notifications`
-            );
+            const jsonResponse = await api.get(`/users/${auth.id}/notifications`);
             console.log('Response from /users/:id/notifications');
             console.log(jsonResponse);
             setNotifications(jsonResponse.data);
@@ -42,7 +39,7 @@ const ProtectedRoute = () => {
     useEffect(() => {
         for (const notification of notifications) {
             //console.log(notification);
-            if (notification.isread == false) {
+            if (notification.isread === false) {
                 setAreAllNotificationsRead(false);
                 break;
             }
@@ -65,9 +62,7 @@ const ProtectedRoute = () => {
     // Mark the notifications as read in the database
     const setAllReadInDB = async (userId: number): Promise<void> => {
         try {
-            const jsonResponse = await api.put(
-                `/users/${userId}/notifications/mark-read`
-            );
+            const jsonResponse = await api.put(`/users/${userId}/notifications/mark-read`);
             console.log(jsonResponse);
         } catch (error) {
             console.error(error);
@@ -89,29 +84,16 @@ const ProtectedRoute = () => {
                     <div className="user-info">User: {auth.email}</div>
                 </div>
                 <div className="header-nav">
-                    <button
-                        onClick={toggleNotifications}
-                        className={`notification-button unread`}
-                    >
-                        <Bell
-                            size={24}
-                            color={!areAllNotificationsRead ? 'red' : 'black'}
-                        />
-                        {!areAllNotificationsRead && (
-                            <span className="notification-dot"></span>
-                        )}
+                    <button onClick={toggleNotifications} className={`notification-button unread`}>
+                        <Bell size={24} color={!areAllNotificationsRead ? 'red' : 'black'} />
+                        {!areAllNotificationsRead && <span className="notification-dot"></span>}
                     </button>
                     {/* Notifications Dropdown */}
                     {showNotifications && (
                         <div className="dropdown-style">
                             {notifications.map((notification) => (
                                 <p key={notification.id}>
-                                    <b>
-                                        {formatDateTime(
-                                            notification.datecreated
-                                        )}{' '}
-                                    </b>{' '}
-                                    - {notification.message}
+                                    <b>{formatDateTime(notification.datecreated)} </b> - {notification.message}
                                 </p>
                             ))}
 

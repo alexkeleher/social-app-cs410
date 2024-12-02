@@ -65,18 +65,13 @@ const JoinGroup: React.FC = () => {
             }}
         >
             <h1>Join a Group</h1>
-            <form
-                onSubmit={handleSubmit}
-                style={{ width: '100%', maxWidth: '400px' }}
-            >
+            <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: '400px' }}>
                 <Box sx={{ mb: 2 }}>
                     <input
                         type="text"
                         id="joinCode"
                         value={joinCode}
-                        onChange={(e) =>
-                            setJoinCode(e.target.value.toUpperCase())
-                        }
+                        onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                         placeholder="Enter 6-digit code"
                         maxLength={6}
                         style={{

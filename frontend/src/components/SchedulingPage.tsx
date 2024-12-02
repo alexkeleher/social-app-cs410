@@ -2,15 +2,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import api from '../api/axios';
 import AuthContext from '../context/AuthProvider';
 
-const daysOfWeek = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-];
+const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const timeSlots = [
     '5:00-6:00 AM',
     '6:00-7:00 AM',
@@ -38,9 +30,7 @@ const SchedulingPage: React.FC = () => {
     const [saveMessage, setSaveMessage] = useState('');
 
     // Declare matrix
-    const [matrix, setMatrix] = useState<number[][]>(
-        Array(7).fill(Array(19).fill(0))
-    );
+    const [matrix, setMatrix] = useState<number[][]>(Array(7).fill(Array(19).fill(0)));
     const [timeRows, setTimeRows] = useState<JSX.Element[]>([]);
 
     // When this component first loads, populate the matrix by reading serialized string of users schedule from the DB.
@@ -48,16 +38,13 @@ const SchedulingPage: React.FC = () => {
         // define an async function inside useEffect
         const fetchSerializedMatrixAndSetStateMatrix = async () => {
             // Create a 2d array of numbers of dimensions 7 by 19 initialized with all zeroes
-            let newMatrix: number[][] = Array.from({ length: 7 }, () =>
-                Array(19).fill(0)
-            );
+            let newMatrix: number[][] = Array.from({ length: 7 }, () => Array(19).fill(0));
 
-            let serializedMatrix: string =
-                await getUserSerializedScheduleFromDB();
+            let serializedMatrix: string = await getUserSerializedScheduleFromDB();
 
             // let serializedMatrix =
             //     '1100000000000110000000000000110000000000000000000000000000000000011110000000000000000000000000000000000000000000000000000000011111000';
-            if (serializedMatrix.length != 133) {
+            if (serializedMatrix.length !== 133) {
                 setSaveMessage('Serialized matrix from DB was not valid!');
                 setTimeout(() => setSaveMessage(''), 3000);
                 console.log('serialized matrix string was not valid');
@@ -80,16 +67,12 @@ const SchedulingPage: React.FC = () => {
 
     const getUserSerializedScheduleFromDB = async (): Promise<string> => {
         try {
-            console.log(
-                'fetching user information from DB to get serialized schedule'
-            );
+            console.log('fetching user information from DB to get serialized schedule');
             const responseUserData = await api.get(`/users${auth.id}`);
 
             // Check if we have valid data
             if (!responseUserData?.data?.serializedschedulematrix) {
-                console.log(
-                    'No schedule found in DB, using default empty schedule'
-                );
+                console.log('No schedule found in DB, using default empty schedule');
                 return '0'.repeat(133); // Return default empty schedule (7 days * 19 time slots)
             }
 
@@ -113,11 +96,7 @@ const SchedulingPage: React.FC = () => {
 
             // First column: Time selector button
             timeBlocks.push(
-                <button
-                    key={`time-${j}`}
-                    className="time-select-button"
-                    onClick={() => handleTimeRowClick(j)}
-                >
+                <button key={`time-${j}`} className="time-select-button" onClick={() => handleTimeRowClick(j)}>
                     {timeSlots[j]}
                 </button>
             );
@@ -127,7 +106,7 @@ const SchedulingPage: React.FC = () => {
                 timeBlocks.push(
                     <div
                         key={`slot-${i}`}
-                        className={`slot ${matrix[i][j] == 0 ? 'off' : 'yes'}`}
+                        className={`slot ${matrix[i][j] === 0 ? 'off' : 'yes'}`}
                         onClick={() => handleOnClickSlot(i, j)}
                     >
                         {timeSlots[j]}
@@ -149,12 +128,10 @@ const SchedulingPage: React.FC = () => {
         //  How map(row => [...row]) creates a proper deep copy by:
         //  Creating a new outer array via map()
         //  Creating new inner arrays via [...row] for each row
-        const deepCopy: number[][] = matrix.map((dayOfWeekAr) => [
-            ...dayOfWeekAr,
-        ]);
+        const deepCopy: number[][] = matrix.map((dayOfWeekAr) => [...dayOfWeekAr]);
 
         // if the matrix entry is 1, set to 0, if it's 0, set to 1. Update it in the deep copy
-        deepCopy[i][j] = deepCopy[i][j] == 0 ? 1 : 0;
+        deepCopy[i][j] = deepCopy[i][j] === 0 ? 1 : 0;
 
         // use setMatrix to set the new useState matrix and force a UI rebuild of the schedule
         setMatrix(deepCopy);
@@ -163,11 +140,8 @@ const SchedulingPage: React.FC = () => {
     const savePreferences = async () => {
         setSaveMessage('');
         try {
-            console.log(
-                'Attempting to store new preference for Schedule on the database for this user'
-            );
-            const serializedScheduleMatrix =
-                serializeMatrixToLongString(matrix);
+            console.log('Attempting to store new preference for Schedule on the database for this user');
+            const serializedScheduleMatrix = serializeMatrixToLongString(matrix);
             const response = await api.put(`/users/${auth.id}`, {
                 SerializedScheduleMatrix: serializedScheduleMatrix,
             });
@@ -192,9 +166,7 @@ const SchedulingPage: React.FC = () => {
 
     // Add handleTimeRowClick function
     const handleTimeRowClick = (rowIndex: number) => {
-        const deepCopy: number[][] = matrix.map((row) =>
-            Array.isArray(row) ? [...row] : Array(19).fill(0)
-        );
+        const deepCopy: number[][] = matrix.map((row) => (Array.isArray(row) ? [...row] : Array(19).fill(0)));
 
         // Check first slot of the row to determine current state
         const isCurrentlyEmpty = !deepCopy[0][rowIndex];
@@ -233,9 +205,7 @@ const SchedulingPage: React.FC = () => {
         }
 
         // Make deep copy with null check
-        const deepCopy: number[][] = matrix.map((row) =>
-            Array.isArray(row) ? [...row] : Array(19).fill(0)
-        );
+        const deepCopy: number[][] = matrix.map((row) => (Array.isArray(row) ? [...row] : Array(19).fill(0)));
 
         // Check first time slot of the day
         const isCurrentlyEmpty = !deepCopy[dayIndex][0];
@@ -258,11 +228,7 @@ const SchedulingPage: React.FC = () => {
 
                 {/* Days header */}
                 {daysOfWeek.map((day) => (
-                    <div
-                        key={day}
-                        className="day-header"
-                        onClick={() => handleDayClick(day)}
-                    >
+                    <div key={day} className="day-header" onClick={() => handleDayClick(day)}>
                         {day}
                     </div>
                 ))}
@@ -270,19 +236,14 @@ const SchedulingPage: React.FC = () => {
                 {/* Time slots and selection grid */}
                 {timeSlots.map((time, rowIndex) => (
                     <React.Fragment key={rowIndex}>
-                        <button
-                            className="time-label"
-                            onClick={() => handleTimeRowClick(rowIndex)}
-                        >
+                        <button className="time-label" onClick={() => handleTimeRowClick(rowIndex)}>
                             {time}
                         </button>
                         {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => (
                             <div
                                 key={`${rowIndex}-${dayIndex}`}
                                 className={`grid-cell ${matrix[dayIndex][rowIndex] === 1 ? 'selected' : ''}`}
-                                onClick={() =>
-                                    handleOnClickSlot(dayIndex, rowIndex)
-                                }
+                                onClick={() => handleOnClickSlot(dayIndex, rowIndex)}
                             />
                         ))}
                     </React.Fragment>
@@ -294,9 +255,7 @@ const SchedulingPage: React.FC = () => {
                     Save Preferences
                 </button>
                 {saveMessage && (
-                    <p
-                        className={`save-message ${saveMessage.includes('Error') ? 'error' : 'success'}`}
-                    >
+                    <p className={`save-message ${saveMessage.includes('Error') ? 'error' : 'success'}`}>
                         {saveMessage}
                     </p>
                 )}

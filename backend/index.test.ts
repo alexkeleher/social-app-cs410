@@ -33,28 +33,18 @@ describe('CRUD Operations Tests', () => {
         const result = await pool.query('SELECT current_database()');
         const currentDatabase = result.rows[0].current_database;
         if (currentDatabase !== 'groupeats_test') {
-            throw new Error(
-                `Wrong database in use! Expected 'groupeats_test but got' '${currentDatabase}'`
-            );
+            throw new Error(`Wrong database in use! Expected 'groupeats_test but got' '${currentDatabase}'`);
         }
 
         // Clear test data before starting
-        await pool.query('DELETE FROM Users WHERE email = $1', [
-            testUser.email,
-        ]);
-        await pool.query('DELETE FROM Groups WHERE name = $1', [
-            testGroup.groupname,
-        ]);
+        await pool.query('DELETE FROM Users WHERE email = $1', [testUser.email]);
+        await pool.query('DELETE FROM Groups WHERE name = $1', [testGroup.groupname]);
     });
 
     afterAll(async () => {
         // Cleanup
-        await pool.query('DELETE FROM Users WHERE email = $1', [
-            testUser.email,
-        ]);
-        await pool.query('DELETE FROM Groups WHERE name = $1', [
-            testGroup.groupname,
-        ]);
+        await pool.query('DELETE FROM Users WHERE email = $1', [testUser.email]);
+        await pool.query('DELETE FROM Groups WHERE name = $1', [testGroup.groupname]);
         await pool.end();
         server.close();
     });
@@ -84,9 +74,7 @@ describe('CRUD Operations Tests', () => {
         });
 
         it('should get user by id', async () => {
-            const response = await request(app)
-                .get(`/users${userId}`)
-                .set('Authorization', `Bearer ${authToken}`);
+            const response = await request(app).get(`/users${userId}`).set('Authorization', `Bearer ${authToken}`);
 
             expect(response.status).toBe(200);
             expect(response.body.email).toBe(testUser.email);
@@ -127,17 +115,13 @@ describe('CRUD Operations Tests', () => {
 
             expect(response.status).toBe(200);
             expect(response.body.Result).toBe('Success');
-            expect(response.body.InsertedEntry[0].name).toBe(
-                testGroup.groupname
-            );
+            expect(response.body.InsertedEntry[0].name).toBe(testGroup.groupname);
 
             groupId = response.body.InsertedEntry[0].id;
         });
 
         it('should get groups by user id', async () => {
-            const response = await request(app)
-                .get(`/groups${userId}`)
-                .set('Authorization', `Bearer ${authToken}`);
+            const response = await request(app).get(`/groups${userId}`).set('Authorization', `Bearer ${authToken}`);
 
             expect(response.status).toBe(200);
             expect(Array.isArray(response.body)).toBe(true);
@@ -178,9 +162,7 @@ describe('CRUD Operations Tests', () => {
         });
 
         it('should delete user', async () => {
-            const response = await request(app)
-                .delete(`/users/${userId}`)
-                .set('Authorization', `Bearer ${authToken}`);
+            const response = await request(app).delete(`/users/${userId}`).set('Authorization', `Bearer ${authToken}`);
 
             expect(response.status).toBe(200);
         });

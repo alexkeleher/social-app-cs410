@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import api from '../api/axios';
 import DatePicker from 'react-datepicker';
@@ -54,7 +53,7 @@ const GroupEvent: React.FC = () => {
     const [longitude, setLongitude] = useState<number | null>(null);
     const [sortOption, setSortOption] = useState<string>('best_match');
     const [dietOption, setDietOption] = useState<string | null>(null);
-    const [cuisineOption, setCuisineOption] = useState<string | null>(null);
+    // const [cuisineOption, setCuisineOption] = useState<string | null>(null);
     const [restaurantLimit, setRestaurantLimit] = useState<number>(4);
     const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
     const [eventDate, setEventDate] = useState<Date | null>(null);
@@ -109,30 +108,30 @@ const GroupEvent: React.FC = () => {
         return timeMap[slotIndex] || '';
     };
 
-    const timeOptions = [
-        '05:00',
-        '06:00',
-        '07:00',
-        '08:00',
-        '09:00',
-        '10:00',
-        '11:00',
-        '12:00',
-        '13:00',
-        '14:00',
-        '15:00',
-        '16:00',
-        '17:00',
-        '18:00',
-        '19:00',
-        '20:00',
-        '21:00',
-        '22:00',
-        '23:00',
-        '00:00',
-    ];
+    // const timeOptions = [
+    //     '05:00',
+    //     '06:00',
+    //     '07:00',
+    //     '08:00',
+    //     '09:00',
+    //     '10:00',
+    //     '11:00',
+    //     '12:00',
+    //     '13:00',
+    //     '14:00',
+    //     '15:00',
+    //     '16:00',
+    //     '17:00',
+    //     '18:00',
+    //     '19:00',
+    //     '20:00',
+    //     '21:00',
+    //     '22:00',
+    //     '23:00',
+    //     '00:00',
+    // ];
 
-    const API_KEY = process.env.REACT_APP_YELP_API_KEY;
+    // const API_KEY = process.env.REACT_APP_YELP_API_KEY;
 
     useEffect(() => {
         const savedCenter = localStorage.getItem(`group_${groupid}_center`);
@@ -304,16 +303,16 @@ const GroupEvent: React.FC = () => {
         return daySlots.slots.map((slotIndex) => convertSlotToTime(slotIndex)).filter((time) => time !== '');
     };
 
-    const formatHours = (hours: { start: string; end: string; day: number }[]) => {
-        const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        return hours
-            .map((hour) => {
-                const start = `${hour.start.slice(0, 2)}:${hour.start.slice(2)}`;
-                const end = `${hour.end.slice(0, 2)}:${hour.end.slice(2)}`;
-                return `${daysOfWeek[hour.day]}: ${start} - ${end}`;
-            })
-            .join(', ');
-    };
+    // const formatHours = (hours: { start: string; end: string; day: number }[]) => {
+    //     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    //     return hours
+    //         .map((hour) => {
+    //             const start = `${hour.start.slice(0, 2)}:${hour.start.slice(2)}`;
+    //             const end = `${hour.end.slice(0, 2)}:${hour.end.slice(2)}`;
+    //             return `${daysOfWeek[hour.day]}: ${start} - ${end}`;
+    //         })
+    //         .join(', ');
+    // };
 
     const isRestaurantOpenAtDateTime = (restaurant: Restaurant, date: Date, time: string): boolean => {
         if (!restaurant.hours?.[0]?.open) return false;

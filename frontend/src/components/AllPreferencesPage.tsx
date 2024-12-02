@@ -30,12 +30,8 @@ const AllPreferencesPage: React.FC = () => {
             <h1>Select Your Preferences</h1>
 
             <div className="preference-section">
-                <button
-                    onClick={() => toggleSection('cuisine')}
-                    className="dropdown-toggle"
-                >
-                    {openSection === 'cuisine' ? 'Hide' : 'Show'} Cuisine
-                    Preferences
+                <button onClick={() => toggleSection('cuisine')} className="dropdown-toggle">
+                    {openSection === 'cuisine' ? 'Hide' : 'Show'} Cuisine Preferences
                 </button>
                 {openSection === 'cuisine' && (
                     <div className="preference-content">
@@ -45,12 +41,8 @@ const AllPreferencesPage: React.FC = () => {
             </div>
 
             <div className="preference-section">
-                <button
-                    onClick={() => toggleSection('location')}
-                    className="dropdown-toggle"
-                >
-                    {openSection === 'location' ? 'Hide' : 'Show'} Location
-                    Preferences
+                <button onClick={() => toggleSection('location')} className="dropdown-toggle">
+                    {openSection === 'location' ? 'Hide' : 'Show'} Location Preferences
                 </button>
                 {openSection === 'location' && (
                     <div className="preference-content">
@@ -60,12 +52,8 @@ const AllPreferencesPage: React.FC = () => {
             </div>
 
             <div className="preference-section">
-                <button
-                    onClick={() => toggleSection('priceDistance')}
-                    className="dropdown-toggle"
-                >
-                    {openSection === 'priceDistance' ? 'Hide' : 'Show'} Price
-                    and Distance Preferences
+                <button onClick={() => toggleSection('priceDistance')} className="dropdown-toggle">
+                    {openSection === 'priceDistance' ? 'Hide' : 'Show'} Price and Distance Preferences
                 </button>
                 {openSection === 'priceDistance' && (
                     <div className="preference-content">
@@ -75,12 +63,8 @@ const AllPreferencesPage: React.FC = () => {
             </div>
 
             <div className="preference-section">
-                <button
-                    onClick={() => toggleSection('schedule')}
-                    className="dropdown-toggle"
-                >
-                    {openSection === 'schedule' ? 'Hide' : 'Show'} Schedule
-                    Preferences
+                <button onClick={() => toggleSection('schedule')} className="dropdown-toggle">
+                    {openSection === 'schedule' ? 'Hide' : 'Show'} Schedule Preferences
                 </button>
                 {openSection === 'schedule' && (
                     <div className="preference-content">

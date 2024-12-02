@@ -56,9 +56,7 @@ function TestPage() {
 
     return (
         <>
-            <h1>
-                Test Page To Practice/Reference Front-End Back-End communication
-            </h1>
+            <h1>Test Page To Practice/Reference Front-End Back-End communication</h1>
             <h2>Viewing Restaurants</h2>
             <table className="table mt-5 text-center">
                 <thead>

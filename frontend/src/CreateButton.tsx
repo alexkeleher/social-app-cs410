@@ -15,11 +15,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
     className = '',
 }) => {
     return (
-        <button
-            onClick={onClick}
-            type={type}
-            className={`create-button ${className}`}
-        >
+        <button onClick={onClick} type={type} className={`create-button ${className}`}>
             {children}
         </button>
     );

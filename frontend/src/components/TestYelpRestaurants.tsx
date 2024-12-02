@@ -49,41 +49,27 @@ const YelpRestaurants: React.FC = () => {
             });
             fetchRestaurants(latitude, longitude);
         }
-    }, [
-        latitude,
-        longitude,
-        API_KEY,
-        sortOption,
-        dietOption,
-        cuisineOption,
-        restaurantLimit,
-    ]);
+    }, [latitude, longitude, API_KEY, sortOption, dietOption, cuisineOption, restaurantLimit]);
 
     const fetchRestaurants = async (lat: number, lon: number) => {
         try {
-            const response = await axios.get(
-                'https://api.yelp.com/v3/businesses/search',
-                {
-                    headers: {
-                        Authorization: `Bearer ${API_KEY}`,
-                    },
-                    params: {
-                        latitude: lat,
-                        longitude: lon,
-                        categories: cuisineOption || 'restaurants',
-                        sort_by: sortOption,
-                        attributes: dietOption || 'restrictions',
-                        limit: restaurantLimit,
-                    },
-                }
-            );
+            const response = await axios.get('https://api.yelp.com/v3/businesses/search', {
+                headers: {
+                    Authorization: `Bearer ${API_KEY}`,
+                },
+                params: {
+                    latitude: lat,
+                    longitude: lon,
+                    categories: cuisineOption || 'restaurants',
+                    sort_by: sortOption,
+                    attributes: dietOption || 'restrictions',
+                    limit: restaurantLimit,
+                },
+            });
             console.log('Received restaurants data:', response.data.businesses);
             setRestaurants(response.data.businesses);
         } catch (error) {
-            console.error(
-                'There was an error fetching data from Yelp API',
-                error
-            );
+            console.error('There was an error fetching data from Yelp API', error);
         }
     };
 
@@ -97,9 +83,7 @@ const YelpRestaurants: React.FC = () => {
         console.log('Diet option changed to:', selectedOption);
     };
 
-    const handleCuisineChange = (
-        event: React.ChangeEvent<HTMLSelectElement>
-    ) => {
+    const handleCuisineChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedCuisine = event.target.value || null;
         setCuisineOption(selectedCuisine);
         console.log('Cuisine option changed to:', selectedCuisine);
@@ -109,18 +93,8 @@ const YelpRestaurants: React.FC = () => {
         setRestaurantLimit(Number(event.target.value));
     };
 
-    const formatHours = (
-        hours: { start: string; end: string; day: number }[]
-    ) => {
-        const daysOfWeek = [
-            'Sunday',
-            'Monday',
-            'Tuesday',
-            'Wednesday',
-            'Thursday',
-            'Friday',
-            'Saturday',
-        ];
+    const formatHours = (hours: { start: string; end: string; day: number }[]) => {
+        const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         return hours
             .map((hour) => {
                 const start = `${hour.start.slice(0, 2)}:${hour.start.slice(2)}`;
@@ -142,11 +116,7 @@ const YelpRestaurants: React.FC = () => {
             </select>
 
             <label htmlFor="diet">Dietary Restrictions: </label>
-            <select
-                id="diet"
-                value={dietOption || ''}
-                onChange={handleDietChange}
-            >
+            <select id="diet" value={dietOption || ''} onChange={handleDietChange}>
                 <option value="">All</option>
                 <option value="vegetarian">Vegetarian</option>
                 <option value="vegan">Vegan</option>
@@ -156,11 +126,7 @@ const YelpRestaurants: React.FC = () => {
             </select>
 
             <label htmlFor="cuisine">Cuisine Type: </label>
-            <select
-                id="cuisine"
-                value={cuisineOption || ''}
-                onChange={handleCuisineChange}
-            >
+            <select id="cuisine" value={cuisineOption || ''} onChange={handleCuisineChange}>
                 <option value="">All</option>
                 <option value="chinese">Chinese</option>
                 <option value="italian">Italian</option>
@@ -179,11 +145,7 @@ const YelpRestaurants: React.FC = () => {
             </select>
 
             <label htmlFor="limit">Number of Restaurants: </label>
-            <select
-                id="limit"
-                value={restaurantLimit}
-                onChange={handleLimitChange}
-            >
+            <select id="limit" value={restaurantLimit} onChange={handleLimitChange}>
                 <option value={5}>5</option>
                 <option value={10}>10</option>
                 <option value={20}>20</option>
@@ -207,29 +169,15 @@ const YelpRestaurants: React.FC = () => {
                             }}
                         />
                         <p>Rating: {restaurant.rating}</p>
+                        <p>Distance: {(restaurant.distance / 1000).toFixed(2)} km</p>
                         <p>
-                            Distance: {(restaurant.distance / 1000).toFixed(2)}{' '}
-                            km
-                        </p>
-                        <p>
-                            Address: {restaurant.location.address1},{' '}
-                            {restaurant.location.city}
+                            Address: {restaurant.location.address1}, {restaurant.location.city}
                         </p>
 
-                        {restaurant.hours &&
-                        restaurant.hours[0]?.open &&
-                        restaurant.hours[0]?.open.length > 0 ? (
+                        {restaurant.hours && restaurant.hours[0]?.open && restaurant.hours[0]?.open.length > 0 ? (
                             <>
-                                <p>
-                                    It is:{' '}
-                                    {restaurant.hours[0]?.is_open
-                                        ? 'Open'
-                                        : 'Closed'}
-                                </p>
-                                <p>
-                                    Hours:{' '}
-                                    {formatHours(restaurant.hours[0].open)}
-                                </p>
+                                <p>It is: {restaurant.hours[0]?.is_open ? 'Open' : 'Closed'}</p>
+                                <p>Hours: {formatHours(restaurant.hours[0].open)}</p>
                             </>
                         ) : (
                             <p>Status: Unknown</p>
