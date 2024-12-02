@@ -1198,6 +1198,7 @@ h1 {
 .day-schedule {
     border: 1px solid var(--gray-200);
     border-radius: 8px;
+  - Remove users from group
     overflow: hidden;
 }
 
@@ -1303,6 +1304,39 @@ h1 {
     font-style: italic;
     padding: 1rem;
     text-align: center;
+}
+
+.admin-badge {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background-color: #dbeafe;
+    color: #1e40af;
+    border-radius: 0.25rem;
+    display: inline-block;
+    margin-left: 0.5rem;
+}
+
+.member-name-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;  /* Equivalent to gap-2 (8px) */
+}
+
+.transfer-admin-button {
+    margin-left: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    color: #4b5563;
+    background-color: #e5e7eb;
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.transfer-admin-button:hover {
+    background-color: #d1d5db;
 }
 
 .back-link {
