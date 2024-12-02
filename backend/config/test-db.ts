@@ -6,10 +6,10 @@ dotenv.config({ path: '.env.test' });
 
 export const testConfig = {
     database: {
-        user: process.env.TEST_DB_USER || 'postgres',
+        user: process.env.TEST_DB_USER,
         host: process.env.TEST_DB_HOST || 'localhost',
         database: process.env.TEST_DB_NAME || 'groupeats_test',
-        password: process.env.TEST_DB_PASSWORD || 'postgres',
+        password: process.env.TEST_DB_PASSWORD,
         port: parseInt(process.env.TEST_DB_PORT || '5432', 10),
     },
 };
