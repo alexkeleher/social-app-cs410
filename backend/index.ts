@@ -544,7 +544,7 @@ app.post(
                     await pool.query('INSERT INTO UserGroupXRef (UserID, GroupID, isAdmin) VALUES($1, $2, $3);', [
                         creatoruserid,
                         newlyCreatedGroupID,
-                        true
+                        true,
                     ]);
                     // Send response back to the client
                     res.json({
@@ -1016,15 +1016,15 @@ app.put('/groups/:groupId/transfer-admin', async (req: Request, res: Response) =
         const { currentAdminId, newAdminId } = req.body;
         await client.query('BEGIN');
         // Remove admin status from current admin
-        await client.query(
-            'UPDATE UserGroupXRef SET isadmin = false WHERE GroupID = $1 AND UserID = $2',
-            [groupId, currentAdminId]
-        );
+        await client.query('UPDATE UserGroupXRef SET isadmin = false WHERE GroupID = $1 AND UserID = $2', [
+            groupId,
+            currentAdminId,
+        ]);
         // Set new admin
-        await client.query(
-            'UPDATE UserGroupXRef SET isadmin = true WHERE GroupID = $1 AND UserID = $2',
-            [groupId, newAdminId]
-        );
+        await client.query('UPDATE UserGroupXRef SET isadmin = true WHERE GroupID = $1 AND UserID = $2', [
+            groupId,
+            newAdminId,
+        ]);
         await client.query('COMMIT');
         res.json({ message: 'Admin status transferred successfully' });
     } catch (error) {
@@ -1197,6 +1197,7 @@ app.get('/socialevents/generate-new/:groupid', async (req: Request, res: Respons
                 generatedSocialEvent.startTime.time,
             ]
         );
+        await client.query('COMMIT');
         res.json(generatedSocialEvent);
     } catch (e) {
         await client.query('ROLLBACK');
