@@ -272,14 +272,13 @@ app.get('/users/by-groupid/:id', async (req: Request, res: Response) => {
     u.preferredpricerange,
     u.preferredmaxdistance,
     u.serializedschedulematrix,
-    x.isadmin as "isAdmin",
     ARRAY_AGG(DISTINCT cp.CuisineType) FILTER (WHERE cp.CuisineType IS NOT NULL) as cuisine_preferences
 FROM Users u
 JOIN UserGroupXRef x ON u.ID = x.UserID
 JOIN Groups g ON g.ID = x.GroupID
 LEFT JOIN UserCuisinePreferences cp ON cp.UserID = u.ID
 WHERE g.ID = $1
-GROUP BY g.name, g.joincode, u.id, u.firstname, u.lastname, u.username, u.email, u.address, u.serializedschedulematrix, u.preferredpricerange, u.preferredmaxdistance,x.isAdmin`,
+GROUP BY g.name, g.joincode, u.id, u.firstname, u.lastname, u.username, u.email, u.address, u.serializedschedulematrix, u.preferredpricerange, u.preferredmaxdistance`,
             [id]
         );
 
@@ -540,19 +539,11 @@ app.post(
                         [groupname, joinCode]
                     );
                     const newlyCreatedGroupID = insertedGroupData.rows[0].id;
-
-                    // Add the creating user to the group WITH admin status
-await pool.query(
-    'INSERT INTO UserGroupXRef (UserID, GroupID, isAdmin) VALUES($1, $2, $3);',
-    [creatoruserid, newlyCreatedGroupID, true]
-);
-
                     // Add the creating user to the group
                     await pool.query('INSERT INTO UserGroupXRef (UserID, GroupID) VALUES($1, $2);', [
                         creatoruserid,
                         newlyCreatedGroupID,
                     ]);
-
                     // Send response back to the client
                     res.json({
                         Result: 'Success',
@@ -1270,38 +1261,6 @@ app.get('/socialevents/bygroupid/:groupid', async (req: Request, res: Response) 
         res.status(500).json({ error: (e as Error).message });
     }
 });
-
-app.put('/groups/:groupId/transfer-admin', async (req: Request, res: Response) => {
-    const client = await pool.connect();
-    try {
-        const { groupId } = req.params;
-        const { currentAdminId, newAdminId } = req.body;
-
-        await client.query('BEGIN');
-
-        // Remove admin status from current admin
-        await client.query(
-            'UPDATE UserGroupXRef SET isadmin = false WHERE GroupID = $1 AND UserID = $2',
-            [groupId, currentAdminId]
-        );
-
-        // Set new admin
-        await client.query(
-            'UPDATE UserGroupXRef SET isadmin = true WHERE GroupID = $1 AND UserID = $2',
-            [groupId, newAdminId]
-        );
-
-        await client.query('COMMIT');
-        res.json({ message: 'Admin status transferred successfully' });
-    } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('Error transferring admin status:', error);
-        res.status(500).json({ error: 'Failed to transfer admin status' });
-    } finally {
-        client.release();
-    }
-});
-
 
 /*    DELETE /socialevents/delete-by-groupid/:groupid    */
 /* ************************************************************************** 
