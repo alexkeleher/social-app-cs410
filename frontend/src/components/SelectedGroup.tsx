@@ -54,7 +54,6 @@ const SelectedGroup = () => {
     useEffect(() => {
         getSocialEventsForThisGroup(groupid!);
     }, [groupid]);
-    const [showHours, setShowHours] = useState<boolean>(false);
 
     // Update handleTimeSlotClick function
 
@@ -107,7 +106,7 @@ const SelectedGroup = () => {
         getSocialEventsForThisGroup(groupid!);
     };
 
-    const onClickDeleteSocialEvent = async () => {
+    const deleteSocialEvent = async () => {
         try {
             await api.delete(`socialevents/delete-by-groupid/${groupid}`);
             await getSocialEventsForThisGroup(groupid!);
@@ -418,10 +417,6 @@ const SelectedGroup = () => {
         return '' + hourInt + ':' + minuteStr + ' ' + amPm;
     };
 
-    const toggleShowHours = () => {
-        setShowHours(showHours == false ? true : false);
-    };
-
     return (
         <div className="selected-group-container">
             <header className="group-header">
@@ -631,14 +626,12 @@ const SelectedGroup = () => {
                                 {groupEvent.restaurant.location.display_address}
                             </p>
                             <p>
-                                Categories:{' '}
+                                <b>Categories:</b>{' '}
                                 {groupEvent.restaurant.categories.map((category) => category.title).join(', ')}
                             </p>
-                            <p>
-                                <button className="cta-button" onClick={onClickDeleteSocialEvent}>
-                                    Delete
-                                </button>
-                            </p>
+                            <button className="cta-button" onClick={deleteSocialEvent}>
+                                Delete
+                            </button>
                         </div>
 
                         <img
@@ -648,18 +641,18 @@ const SelectedGroup = () => {
                                 width: '250px',
                                 height: '250px',
                                 objectFit: 'cover',
+                                marginLeft: '3rem',
+                                marginRight: '3rem',
                                 borderRadius: '8px',
+                                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
                             }}
                         />
 
                         <div key="hours-key">
-                            <p>
-                                <button className="cta-button" onClick={toggleShowHours}>
-                                    Hours
-                                </button>
-                            </p>
-                            {showHours &&
-                                groupEvent.restaurant.hours &&
+                            <h3>
+                                <u>Hours</u>
+                            </h3>
+                            {groupEvent.restaurant.hours &&
                                 groupEvent.restaurant.hours[0].open.map(({ day, start, end }) => (
                                     <p
                                         style={{
@@ -669,18 +662,12 @@ const SelectedGroup = () => {
                                     >
                                         <span
                                             style={{
-                                                flex: '1 1 auto',
-                                                textAlign: 'left',
+                                                marginRight: '3rem',
                                             }}
                                         >
                                             {daysOfWeek[day]}
                                         </span>
-                                        <span
-                                            style={{
-                                                flex: '0 0 auto',
-                                                textAlign: 'right',
-                                            }}
-                                        >
+                                        <span>
                                             {convertHoursNumberToString(start)}
                                             {'-'}
                                             {convertHoursNumberToString(end)}
