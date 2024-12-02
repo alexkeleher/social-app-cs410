@@ -248,6 +248,21 @@ INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
  INSERT INTO UserGroupXRef (UserID, GroupID) VALUES
  ((SELECT id FROM Users WHERE email = 'mjanak@email.com'), (SELECT ID FROM Groups WHERE name = 'Coworkers Forever'));
  
+
+UPDATE UserGroupXRef x1
+SET isadmin = true
+WHERE EXISTS (
+    SELECT 1
+    FROM (
+        SELECT GroupID, MIN(UserID) as FirstUserID
+        FROM UserGroupXRef
+        GROUP BY GroupID
+    ) x2
+    WHERE x1.GroupID = x2.GroupID 
+    AND x1.UserID = x2.FirstUserID
+);
+
+
 -- Inserts into Restaurant
 -- INSERT INTO Restaurant (Name, Address, PriceLevel) VALUES
 -- ('Olive Garden', '8245 Perry Hall Blvd, Baltimore, MD 21236', 2),
