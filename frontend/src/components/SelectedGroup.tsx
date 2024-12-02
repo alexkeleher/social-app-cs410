@@ -607,7 +607,11 @@ const SelectedGroup = () => {
                         <div key={groupEvent.restaurant.id}>
                             <p>
                                 <b>When: </b>
-                                {groupEvent.startTime.day} {convertTo12Hour(groupEvent.startTime.time)}
+                                {/* Only convert to 12 hours when using military time (We seem to store the time as military when saving events in the manual event feature) */}
+                                {groupEvent.startTime.day}{' '}
+                                {!groupEvent.startTime.time.includes('M')
+                                    ? convertTo12Hour(groupEvent.startTime.time)
+                                    : groupEvent.startTime.time}
                             </p>
                             <p>
                                 <b>Restaurant:</b> {groupEvent.restaurant.name}
