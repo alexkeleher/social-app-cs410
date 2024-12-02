@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import AuthContext from '../context/AuthProvider';
 import api from '../api/axios';
 import axios from 'axios';
 import { SocialEvent, Coordinates } from '@types';
@@ -18,6 +19,7 @@ interface GroupUser {
     cuisine_preferences?: string[] | null;
     joincode?: string;
     serializedschedulematrix?: string;
+    isAdmin: boolean;
 }
 
 interface AvailabilityMatrix {
@@ -27,6 +29,7 @@ interface AvailabilityMatrix {
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 const SelectedGroup = () => {
+    const { auth } = useContext(AuthContext);
     const { groupid } = useParams();
     const navigate = useNavigate();
     const [groupUsers, setGroupUsers] = useState<GroupUser[]>([]);
@@ -229,6 +232,10 @@ const SelectedGroup = () => {
     }, [fetchGroupUsers]);
 
     useEffect(() => {
+        console.log('Group Users Data:', groupUsers);
+    }, [groupUsers]);
+
+    useEffect(() => {
         if (groupUsers.length > 0) {
             setGroupName(groupUsers[0].groupname);
             aggregatePreferences();
@@ -386,17 +393,26 @@ const SelectedGroup = () => {
     };
 
     const handleDeleteClick = async () => {
+        // Use auth from above instead of getting it inside the function
+        const currentUser = groupUsers.find(
+            (user) => user.isAdmin && user.id === auth?.id
+        );
+        if (!currentUser) {
+            alert('Only group admins can delete groups');
+            return;
+        }
+
         // Show confirmation dialog
-        const confirmDelete = window.confirm('Are you sure you want to delete this group?');
+        const confirmDelete = window.confirm(
+            'Are you sure you want to delete this group?'
+        );
 
         if (confirmDelete) {
             try {
                 const response = await api.delete(`/groups/${groupid}`);
-
                 if (!response) {
                     throw new Error('Failed to delete group');
                 }
-
                 // Redirect to my-groups page after successful deletion
                 navigate('/my-groups');
             } catch (error) {
@@ -405,6 +421,26 @@ const SelectedGroup = () => {
             }
         }
     };
+
+    const handleTransferAdmin = async (newAdminId: number) => {
+        const confirmTransfer = window.confirm(
+            'Are you sure you want to transfer admin status to this user? You will no longer be the admin.'
+        );
+        if (confirmTransfer) {
+            try {
+                await api.put(`/groups/${groupid}/transfer-admin`, {
+                    currentAdminId: auth?.id,
+                    newAdminId: newAdminId,
+                });
+                
+                await fetchGroupUsers();
+            } catch (error) {
+                console.error('Error transferring admin status:', error);
+                alert('Failed to transfer admin status. Please try again.');
+            }
+        }
+    };
+    
 
     // Input: 1330
     // Output: 1:30 PM
@@ -483,37 +519,51 @@ const SelectedGroup = () => {
             </section>
             <h2>Group Members</h2>
             <section className="group-members">
-                {groupUsers.map((gUser) => (
-                    <div key={gUser.id} className="member-card">
-                        <div className="member-avatar">
-                            {gUser.firstname[0]}
-                            {gUser.lastname[0]}
-                        </div>
-                        <div className="member-info">
-                            <h3>
-                                {gUser.firstname} {gUser.lastname}
-                            </h3>
-                            <p>{gUser.email}</p>
-                            {gUser.address ? (
-                                <p className="member-address">Address: {gUser.address}</p>
-                            ) : (
-                                <p className="no-preferences">No address set</p>
-                            )}
-                            <div className="cuisine-preferences">
-                                {gUser.cuisine_preferences && gUser.cuisine_preferences.length > 0 ? (
-                                    gUser.cuisine_preferences.map((cuisine) => (
-                                        <span key={cuisine} className="preference-tag">
-                                            {cuisine}
-                                        </span>
-                                    ))
-                                ) : (
-                                    <p className="no-preferences">No cuisine preferences set</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </section>
+    {groupUsers.map((gUser) => (
+        <div key={gUser.id} className="member-card">
+            <div className="member-avatar">
+                {gUser.firstname[0]}
+                {gUser.lastname[0]}
+            </div>
+            <div className="member-info">
+                <div className="member-name-container">
+                    <h3>
+                        {gUser.firstname} {gUser.lastname}
+                    </h3>
+                    {gUser.isAdmin && (
+                        <span className="admin-badge">Admin</span>
+                    )}
+                    {auth?.id !== gUser.id && 
+                     groupUsers.find(u => u.isAdmin && u.id === auth?.id) && (
+                        <button
+                            className="transfer-admin-button"
+                            onClick={() => handleTransferAdmin(gUser.id)}
+                        >
+                            Make Admin
+                        </button>
+                    )}
+                </div>
+                <p>{gUser.email}</p>
+                {gUser.address ? (
+                    <p className="member-address">Address: {gUser.address}</p>
+                ) : (
+                    <p className="no-preferences">No address set</p>
+                )}
+                <div className="cuisine-preferences">
+                    {gUser.cuisine_preferences && gUser.cuisine_preferences.length > 0 ? (
+                        gUser.cuisine_preferences.map((cuisine) => (
+                            <span key={cuisine} className="preference-tag">
+                                {cuisine}
+                            </span>
+                        ))
+                    ) : (
+                        <p className="no-preferences">No cuisine preferences set</p>
+                    )}
+                </div>
+            </div>
+        </div>
+    ))}
+</section>
             <h2>Group Availability</h2>
             <section className="availability-section">
                 {/* Next Available Time Card */}
