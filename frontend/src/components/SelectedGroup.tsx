@@ -17,6 +17,7 @@ interface GroupUser {
     cuisine_preferences?: string[] | null;
     joincode?: string;
     serializedschedulematrix?: string;
+    isAdmin: boolean;
 }
 
 interface AvailabilityMatrix {
@@ -277,6 +278,10 @@ const SelectedGroup = () => {
     useEffect(() => {
         fetchGroupUsers();
     }, [fetchGroupUsers]);
+
+    useEffect(() => {
+        console.log('Group Users Data:', groupUsers);
+    }, [groupUsers]);
 
     useEffect(() => {
         if (groupUsers.length > 0) {
@@ -560,7 +565,7 @@ const SelectedGroup = () => {
             </section>
             <h2>Group Members</h2>
             <section className="group-section">
-                {groupUsers.map((gUser,index) => (
+                {groupUsers.map((gUser) => (
                     <div key={gUser.id} className="member-card">
                         <div className="member-avatar">
                             {gUser.firstname[0]}
@@ -568,15 +573,13 @@ const SelectedGroup = () => {
                         </div>
                         <div className="member-info">
                             <div className="member-name-container">
-                <h3>
-                    {gUser.firstname} {gUser.lastname}
-                </h3>
-                {index === 0 && (
-                    <span className="admin-badge">
-                        Admin
-                    </span>
-                )}
-            </div>
+                                <h3>
+                                    {gUser.firstname} {gUser.lastname}
+                                </h3>
+                                {gUser.isAdmin && (
+                                    <span className="admin-badge">Admin</span>
+                                )}
+                            </div>
                             <p className="member-email">{gUser.email}</p>
                             {gUser.address ? (
                                 <p className="member-address">
