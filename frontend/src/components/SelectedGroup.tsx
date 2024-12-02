@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import AuthContext from '../context/AuthProvider';
 import api from '../api/axios';
 import axios from 'axios';
 import { SocialEvent, Coordinates } from '@types';
@@ -35,6 +36,7 @@ const daysOfWeek = [
 ];
 
 const SelectedGroup = () => {
+    const { auth } = useContext(AuthContext);
     const { groupid } = useParams();
     const navigate = useNavigate();
     const [groupUsers, setGroupUsers] = useState<GroupUser[]>([]);
@@ -453,6 +455,15 @@ const SelectedGroup = () => {
     };
 
     const handleDeleteClick = async () => {
+        // Use auth from above instead of getting it inside the function
+        const currentUser = groupUsers.find(
+            (user) => user.isAdmin && user.id === auth?.id
+        );
+        if (!currentUser) {
+            alert('Only group admins can delete groups');
+            return;
+        }
+
         // Show confirmation dialog
         const confirmDelete = window.confirm(
             'Are you sure you want to delete this group?'
@@ -461,11 +472,9 @@ const SelectedGroup = () => {
         if (confirmDelete) {
             try {
                 const response = await api.delete(`/groups/${groupid}`);
-
                 if (!response) {
                     throw new Error('Failed to delete group');
                 }
-
                 // Redirect to my-groups page after successful deletion
                 navigate('/my-groups');
             } catch (error) {
@@ -858,15 +867,21 @@ const SelectedGroup = () => {
                     </Link>
                 </div>
 
-                <Link
-                    to="#"
-                    onClick={(e) => {
-                        e.preventDefault(); // Prevents navigation
-                        handleDeleteClick(); // Too lazy to figure out the styling... So I just put it in a link wrapper.
-                    }}
-                >
-                    <button className="cta-button delete">Delete Group</button>
-                </Link>
+                {groupUsers.find(
+                    (user) => user.isAdmin && user.id === auth.id
+                ) && (
+                    <Link
+                        to="#"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            handleDeleteClick();
+                        }}
+                    >
+                        <button className="cta-button delete">
+                            Delete Group
+                        </button>
+                    </Link>
+                )}
             </div>
         </div>
     );
