@@ -5,6 +5,7 @@ import axios from 'axios';
 import { SocialEvent, Coordinates } from '@types';
 //import { format } from 'date-fns';
 import { YelpCache } from '../utils/cache';
+import './SelectedGroup.css';
 
 interface GroupUser {
     groupname: string;
@@ -23,15 +24,7 @@ interface AvailabilityMatrix {
     [key: string]: boolean[];
 }
 
-const daysOfWeek = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-];
+const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 const SelectedGroup = () => {
     const { groupid } = useParams();
@@ -42,29 +35,19 @@ const SelectedGroup = () => {
     const [inviteError, setInviteError] = useState('');
     const [saveMessage, setSaveMessage] = useState(''); // For displaying error or success when creating event with automatic option
     const [joinCode, setJoinCode] = useState('');
-    const [groupAvailability, setGroupAvailability] =
-        useState<AvailabilityMatrix>({});
-    const [commonTimeSlots, setCommonTimeSlots] = useState<
-        { day: string; slots: number[] }[]
-    >([]);
-    const [memberCoordinates, setMemberCoordinates] = useState<Coordinates[]>(
-        []
-    );
+    const [groupAvailability, setGroupAvailability] = useState<AvailabilityMatrix>({});
+    const [commonTimeSlots, setCommonTimeSlots] = useState<{ day: string; slots: number[] }[]>([]);
+    const [memberCoordinates, setMemberCoordinates] = useState<Coordinates[]>([]);
     const [centerPoint, setCenterPoint] = useState<Coordinates | null>(null);
 
-    const [aggregatedPreferences, setAggregatedPreferences] = useState<
-        { preference: string; count: number }[]
-    >([]);
+    const [aggregatedPreferences, setAggregatedPreferences] = useState<{ preference: string; count: number }[]>([]);
     const [nextAvailableTime, setNextAvailableTime] = useState<{
         day: string;
         time: string;
         daysUntil: number;
     } | null>(null);
     const isSelectedTimeSlot = (day: string, slotIndex: number) => {
-        return (
-            nextAvailableTime?.day === day &&
-            nextAvailableTime?.time === timeSlots[slotIndex]
-        );
+        return nextAvailableTime?.day === day && nextAvailableTime?.time === timeSlots[slotIndex];
     };
 
     const [groupEvent, setGroupEvent] = useState<SocialEvent | null>(null);
@@ -82,16 +65,12 @@ const SelectedGroup = () => {
         const maxCount = Math.max(...aggregatedPreferences.map((p) => p.count));
 
         // Filter to only include preferences with the highest count
-        return aggregatedPreferences
-            .filter((p) => p.count === maxCount)
-            .map((p) => p.preference.toLowerCase());
+        return aggregatedPreferences.filter((p) => p.count === maxCount).map((p) => p.preference.toLowerCase());
     }, [aggregatedPreferences]);
 
     const getSocialEventsForThisGroup = async (groupid: string) => {
         try {
-            const response = await api.get(
-                `/socialevents/bygroupid/${groupid}`
-            );
+            const response = await api.get(`/socialevents/bygroupid/${groupid}`);
             console.log('getting social events from the backend');
             if (Object.keys(response.data).length === 0) {
                 // If response had no data, ensure the events section shows empty
@@ -113,21 +92,15 @@ const SelectedGroup = () => {
         }
         try {
             await api.get(`socialevents/generate-new/${groupid}`);
-            console.log(
-                'success calling ' + `socialevents/generate-new/${groupid}`
-            );
+            console.log('success calling ' + `socialevents/generate-new/${groupid}`);
             setSaveMessage('Success creating social event');
             setTimeout(() => setSaveMessage(''), 4000);
         } catch (error: any) {
             // Type as 'any' to access axios error properties
-            console.error(
-                'Error creating event automatically onClickCreateEventAutomatic',
-                error
-            );
+            console.error('Error creating event automatically onClickCreateEventAutomatic', error);
             // Get the error message from the response of it exists
             console.log(error);
-            const errorMessage =
-                error.response?.data?.error || 'Unknown error occurred';
+            const errorMessage = error.response?.data?.error || 'Unknown error occurred';
             setSaveMessage('Error creating social event: ' + errorMessage);
             setTimeout(() => setSaveMessage(''), 4000);
         }
@@ -143,8 +116,7 @@ const SelectedGroup = () => {
             setTimeout(() => setSaveMessage(''), 4000);
         } catch (error: any) {
             console.error('Error deleting social event', error);
-            const errorMessage =
-                error.response?.data?.error || 'Unknown error occurred';
+            const errorMessage = error.response?.data?.error || 'Unknown error occurred';
             setSaveMessage('Error deleting social event: ' + errorMessage);
             setTimeout(() => setSaveMessage(''), 4000);
         }
@@ -171,28 +143,18 @@ const SelectedGroup = () => {
         for (let daysAhead = 0; daysAhead < 7; daysAhead++) {
             const checkingDay = (adjustedCurrentDay + daysAhead) % 7;
             const dayName = Object.keys(dayIndices).find(
-                (key) =>
-                    dayIndices[key as keyof typeof dayIndices] === checkingDay
+                (key) => dayIndices[key as keyof typeof dayIndices] === checkingDay
             )!;
 
-            const daySlots = commonTimeSlots.find(
-                (slot) => slot.day === dayName
-            );
+            const daySlots = commonTimeSlots.find((slot) => slot.day === dayName);
 
             if (daySlots?.slots.length) {
                 // On current day, filter out past times
                 const availableSlots =
                     daysAhead === 0
                         ? daySlots.slots.filter((slotIndex) => {
-                              const [startHour] = timeSlots[slotIndex]
-                                  .split('-')[0]
-                                  .split(':')
-                                  .map(Number);
-                              return (
-                                  startHour > currentHour ||
-                                  (startHour === currentHour &&
-                                      currentMinute < 30)
-                              );
+                              const [startHour] = timeSlots[slotIndex].split('-')[0].split(':').map(Number);
+                              return startHour > currentHour || (startHour === currentHour && currentMinute < 30);
                           })
                         : daySlots.slots;
 
@@ -221,17 +183,11 @@ const SelectedGroup = () => {
             const response = await api.get(`/users/by-groupid/${groupid}`);
 
             // Add detailed logging
-            console.log(
-                'Full response data:',
-                JSON.stringify(response.data, null, 2)
-            );
+            console.log('Full response data:', JSON.stringify(response.data, null, 2));
             console.log('First user data:', response.data[0]);
 
             // Check if address is lowercase in response
-            console.log(
-                'First user address:',
-                response.data[0]?.address || response.data[0]?.Address
-            );
+            console.log('First user address:', response.data[0]?.address || response.data[0]?.Address);
 
             // Updated mapping with case check
             const addresses = response.data.map((user: GroupUser) => {
@@ -249,9 +205,7 @@ const SelectedGroup = () => {
                     .map((user: GroupUser) => getCoordinates(user.address))
             );
 
-            const validCoords = coords.filter(
-                (coord): coord is Coordinates => coord !== null
-            );
+            const validCoords = coords.filter((coord): coord is Coordinates => coord !== null);
 
             setMemberCoordinates(validCoords);
 
@@ -260,10 +214,7 @@ const SelectedGroup = () => {
                 setCenterPoint(center);
 
                 // Save center point to localStorage for GroupEvent
-                localStorage.setItem(
-                    `group_${groupid}_center`,
-                    JSON.stringify(center)
-                );
+                localStorage.setItem(`group_${groupid}_center`, JSON.stringify(center));
             }
 
             if (response.data.length > 0 && response.data[0].joincode) {
@@ -296,9 +247,7 @@ const SelectedGroup = () => {
                 }
             });
         });
-        const aggregated = Object.entries(preferencesCount).map(
-            ([preference, count]) => ({ preference, count })
-        );
+        const aggregated = Object.entries(preferencesCount).map(([preference, count]) => ({ preference, count }));
         console.log('Aggregated preferences:', aggregated);
         setAggregatedPreferences(aggregated);
     };
@@ -328,18 +277,8 @@ const SelectedGroup = () => {
 
         users.forEach((user) => {
             if (user.serializedschedulematrix) {
-                const matrix = processScheduleMatrix(
-                    user.serializedschedulematrix
-                );
-                const days = [
-                    'Monday',
-                    'Tuesday',
-                    'Wednesday',
-                    'Thursday',
-                    'Friday',
-                    'Saturday',
-                    'Sunday',
-                ];
+                const matrix = processScheduleMatrix(user.serializedschedulematrix);
+                const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
                 days.forEach((day, dayIndex) => {
                     matrix[dayIndex].forEach((slot, slotIndex) => {
@@ -355,10 +294,7 @@ const SelectedGroup = () => {
 
         const common = Object.entries(availability).map(([day, slots]) => ({
             day,
-            slots: slots.reduce(
-                (acc, available, index) => (available ? [...acc, index] : acc),
-                [] as number[]
-            ),
+            slots: slots.reduce((acc, available, index) => (available ? [...acc, index] : acc), [] as number[]),
         }));
 
         setCommonTimeSlots(common);
@@ -400,9 +336,7 @@ const SelectedGroup = () => {
         return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
     };
 
-    const getCoordinates = async (
-        address: string
-    ): Promise<Coordinates | null> => {
+    const getCoordinates = async (address: string): Promise<Coordinates | null> => {
         try {
             const MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
             const response = await axios.get(
@@ -448,17 +382,13 @@ const SelectedGroup = () => {
             alert('Invite sent successfully');
             fetchGroupUsers();
         } catch (err: any) {
-            setInviteError(
-                err.response?.data?.error || 'Failed to send invite'
-            );
+            setInviteError(err.response?.data?.error || 'Failed to send invite');
         }
     };
 
     const handleDeleteClick = async () => {
         // Show confirmation dialog
-        const confirmDelete = window.confirm(
-            'Are you sure you want to delete this group?'
-        );
+        const confirmDelete = window.confirm('Are you sure you want to delete this group?');
 
         if (confirmDelete) {
             try {
@@ -506,7 +436,7 @@ const SelectedGroup = () => {
                 )}
             </header>
             <h2>Aggregated Preferences</h2>
-            <section className="group-section">
+            <section className="aggregated-preferences">
                 <div className="cuisine-preferences">
                     {aggregatedPreferences.length > 0 ? (
                         aggregatedPreferences.map(({ preference, count }) => (
@@ -524,32 +454,23 @@ const SelectedGroup = () => {
                     {centerPoint ? (
                         <div className="coordinate-container">
                             <p className="coordinate-text">
-                                Latitude:{' '}
-                                <span className="code-text">
-                                    {centerPoint.lat.toFixed(4)}°
-                                </span>
+                                Latitude: <span className="code-text">{centerPoint.lat.toFixed(4)}°</span>
                             </p>
                             <p className="coordinate-text">
-                                Longitude:{' '}
-                                <span className="code-text">
-                                    {centerPoint.lng.toFixed(4)}°
-                                </span>
+                                Longitude: <span className="code-text">{centerPoint.lng.toFixed(4)}°</span>
                             </p>
                             <p className="member-count">
-                                Based on {memberCoordinates.length} member
-                                location
+                                Based on {memberCoordinates.length} member location
                                 {memberCoordinates.length !== 1 ? 's' : ''}
                             </p>
                         </div>
                     ) : (
-                        <p className="no-preferences">
-                            No member locations available
-                        </p>
+                        <p className="no-preferences">No member locations available</p>
                     )}
                 </div>
             </section>
 
-            <section className="group-section">
+            <section className="invite-members">
                 <h2>Invite Members</h2>
                 <form onSubmit={handleInvite} className="invite-form">
                     <input
@@ -566,7 +487,7 @@ const SelectedGroup = () => {
                 {inviteError && <p className="error-message">{inviteError}</p>}
             </section>
             <h2>Group Members</h2>
-            <section className="group-section">
+            <section className="group-members">
                 {groupUsers.map((gUser) => (
                     <div key={gUser.id} className="member-card">
                         <div className="member-avatar">
@@ -577,29 +498,21 @@ const SelectedGroup = () => {
                             <h3>
                                 {gUser.firstname} {gUser.lastname}
                             </h3>
-                            <p className="member-email">{gUser.email}</p>
+                            <p>{gUser.email}</p>
                             {gUser.address ? (
-                                <p className="member-address">
-                                    Address: {gUser.address}
-                                </p>
+                                <p className="member-address">Address: {gUser.address}</p>
                             ) : (
                                 <p className="no-preferences">No address set</p>
                             )}
                             <div className="cuisine-preferences">
-                                {gUser.cuisine_preferences &&
-                                gUser.cuisine_preferences.length > 0 ? (
+                                {gUser.cuisine_preferences && gUser.cuisine_preferences.length > 0 ? (
                                     gUser.cuisine_preferences.map((cuisine) => (
-                                        <span
-                                            key={cuisine}
-                                            className="preference-tag"
-                                        >
+                                        <span key={cuisine} className="preference-tag">
                                             {cuisine}
                                         </span>
                                     ))
                                 ) : (
-                                    <p className="no-preferences">
-                                        No cuisine preferences set
-                                    </p>
+                                    <p className="no-preferences">No cuisine preferences set</p>
                                 )}
                             </div>
                         </div>
@@ -617,12 +530,8 @@ const SelectedGroup = () => {
                         {nextAvailableTime ? (
                             <div className="next-time">
                                 <div className="time-badge">
-                                    <span className="day">
-                                        {nextAvailableTime.day}
-                                    </span>
-                                    <span className="time">
-                                        {nextAvailableTime.time}
-                                    </span>
+                                    <span className="day">{nextAvailableTime.day}</span>
+                                    <span className="time">{nextAvailableTime.time}</span>
                                 </div>
                                 <span className="relative-time">
                                     {nextAvailableTime.daysUntil === 0
@@ -633,9 +542,7 @@ const SelectedGroup = () => {
                                 </span>
                             </div>
                         ) : (
-                            <p className="no-time">
-                                No upcoming times available
-                            </p>
+                            <p>No upcoming times available</p>
                         )}
                     </div>
                 </div>
@@ -652,56 +559,34 @@ const SelectedGroup = () => {
                                         {[
                                             {
                                                 label: 'Morning',
-                                                slots: slots.filter(
-                                                    (i) => i < 6
-                                                ),
+                                                slots: slots.filter((i) => i < 6),
                                             },
                                             {
                                                 label: 'Afternoon',
-                                                slots: slots.filter(
-                                                    (i) => i >= 6 && i < 12
-                                                ),
+                                                slots: slots.filter((i) => i >= 6 && i < 12),
                                             },
                                             {
                                                 label: 'Evening',
-                                                slots: slots.filter(
-                                                    (i) => i >= 12
-                                                ),
+                                                slots: slots.filter((i) => i >= 12),
                                             },
                                         ].map(
                                             ({ label, slots }) =>
                                                 slots.length > 0 && (
-                                                    <div
-                                                        key={label}
-                                                        className="time-group"
-                                                    >
-                                                        <span className="time-label">
-                                                            {label}
-                                                        </span>
+                                                    <div key={label} className="time-group">
+                                                        <span className="time-label">{label}</span>
                                                         <div className="time-list">
-                                                            {slots.map(
-                                                                (slotIndex) => (
-                                                                    <span
-                                                                        key={
-                                                                            slotIndex
-                                                                        }
-                                                                        className={`time-slot clickable ${
-                                                                            isSelectedTimeSlot(
-                                                                                day,
-                                                                                slotIndex
-                                                                            )
-                                                                                ? 'selected'
-                                                                                : ''
-                                                                        }`}
-                                                                    >
-                                                                        {
-                                                                            timeSlots[
-                                                                                slotIndex
-                                                                            ]
-                                                                        }
-                                                                    </span>
-                                                                )
-                                                            )}
+                                                            {slots.map((slotIndex) => (
+                                                                <span
+                                                                    key={slotIndex}
+                                                                    className={`time-slot clickable ${
+                                                                        isSelectedTimeSlot(day, slotIndex)
+                                                                            ? 'selected'
+                                                                            : ''
+                                                                    }`}
+                                                                >
+                                                                    {timeSlots[slotIndex]}
+                                                                </span>
+                                                            ))}
                                                         </div>
                                                     </div>
                                                 )
@@ -716,14 +601,13 @@ const SelectedGroup = () => {
              * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
              */}
             <h2 style={{ paddingTop: '30px' }}>Group Event</h2>
-            <section className="group-section">
+            <section className="group-event">
                 {groupEvent && (
                     <>
                         <div key={groupEvent.restaurant.id}>
                             <p>
                                 <b>When: </b>
-                                {groupEvent.startTime.day}{' '}
-                                {convertTo12Hour(groupEvent.startTime.time)}
+                                {groupEvent.startTime.day} {convertTo12Hour(groupEvent.startTime.time)}
                             </p>
                             <p>
                                 <b>Restaurant:</b> {groupEvent.restaurant.name}
@@ -744,15 +628,10 @@ const SelectedGroup = () => {
                             </p>
                             <p>
                                 Categories:{' '}
-                                {groupEvent.restaurant.categories
-                                    .map((category) => category.title)
-                                    .join(', ')}
+                                {groupEvent.restaurant.categories.map((category) => category.title).join(', ')}
                             </p>
                             <p>
-                                <button
-                                    className="cta-button"
-                                    onClick={onClickDeleteSocialEvent}
-                                >
+                                <button className="cta-button" onClick={onClickDeleteSocialEvent}>
                                     Delete
                                 </button>
                             </p>
@@ -771,48 +650,39 @@ const SelectedGroup = () => {
 
                         <div key="hours-key">
                             <p>
-                                <button
-                                    className="cta-button"
-                                    onClick={toggleShowHours}
-                                >
+                                <button className="cta-button" onClick={toggleShowHours}>
                                     Hours
                                 </button>
                             </p>
                             {showHours &&
                                 groupEvent.restaurant.hours &&
-                                groupEvent.restaurant.hours[0].open.map(
-                                    ({ day, start, end }) => (
-                                        <p
+                                groupEvent.restaurant.hours[0].open.map(({ day, start, end }) => (
+                                    <p
+                                        style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                        }}
+                                    >
+                                        <span
                                             style={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
+                                                flex: '1 1 auto',
+                                                textAlign: 'left',
                                             }}
                                         >
-                                            <span
-                                                style={{
-                                                    flex: '1 1 auto',
-                                                    textAlign: 'left',
-                                                }}
-                                            >
-                                                {daysOfWeek[day]}
-                                            </span>
-                                            <span
-                                                style={{
-                                                    flex: '0 0 auto',
-                                                    textAlign: 'right',
-                                                }}
-                                            >
-                                                {convertHoursNumberToString(
-                                                    start
-                                                )}
-                                                {'-'}
-                                                {convertHoursNumberToString(
-                                                    end
-                                                )}
-                                            </span>
-                                        </p>
-                                    )
-                                )}
+                                            {daysOfWeek[day]}
+                                        </span>
+                                        <span
+                                            style={{
+                                                flex: '0 0 auto',
+                                                textAlign: 'right',
+                                            }}
+                                        >
+                                            {convertHoursNumberToString(start)}
+                                            {'-'}
+                                            {convertHoursNumberToString(end)}
+                                        </span>
+                                    </p>
+                                ))}
                         </div>
                     </>
                 )}
@@ -823,11 +693,7 @@ const SelectedGroup = () => {
              */}
 
             {saveMessage && (
-                <p
-                    className={`save-message ${saveMessage.includes('Error') ? 'error' : 'success'}`}
-                >
-                    {saveMessage}
-                </p>
+                <p className={`save-message ${saveMessage.includes('Error') ? 'error' : 'success'}`}>{saveMessage}</p>
             )}
 
             {/* Buttons Section
@@ -835,38 +701,24 @@ const SelectedGroup = () => {
              */}
             <div className="group-actions">
                 <div>
-                    <button
-                        className="cta-button"
-                        onClick={onClickCreateEventAutomatic}
-                    >
+                    <button className="cta-button" onClick={onClickCreateEventAutomatic}>
                         Create Event - Automatic
                     </button>
 
-                    <Link
-                        to={`/group-event/${groupid}`}
-                        state={{ commonTimeSlots }}
-                    >
-                        <button className="cta-button">
-                            Create Event - Manual
-                        </button>
+                    <Link to={`/group-event/${groupid}`} state={{ commonTimeSlots }}>
+                        <button className="cta-button">Create Event - Manual</button>
                     </Link>
 
-                    <Link to="/my-groups">
-                        <button className="cta-button">
-                            Back to My Groups
-                        </button>
+                    <Link
+                        to="#"
+                        onClick={(e) => {
+                            e.preventDefault(); // Prevents navigation
+                            handleDeleteClick(); // Too lazy to figure out the styling... So I just put it in a link wrapper.
+                        }}
+                    >
+                        <button className="cta-button delete">Delete Group</button>
                     </Link>
                 </div>
-
-                <Link
-                    to="#"
-                    onClick={(e) => {
-                        e.preventDefault(); // Prevents navigation
-                        handleDeleteClick(); // Too lazy to figure out the styling... So I just put it in a link wrapper.
-                    }}
-                >
-                    <button className="cta-button delete">Delete Group</button>
-                </Link>
             </div>
         </div>
     );
