@@ -50,8 +50,6 @@ interface Restaurant {
     PriceLevel?: string;
 }
 
-
-
 // Middleware
 app.use(
     cors({
@@ -137,8 +135,6 @@ const pgSession = connectPgSimple(session);
 app.get('/', (req: Request, res: Response) => {
     res.send('This is Express working');
 });
-
-
 
 // /* LOGIN */
 app.post('/login', async (req: Request, res: Response): Promise<void> => {
@@ -908,9 +904,6 @@ app.post('/selections', async (req: Request, res: Response) => {
     }
 });
 
-
-
-
 app.get('/search', async (req: Request, res: Response) => {
     try {
         const { latitude, longitude, categories, sort_by, limit } = req.query;
@@ -924,8 +917,8 @@ app.get('/search', async (req: Request, res: Response) => {
                 categories: categories || 'restaurants',
                 sort_by: sort_by || 'best_match',
                 limit: Number(limit) || 5,
-                radius: 40000
-            }
+                radius: 40000,
+            },
         });
 
         // Get detailed info (including hours) for each business
@@ -935,10 +928,13 @@ app.get('/search', async (req: Request, res: Response) => {
                     const detailResponse = await yelp.get(`/${business.id}`);
                     return {
                         ...business,
-                        hours: detailResponse.data.hours
+                        hours: detailResponse.data.hours,
                     };
                 } catch (error) {
-                    console.error(`Error fetching details for ${business.id}:`, error);
+                    console.error(
+                        `Error fetching details for ${business.id}:`,
+                        error
+                    );
                     return business;
                 }
             })
@@ -946,14 +942,13 @@ app.get('/search', async (req: Request, res: Response) => {
 
         return res.json({
             ...searchResponse.data,
-            businesses: detailedBusinesses
+            businesses: detailedBusinesses,
         });
-
     } catch (error: any) {
         console.error('Yelp API Error:', error);
         return res.status(500).json({
             error: 'Failed to fetch restaurants',
-            details: error.message
+            details: error.message,
         });
     }
 });
@@ -981,7 +976,10 @@ app.post(
             });
         } catch (e) {
             console.error((e as Error).message);
-            console.log('Using Yelp API key:', process.env.YELP_API_KEY?.slice(0,10) + '...');
+            console.log(
+                'Using Yelp API key:',
+                process.env.YELP_API_KEY?.slice(0, 10) + '...'
+            );
             res.status(500).json({ error: (e as Error).message });
         }
     }
@@ -1045,6 +1043,45 @@ app.delete(
             //console.log("Deletion result:", deleteResult); // Log the result object
 
             res.json('Cuisine preference was deleted');
+        } catch (e) {
+            console.error((e as Error).message);
+            res.status(500).json({ error: (e as Error).message });
+        }
+    }
+);
+
+// Get all notifications for a user
+app.get(
+    '/users/:id/notifications',
+    async (req: Request<{ id: string }>, res: Response) => {
+        try {
+            const { id } = req.params;
+
+            const queryResults = await pool.query(
+                'SELECT * FROM UserNotification WHERE UserID = $1 ORDER BY ID DESC',
+                [id]
+            );
+
+            res.json(queryResults.rows);
+        } catch (e) {
+            console.error((e as Error).message);
+            res.status(500).json({ error: (e as Error).message });
+        }
+    }
+);
+
+// Mark all the notifications for specified userID as read in the database
+app.put(
+    '/users/:id/notifications/mark-read',
+    async (req: Request<{ id: string }>, res: Response) => {
+        try {
+            const { id } = req.params;
+
+            const queryResults = await pool.query(
+                `UPDATE UserNotification SET IsRead = 'True' WHERE UserID = $1`,
+                [id]
+            );
+            res.json({ Result: 'Success' });
         } catch (e) {
             console.error((e as Error).message);
             res.status(500).json({ error: (e as Error).message });

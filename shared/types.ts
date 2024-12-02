@@ -84,3 +84,11 @@ export interface Coordinates {
     lat: number;
     lng: number;
 }
+
+export interface UserNotification {
+    id: number;
+    message: string;
+    datecreated: string;
+    isread: boolean;
+    userid: number;
+}

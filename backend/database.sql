@@ -108,6 +108,40 @@ CREATE TABLE IF NOT EXISTS CuisineTypes (
 	Alias VARCHAR(50) UNIQUE
 );
 
+CREATE TABLE UserNotification (
+	ID SERIAL PRIMARY KEY,
+	DateCreated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	Message VARCHAR(500),
+	IsRead BOOLEAN DEFAULT FALSE,
+	UserID INT NOT NULL,
+	FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE
+);
+
+CREATE OR REPLACE FUNCTION notify_users_on_selection() 
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO UserNotification (Message, UserID)
+    SELECT 
+        'A new social event has been made for your group ' || g.Name || ' on ' || NEW.DayOfWeek || ' at ' || NEW.Time AS Message,
+        ug.UserID
+    FROM 
+        UserGroupXRef ug 	JOIN
+		Groups g 			ON g.ID = ug.GroupID
+    WHERE 
+        ug.GroupID = NEW.GroupID;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+CREATE TRIGGER trigger_notify_users
+AFTER INSERT ON Selection
+FOR EACH ROW
+EXECUTE FUNCTION notify_users_on_selection();
+
+
 -- Inserts into CuisineTypes
 INSERT INTO CuisineTypes (Name, Alias) VALUES
 ('American', 'tradamerican'), ('Italian', 'italian'), ('Mexican', 'mexican'), ('Japanese', 'japanese'), ('Chinese', 'chinese'), ('Indian', 'indpak'),
