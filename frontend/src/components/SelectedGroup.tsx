@@ -484,6 +484,27 @@ const SelectedGroup = () => {
         }
     };
 
+    const handleTransferAdmin = async (newAdminId: number) => {
+        const confirmTransfer = window.confirm(
+            'Are you sure you want to transfer admin status to this user? You will no longer be the admin.'
+        );
+
+        if (confirmTransfer) {
+            try {
+                await api.put(`/groups/${groupid}/transfer-admin`, {
+                    currentAdminId: auth?.id,
+                    newAdminId: newAdminId,
+                });
+
+                
+                await fetchGroupUsers();
+            } catch (error) {
+                console.error('Error transferring admin status:', error);
+                alert('Failed to transfer admin status. Please try again.');
+            }
+        }
+    };
+
     // Input: 1330
     // Output: 1:30 PM
     const convertHoursNumberToString = (yelpTime: string): string => {
@@ -588,6 +609,19 @@ const SelectedGroup = () => {
                                 {gUser.isAdmin && (
                                     <span className="admin-badge">Admin</span>
                                 )}
+                                {auth?.id !== gUser.id &&
+                                    groupUsers.find(
+                                        (u) => u.isAdmin && u.id === auth?.id
+                                    ) && (
+                                        <button
+                                            className="transfer-admin-button"
+                                            onClick={() =>
+                                                handleTransferAdmin(gUser.id)
+                                            }
+                                        >
+                                            Make Admin
+                                        </button>
+                                    )}
                             </div>
                             <p className="member-email">{gUser.email}</p>
                             {gUser.address ? (

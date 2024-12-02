@@ -1341,6 +1341,38 @@ app.get(
     }
 );
 
+app.put('/groups/:groupId/transfer-admin', async (req: Request, res: Response) => {
+    const client = await pool.connect();
+    try {
+        const { groupId } = req.params;
+        const { currentAdminId, newAdminId } = req.body;
+
+        await client.query('BEGIN');
+
+        // Remove admin status from current admin
+        await client.query(
+            'UPDATE UserGroupXRef SET isadmin = false WHERE GroupID = $1 AND UserID = $2',
+            [groupId, currentAdminId]
+        );
+
+        // Set new admin
+        await client.query(
+            'UPDATE UserGroupXRef SET isadmin = true WHERE GroupID = $1 AND UserID = $2',
+            [groupId, newAdminId]
+        );
+
+        await client.query('COMMIT');
+        res.json({ message: 'Admin status transferred successfully' });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error transferring admin status:', error);
+        res.status(500).json({ error: 'Failed to transfer admin status' });
+    } finally {
+        client.release();
+    }
+});
+
+
 /*    DELETE /socialevents/delete-by-groupid/:groupid    */
 /* ************************************************************************** 
 Input: (URL Param) Group ID
