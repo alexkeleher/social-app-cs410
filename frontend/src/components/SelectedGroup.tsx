@@ -560,16 +560,23 @@ const SelectedGroup = () => {
             </section>
             <h2>Group Members</h2>
             <section className="group-section">
-                {groupUsers.map((gUser) => (
+                {groupUsers.map((gUser,index) => (
                     <div key={gUser.id} className="member-card">
                         <div className="member-avatar">
                             {gUser.firstname[0]}
                             {gUser.lastname[0]}
                         </div>
                         <div className="member-info">
-                            <h3>
-                                {gUser.firstname} {gUser.lastname}
-                            </h3>
+                            <div className="member-name-container">
+                <h3>
+                    {gUser.firstname} {gUser.lastname}
+                </h3>
+                {index === 0 && (
+                    <span className="admin-badge">
+                        Admin
+                    </span>
+                )}
+            </div>
                             <p className="member-email">{gUser.email}</p>
                             {gUser.address ? (
                                 <p className="member-address">

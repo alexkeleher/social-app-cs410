@@ -1264,3 +1264,20 @@ h1 {
     padding: 1rem;
     text-align: center;
 }
+
+.admin-badge {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background-color: #dbeafe;
+    color: #1e40af;
+    border-radius: 0.25rem;
+    display: inline-block;
+    margin-left: 0.5rem;
+}
+
+.member-name-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;  /* Equivalent to gap-2 (8px) */
+}
