@@ -1,3 +1,4 @@
+---
 title: "Lab 3 & 4"
 excerpt: "GroupEats User Manual" 
 classes: wide
