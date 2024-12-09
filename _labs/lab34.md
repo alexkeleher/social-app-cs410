@@ -5,7 +5,6 @@ classes: wide
 ---
 
 <div>
-  <iframe src="..." frameborder="0" width="1440" height="839" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true" class="presentation"></iframe> 
-
   <a href="https://github.com/alexkeleher/social-app-cs410/wiki" target="_blank">GroupEats User Manual</a> 
+  <iframe src="..." frameborder="0" width="1440" height="839" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true" class="presentation"></iframe> 
 </div>
